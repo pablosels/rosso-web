@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Agenda semanal de DJs: se lee de la hoja de Google "Agenda ROSSO".
 
-Columnas (fila 1): fecha, hora, dj, genero, instagram, preventa, destacado, notas.
+Columnas (fila 1): fecha, hora, dj, genero, instagram, preventa, destacado, pago, pagado, notas.
 La hoja se comparte como lector con la cuenta de servicio del servicio de Cloud Run;
 se lee con las credenciales por defecto (ADC), sin llaves en el código.
 """
@@ -13,7 +13,7 @@ import google.auth
 from google.auth.transport.requests import AuthorizedSession
 
 SHEET_ID = os.environ.get("AGENDA_SHEET_ID", "")
-RANGO = "A1:H400"
+RANGO = "A1:L400"
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
          "septiembre", "octubre", "noviembre", "diciembre"]
