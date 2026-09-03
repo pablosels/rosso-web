@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+api/.refresh_key
+api/.env
+carta_wansoft.json
+productos_raw.xml
+*.docx
+!api/plantilla/*.docx
