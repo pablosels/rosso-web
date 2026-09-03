@@ -36,7 +36,8 @@ PREFIJO = "rosso-web/"
 REFRESH_KEY = os.environ.get("REFRESH_KEY", "")
 ORIGENES = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS",
-    "https://rossospeakeasy.com,https://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8080"
+    "https://rossospeakeasy.com,http://rossospeakeasy.com,https://www.rossospeakeasy.com,"
+    "http://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8765"
 ).split(",") if o.strip()]
 WHATSAPP = "5664357899"
 
