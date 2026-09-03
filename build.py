@@ -159,6 +159,38 @@ def fecha_carta(carta):
     except Exception:
         return ""
 
+def img(nombre, alt, sizes="(max-width: 760px) 100vw, 60vw", lazy=True):
+    return (f'<img src="{B}/assets/fotos/{nombre}.jpg" '
+            f'srcset="{B}/assets/fotos/{nombre}-m.jpg 900w, {B}/assets/fotos/{nombre}.jpg 1800w" '
+            f'sizes="{sizes}" alt="{e(alt)}"{" loading=lazy decoding=async" if lazy else ""}>')
+
+
+def pie(texto):
+    return f'<figcaption class="pie-foto">{e(texto)}</figcaption>' if texto else ""
+
+
+def cine(nombre, alt, caption="", pos="50% 50%"):
+    """Foto a sangre completa, formato cine, con pie en mono."""
+    return (f'<figure class="cine"><div class="cine-img" style="--pos:{pos}">{img(nombre, alt, "100vw")}</div>{pie(caption)}</figure>')
+
+
+def mosaico(a, b_, c):
+    """Composicion asimetrica: A grande vertical, B desplazada a la derecha, C chica abajo."""
+    return ('<section class="mosaico" aria-label="ROSSO por dentro">'
+            f'<figure class="m-a">{img(a[0], a[1], "(max-width: 760px) 100vw, 50vw")}{pie(a[2])}</figure>'
+            f'<figure class="m-b">{img(b_[0], b_[1], "(max-width: 760px) 60vw, 30vw")}{pie(b_[2])}</figure>'
+            f'<figure class="m-c">{img(c[0], c[1], "(max-width: 760px) 70vw, 28vw")}{pie(c[2])}</figure>'
+            '</section>')
+
+
+def dupla(grande, chica, pos="50% 50%"):
+    """Una foto ancha con otra chica encimada en la esquina."""
+    return ('<section class="dupla">'
+            f'<figure class="d-grande" style="--pos:{pos}">{img(grande[0], grande[1], "(max-width: 760px) 100vw, 80vw")}{pie(grande[2])}</figure>'
+            f'<figure class="d-chica">{img(chica[0], chica[1], "(max-width: 760px) 40vw, 22vw")}{pie(chica[2])}</figure>'
+            '</section>')
+
+
 def foto(nombre, alt, clase="", lazy=True):
     """<figure> con srcset (900/1800 px) desde assets/fotos/."""
     return (f'<figure class="foto {clase}"><img src="{B}/assets/fotos/{nombre}.jpg" '
@@ -187,11 +219,7 @@ def pag_inicio():
   </div>
 </section>
 
-<section class="fotos-banda" aria-label="El lugar">
-  {foto("espacio_corner", "Sillón curvo rojo con mesas de cóctel en ROSSO", "alta")}
-  {foto("espacio_vistaconsola", "Vista de la consola de DJ bajo el techo de luces circulares", "ancha")}
-  {foto("coctel_queridodiario", "Cóctel Querido Diario servido en la barra", "alta")}
-</section>
+{cine("espacio_vistaconsola", "La consola de DJ de ROSSO bajo el techo de luces circulares", "La consola · Puebla 329, detrás de la cocina", "50% 72%")}
 
 <section class="franja">
   <div class="franja-col">
@@ -205,6 +233,10 @@ def pag_inicio():
     <a class="enlace" href="{B}/carta/">Carta completa</a>
   </div>
 </section>
+
+{mosaico(("espacio_corner", "Sillón curvo rojo con mesas de cóctel", "El sillón"),
+          ("coctel_queridodiario", "Querido Diario, cóctel de la casa, servido en la barra", "Querido Diario"),
+          ("voyeur", "Invitados brindando en el sillón", "Sábado, 1 am"))}
 
 <section class="bloque-eventos">
   <div class="etiqueta">Eventos privados</div>
@@ -223,14 +255,12 @@ def pag_carta():
   <h1>Cócteles de la casa, clásicos y algo para picar.</h1>
   <p class="nota" id="carta-nota">Precios en pesos, IVA incluido. Actualizada desde nuestro punto de venta el {e(fecha_carta(CARTA))}.</p>
 </section>
-<section class="fotos-fila claro" aria-label="Cócteles de ROSSO">
-  {foto("barra_picarilla", "Picarilla, cóctel de la casa, sobre la barra")}
-  {foto("coctel_loriginedumonde", "L'Origine du Monde, martini de la casa")}
-  {foto("coctel_kamazotz", "Camasotz, cóctel de la casa en copa coupe")}
-</section>
+{dupla(("barra_picarilla", "Picarilla, cóctel de la casa, sobre la barra bajo el techo de luces", "Picarilla · cóctel de la casa"),
+        ("coctel_loriginedumonde", "L'Origine du Monde, martini de la casa", "L'Origine du Monde"), "50% 62%")}
 <div class="carta claro" id="carta">
 {render_carta(CARTA)}
 </div>
+{cine("coctel_kamazotz", "Camasotz, cóctel de la casa en copa coupe sobre la barra", "Camasotz · cóctel de la casa", "50% 55%")}
 """
     return pagina("Carta · ROSSO", cuerpo, "/carta/",
                   "La carta de ROSSO: cócteles de la casa, clásicos, destilados, sin alcohol y botanas. Precios actualizados desde el punto de venta.",
@@ -259,7 +289,7 @@ def pag_noches():
   <div class="etiqueta">Noches</div>
   <h1>Lo que pasa cada semana en ROSSO.</h1>
 </section>
-<section class="foto-sola">{foto("espacio_vistaconsola", "La consola de DJ de ROSSO bajo el techo de luces", "ancha")}</section>
+{cine("espacio_vistaconsola", "La consola de DJ de ROSSO bajo el techo de luces", "Miércoles a sábado · sesiones de DJ · 9 pm – 1 am", "50% 72%")}
 <section class="noches">{series}</section>
 <section class="fechas-sec">{lista}
   <p class="nota">Para las noches con música la mesa se reserva igual: hasta {SITE['max_widget']} personas <a href="{B}/reservar/">por OpenTable</a>, grupos por <a href="{wa('Hola, ROSSO. Quiero reservar para un grupo.')}">WhatsApp</a>.</p>
@@ -288,7 +318,7 @@ def pag_reservar():
   <h1>Mesas hasta {SITE['max_widget']} personas, aquí mismo.</h1>
   <p class="nota">Elige fecha, hora y personas. La confirmación llega al instante por OpenTable, sin costo.</p>
 </section>
-<section class="foto-sola">{foto("espacio_01", "Interior de ROSSO: sillones rojos, luz azul al fondo y techo de círculos", "ancha")}</section>
+{cine("espacio_01", "Interior de ROSSO: sillones rojos, luz azul al fondo y techo de círculos", "32 lugares · mesas hasta 4 personas", "50% 60%")}
 <section class="reserva">
   <div class="widget-caja">
     <form class="reserva-forma" id="forma-reserva" action="{SITE['opentable_url']}" method="get" target="_blank" rel="noopener">
@@ -325,10 +355,8 @@ def pag_eventos():
   <h1>Cerramos la puerta y la casa es de ustedes.</h1>
   <p class="nota">Cumpleaños, cenas de equipo, lanzamientos, afters. Cuéntanos la fecha y cuántos son; te mandamos una propuesta por WhatsApp en menos de 24 horas.</p>
 </section>
-<section class="fotos-banda" aria-label="El espacio para eventos">
-  {foto("cortinaentrada", "La cortina roja de la entrada a ROSSO", "ancha")}
-  {foto("voyeur", "Invitados brindando en el sillón de ROSSO", "alta")}
-</section>
+{dupla(("cortinaentrada", "La cortina roja de la entrada a ROSSO", "La entrada, por la cocina de Pavorosso"),
+        ("shake_barra", "Bartender agitando un cóctel bajo el techo de luces", "La barra, para ustedes"), "50% 50%")}
 <section class="eventos">
   <div class="eventos-datos">
     <dl class="ficha">
