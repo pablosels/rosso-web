@@ -1,44 +1,45 @@
 # Desplegar la API de rossospeakeasy.com
 
 Servicio `rosso-web-api` en Cloud Run (proyecto `motor-facturas`, misma cuenta de
-servicio que los jobs de facturas). Correr desde `rosso-web\api`.
+servicio que los jobs de facturas). **Todo se corre desde `rosso-web\api`**: si se
+corre desde otra carpeta, Cloud Build no encuentra `app.py` ni el `Dockerfile` y
+falla con "provide a main.py or app.py file".
 
-## 1. Clave para el refresco de la carta
+## En PowerShell (Windows), copiar y pegar tal cual
 
-```bash
-python -c "import secrets;print(secrets.token_urlsafe(24))" > .refresh_key
+```powershell
+cd C:\Users\minis\Downloads\rosso-web\api
+if (-not (Test-Path .refresh_key)) { python -c "import secrets;print(secrets.token_urlsafe(24))" | Out-File -Encoding ascii -NoNewline .refresh_key }
+$KEY = (Get-Content .refresh_key -Raw).Trim()
+gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest" --set-env-vars "BUCKET=motor-facturas-respaldos,REFRESH_KEY=$KEY"
 ```
 
-## 2. Deploy (la primera vez y cada cambio)
-
-```bash
-gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest" --set-env-vars "BUCKET=motor-facturas-respaldos,REFRESH_KEY=$(cat .refresh_key)"
-```
+Al final imprime `Service URL: https://rosso-web-api-....run.app`. Esa URL va en
+`content/site.json` → `"api"`, y luego `python build.py` + commit + push.
 
 Ojo: `--set-env-vars` reemplaza TODO el entorno en cada deploy (misma regla que el
-motor de facturas), por eso se pasan siempre las dos variables.
+motor de facturas), por eso siempre se pasan las dos variables.
 
-La URL que imprime al final (`https://rosso-web-api-....run.app`) va en
-`content/site.json` → `"api"`, y después `python build.py`.
+## Primera carta (después del deploy)
 
-## 3. Primera carta
-
-```bash
-curl -X POST -H "X-Refresh-Key: $(cat .refresh_key)" https://rosso-web-api-XXXX.run.app/carta/refresh
+```powershell
+$KEY = (Get-Content .refresh_key -Raw).Trim()
+curl.exe -X POST -H "X-Refresh-Key: $KEY" https://rosso-web-api-XXXX.run.app/carta/refresh
 ```
 
-Tarda ~1–2 min (28 días de ventas de Wansoft). Deja `rosso-web/carta.json` en el
+Tarda 1–2 min (28 días de ventas de Wansoft). Deja `rosso-web/carta.json` en el
 bucket `motor-facturas-respaldos`.
 
-## 4. Refresco diario 6:00 (Cloud Scheduler)
+## Refresco diario 6:00 (Cloud Scheduler)
 
-```bash
-gcloud scheduler jobs create http rosso-carta-diaria --location us-central1 --project motor-facturas --schedule "0 6 * * *" --time-zone "America/Mexico_City" --uri "https://rosso-web-api-XXXX.run.app/carta/refresh" --http-method POST --headers "X-Refresh-Key=$(cat .refresh_key)"
+```powershell
+$KEY = (Get-Content .refresh_key -Raw).Trim()
+gcloud scheduler jobs create http rosso-carta-diaria --location us-central1 --project motor-facturas --schedule "0 6 * * *" --time-zone "America/Mexico_City" --uri "https://rosso-web-api-XXXX.run.app/carta/refresh" --http-method POST --headers "X-Refresh-Key=$KEY"
 ```
 
 ## Qué hace cada endpoint
 
-- `GET /carta` — carta viva (JSON). El sitio la pide al cargar `/carta/`; si falla, muestra el snapshot que trae embebido.
+- `GET /carta` — carta viva (JSON). El sitio la pide al cargar `/carta/`; si falla, muestra el snapshot embebido.
 - `POST /carta/refresh` — recalcula desde Wansoft (últimos 28 días de ventas; `GetProducts_Xml` viene vacío para Rosso).
 - `POST /eventos` — solicitud del formulario: calcula con `tarifario.py`, genera el borrador `.docx` en membrete con `cotizador.py`, lo guarda en el bucket y lo manda al Telegram de Rosso. Al cliente sólo se le dice que se le contesta por WhatsApp.
 

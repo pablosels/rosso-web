@@ -1,0 +1,6 @@
+;; rossospeakeasy.com -> GitHub Pages (pablosels/rosso-web)
+rossospeakeasy.com.	300	IN	A	185.199.108.153
+rossospeakeasy.com.	300	IN	A	185.199.109.153
+rossospeakeasy.com.	300	IN	A	185.199.110.153
+rossospeakeasy.com.	300	IN	A	185.199.111.153
+www.rossospeakeasy.com.	300	IN	CNAME	pablosels.github.io.
