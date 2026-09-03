@@ -24,7 +24,12 @@ motor de facturas), por eso siempre se pasan las dos variables.
 
 ```powershell
 $KEY = (Get-Content .refresh_key -Raw).Trim()
-curl.exe -X POST -H "X-Refresh-Key: $KEY" https://rosso-web-api-XXXX.run.app/carta/refresh
+curl.exe -X POST -d "" -H "X-Refresh-Key: $KEY" https://rosso-web-api-703407013960.us-central1.run.app/carta/refresh
+```
+
+(El `-d ""` importa: el frontal de Google rechaza POST sin `Content-Length` con un error 411.)
+
+```powershell
 ```
 
 Tarda 1–2 min (28 días de ventas de Wansoft). Deja `rosso-web/carta.json` en el
