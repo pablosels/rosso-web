@@ -63,7 +63,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
         "acceptsReservations": SITE["opentable_url"], "menu": URL + "/carta/",
         "sameAs": [f"https://www.instagram.com/{SITE['instagram']}/", SITE["opentable_url"]],
         "openingHoursSpecification": [
-            {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Wednesday", "Thursday", "Friday", "Saturday"],
+            {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
              "opens": "18:00", "closes": "02:00"},
             {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "16:00", "closes": "23:00"}],
     }, ensure_ascii=False)
@@ -171,7 +171,7 @@ def pag_inicio():
   <div class="hero-marca"><img src="{B}/assets/rosso-wordmark.svg" alt="ROSSO" width="586" height="121" fetchpriority="high"></div>
   <div class="hero-ficha">
     <div class="ficha-l">PUEBLA, 329<br>ROMA NTE.<br>( CDMX )</div>
-    <div class="ficha-r">SPEAKEASY<br>MIÉ – DOM<br>DESDE 6 PM</div>
+    <div class="ficha-r">SPEAKEASY<br>MAR – DOM<br>DESDE 6 PM</div>
   </div>
   <p class="hero-texto">Un bar que explora el placer a través de los sentidos. Escondido dentro de Pavorosso, se entra por la cocina: ahí empieza una experiencia íntima e inmersiva.</p>
   <p class="hero-texto hero-texto-2">Inspirado en el rojo como símbolo del deseo, ROSSO envuelve a sus invitados con atmósfera, música y ritmo.</p>
