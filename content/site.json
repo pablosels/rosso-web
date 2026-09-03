@@ -1,7 +1,7 @@
 {
   "nombre": "ROSSO",
   "nombre_largo": "Rosso Speakeasy",
-  "descripcion": "Speakeasy y bar de cócteles en Roma Norte, Ciudad de México. Puebla 329, detrás de la cocina de Pavorosso.",
+  "descripcion": "ROSSO es un bar en Roma Norte que explora el placer a través de los sentidos. Escondido dentro de Pavorosso, se entra por la cocina. Cócteles, música y ritmo, de miércoles a domingo.",
   "dominio": "rossospeakeasy.com",
   "cname": true,
   "base": "",
@@ -14,15 +14,15 @@
   "maps": "https://maps.google.com/?q=Rosso+Speakeasy+Puebla+329+Roma+Norte+CDMX",
   "horario": [
     [
-      "Martes a sábado",
+      "Miércoles a sábado",
       "6:00 pm – 2:00 am"
     ],
     [
       "Domingo",
-      "6:00 pm – 12:00 am"
+      "4:00 pm – 11:00 pm"
     ],
     [
-      "Lunes",
+      "Lunes y martes",
       "cerrado"
     ]
   ],

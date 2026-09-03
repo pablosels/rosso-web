@@ -57,7 +57,8 @@ main{min-height:60vh}
 .hero-marca img{width:min(100%,1100px);height:auto}
 .hero-ficha{display:flex;justify-content:space-between;gap:2rem;margin:2.4rem 0 3rem;font-family:var(--mono);font-weight:500;font-size:clamp(11px,1.3vw,13px);letter-spacing:.38em;line-height:1.9;text-transform:uppercase;color:var(--carmin-claro)}
 .ficha-r{text-align:right}
-.hero-texto{font-size:clamp(20px,2.3vw,28px);line-height:1.3;max-width:26ch;font-weight:400;letter-spacing:-.01em}
+.hero-texto{font-size:clamp(20px,2.3vw,28px);line-height:1.3;max-width:28ch;font-weight:400;letter-spacing:-.01em}
+.hero-texto-2{font-size:clamp(17px,1.6vw,20px);color:var(--ink-suave);max-width:40ch}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:2rem}
 
 /* botones */

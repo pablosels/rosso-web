@@ -1,9 +1,18 @@
 {
   "_nota": "Series = lo que pasa cada semana. Fechas = noches puntuales (se muestran las futuras). 'link' opcional: preventa (OpenTable Experiences o Stripe).",
   "series": [
-    {"dia": "Miércoles", "titulo": "Jazz en vivo", "hora": "9:00 pm", "texto": "Trío en la barra. La mesa se reserva; el lugar se llena."},
-    {"dia": "Jueves a sábado", "titulo": "DJ set", "hora": "10:00 pm", "texto": "Selectores invitados hasta el cierre."},
-    {"dia": "Domingo", "titulo": "Domingos", "hora": "6:00 pm", "texto": "Carta de domingo: Bull, Clamato Signature, micheladas. Cerramos a medianoche."}
+    {
+      "dia": "Miércoles a sábado",
+      "titulo": "Sesiones de DJ",
+      "hora": "9:00 pm – 1:00 am",
+      "texto": "Selectores invitados en la consola, del primer trago al cierre. La mesa se reserva; la pista se llena."
+    },
+    {
+      "dia": "Domingo",
+      "titulo": "Vinilos completos",
+      "hora": "4:00 pm – 11:00 pm",
+      "texto": "Discos enteros, de principio a fin, sin saltar canciones. Carta de domingo: Bull, Clamato Signature y micheladas."
+    }
   ],
   "fechas": []
 }

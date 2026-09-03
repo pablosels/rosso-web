@@ -63,9 +63,9 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
         "acceptsReservations": SITE["opentable_url"], "menu": URL + "/carta/",
         "sameAs": [f"https://www.instagram.com/{SITE['instagram']}/", SITE["opentable_url"]],
         "openingHoursSpecification": [
-            {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            {"@type": "OpeningHoursSpecification", "dayOfWeek": ["Wednesday", "Thursday", "Friday", "Saturday"],
              "opens": "18:00", "closes": "02:00"},
-            {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "18:00", "closes": "00:00"}],
+            {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "16:00", "closes": "23:00"}],
     }, ensure_ascii=False)
     return f"""<!doctype html>
 <html lang="es">
@@ -92,7 +92,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
 <body class="{clase}" data-api="{e(SITE['api'])}" data-base="{B}">
 <a class="salto" href="#contenido">Ir al contenido</a>
 <header class="cabecera">
-  <a class="marca" href="{B}/" aria-label="ROSSO, inicio"><img src="{B}/assets/rosso-wordmark-solid.png" alt="ROSSO" width="586" height="121"></a>
+  <a class="marca" href="{B}/" aria-label="ROSSO, inicio"><img src="{B}/assets/rosso-wordmark-solid.svg" alt="ROSSO" width="586" height="121"></a>
   <button class="menu-btn" aria-expanded="false" aria-controls="nav">Menú</button>
   <nav id="nav" class="nav">{nav}</nav>
 </header>
@@ -168,12 +168,13 @@ def pag_inicio():
         for n in NOCHES["series"])
     cuerpo = f"""
 <section class="hero">
-  <div class="hero-marca"><img src="{B}/assets/rosso-wordmark.png" alt="ROSSO" width="586" height="121" fetchpriority="high"></div>
+  <div class="hero-marca"><img src="{B}/assets/rosso-wordmark.svg" alt="ROSSO" width="586" height="121" fetchpriority="high"></div>
   <div class="hero-ficha">
     <div class="ficha-l">PUEBLA, 329<br>ROMA NTE.<br>( CDMX )</div>
-    <div class="ficha-r">SPEAKEASY<br>MAR – DOM<br>6 PM – 2 AM</div>
+    <div class="ficha-r">SPEAKEASY<br>MIÉ – DOM<br>DESDE 6 PM</div>
   </div>
-  <p class="hero-texto">Un bar de cócteles escondido detrás de la cocina de Pavorosso. Cuarenta metros cuadrados, treinta y dos lugares y una barra que se toma en serio.</p>
+  <p class="hero-texto">Un bar que explora el placer a través de los sentidos. Escondido dentro de Pavorosso, se entra por la cocina: ahí empieza una experiencia íntima e inmersiva.</p>
+  <p class="hero-texto hero-texto-2">Inspirado en el rojo como símbolo del deseo, ROSSO envuelve a sus invitados con atmósfera, música y ritmo.</p>
   <div class="hero-cta">
     <a class="btn" href="{B}/reservar/">Reservar mesa</a>
     <a class="btn btn-linea" href="{B}/carta/">Ver la carta</a>
@@ -271,7 +272,8 @@ def pag_reservar():
     <div class="etiqueta" style="margin-top:2.5rem">Horario</div>
     <p>{"<br>".join(f"{e(a)} · {e(b)}" for a, b in SITE['horario'])}</p>
     <div class="etiqueta" style="margin-top:2.5rem">Antes de venir</div>
-    <p>La cocina cierra a las {SITE['cocina_cierra']}. Te guardamos la mesa 15 minutos. Si no van a llegar, cancela desde tu confirmación y se la damos a alguien más.</p>
+    <p>Toda reservación se garantiza con tarjeta. Puedes cancelar o modificar hasta las 2:30 pm del mismo día; después de esa hora, o si no llegan, se cobran $250 MXN por persona.</p>
+    <p>Te guardamos la mesa 15 minutos. No se permiten reservaciones múltiples ni juntar mesas. La cocina cierra a las {SITE['cocina_cierra']}.</p>
   </aside>
 </section>
 """
