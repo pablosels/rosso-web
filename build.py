@@ -438,6 +438,20 @@ def main():
         destino.parent.mkdir(parents=True, exist_ok=True)
         destino.write_text(contenido, encoding="utf-8")
 
+    # ligas cortas por canal: /ig, /qr, /google... -> destino con ?de=<canal>
+    canales = json.loads((CONT / "canales.json").read_text(encoding="utf-8"))
+    for clave, c in canales.items():
+        if clave.startswith("_"):
+            continue
+        destino = f"{B}{c['destino']}?de={clave}"
+        (DOCS / clave).mkdir(parents=True, exist_ok=True)
+        (DOCS / clave / "index.html").write_text(
+            f'<!doctype html><html lang="es"><head><meta charset="utf-8"><title>ROSSO</title>'
+            f'<meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url={destino}">'
+            f'<script>location.replace("{destino}")</script></head>'
+            f'<body style="background:#28000F;color:#E6E6E6;font-family:sans-serif;padding:2rem">'
+            f'<a href="{destino}" style="color:#E6E6E6">Entrar a ROSSO</a></body></html>', encoding="utf-8")
+
     (DOCS / "carta.json").write_text(json.dumps(CARTA, ensure_ascii=False), encoding="utf-8")
     (DOCS / ".nojekyll").write_text("")
     (DOCS / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {URL}/sitemap.xml\n")

@@ -21,6 +21,7 @@ from flask import Flask, jsonify, request, make_response
 
 import agenda as agenda_mod
 import carta as carta_mod
+import metricas as metricas_mod
 import cotizador
 import tarifario as tf
 
@@ -198,6 +199,43 @@ def recordatorio_agenda():
     with _lock:
         _agenda_cache.update(datos=None, t=0)
     return jsonify(ok=True, faltan=faltan)
+
+
+# ------------------------------------------------------------------ métricas de origen
+@app.post("/clic")
+def clic():
+    """El sitio manda un beacon por visita y por clic importante. Sin datos personales."""
+    d = request.get_json(silent=True, force=True) or {}   # el beacon llega como text/plain
+    fila = metricas_mod.limpiar(d)
+    if not fila:
+        return jsonify(ok=False), 400
+    try:
+        metricas_mod.anotar(fila)
+    except Exception as e:
+        print("metricas fallo:", e)
+    return jsonify(ok=True)
+
+
+@app.post("/metricas/resumen")
+def metricas_resumen():
+    """Cloud Scheduler, lunes 9:30: resumen de la semana por canal al Telegram de Rosso."""
+    if not REFRESH_KEY or request.headers.get("X-Refresh-Key") != REFRESH_KEY:
+        return jsonify(error="no autorizado"), 401
+    try:
+        metricas_mod.vaciar()
+        texto = metricas_mod.texto_resumen(7)
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+    telegram(texto)
+    return jsonify(ok=True)
+
+
+@app.get("/metricas")
+def metricas_json():
+    if not REFRESH_KEY or request.args.get("k") != REFRESH_KEY:
+        return jsonify(error="no autorizado"), 401
+    metricas_mod.vaciar()
+    return jsonify(metricas_mod.resumen(int(request.args.get("dias", 7))))
 
 
 # ------------------------------------------------------------------ eventos

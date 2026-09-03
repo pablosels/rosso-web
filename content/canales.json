@@ -1,0 +1,9 @@
+{
+  "_nota": "Ligas cortas rossospeakeasy.com/<clave> -> inicio con ?de=<clave>. El sitio recuerda el canal 30 días y lo anota en cada clic.",
+  "ig": {"destino": "/", "nombre": "Instagram (link en bio)"},
+  "qr": {"destino": "/carta/", "nombre": "QR en mesa y tarjetas"},
+  "google": {"destino": "/", "nombre": "Ficha de Google"},
+  "prensa": {"destino": "/", "nombre": "Prensa / KAPR"},
+  "ot": {"destino": "/", "nombre": "OpenTable (perfil)"},
+  "wa": {"destino": "/reservar/", "nombre": "WhatsApp (estados y mensajes)"}
+}

@@ -2,6 +2,36 @@
 (function () {
   var API = document.body.dataset.api || "";
 
+  // métricas de origen: ?de=<canal> se recuerda 30 días; cada visita y clic importante se anota.
+  var CANAL = "directo";
+  try {
+    var q = new URLSearchParams(location.search), de = (q.get("de") || "").toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 24);
+    if (de) {
+      localStorage.setItem("rosso_canal", JSON.stringify({ c: de, t: Date.now() }));
+      q.delete("de");
+      history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : "") + location.hash);
+    }
+    var g = JSON.parse(localStorage.getItem("rosso_canal") || "null");
+    if (g && g.c && Date.now() - g.t < 30 * 864e5) CANAL = g.c;
+  } catch (e) { /* sin storage: canal directo */ }
+  function medir(tipo) {
+    if (!API) return;
+    try {
+      var datos = JSON.stringify({ tipo: tipo, canal: CANAL, pagina: location.pathname, movil: /Mobi|Android/i.test(navigator.userAgent), ref: document.referrer });
+      if (navigator.sendBeacon) navigator.sendBeacon(API + "/clic", new Blob([datos], { type: "text/plain" }));
+      else fetch(API + "/clic", { method: "POST", mode: "cors", keepalive: true, headers: { "Content-Type": "text/plain" }, body: datos });
+    } catch (e) { /* nada */ }
+  }
+  try {
+    if (!sessionStorage.getItem("rosso_visita")) { sessionStorage.setItem("rosso_visita", "1"); medir("visita"); }
+  } catch (e) { medir("visita"); }
+  if (location.pathname.indexOf("/carta") === 0) medir("carta");
+  document.addEventListener("click", function (ev) {
+    var a = ev.target.closest && ev.target.closest("a[href*='wa.me'], a[href*='opentable.com']");
+    if (!a) return;
+    medir(a.href.indexOf("wa.me") >= 0 ? "whatsapp" : "opentable");
+  });
+
   // menú móvil
   var btn = document.querySelector(".menu-btn"), nav = document.getElementById("nav");
   if (btn && nav) {
@@ -67,6 +97,7 @@
       var f = document.getElementById("r-fecha").value, h = document.getElementById("r-hora").value, p = document.getElementById("r-personas").value;
       if (!f) return;
       var url = "https://www.opentable.com.mx/restref/client/?rid=1498843&restref=1498843&lang=es-MX&datetime=" + encodeURIComponent(f + "T" + h) + "&covers=" + p + "&otSource=Restaurant%20website";
+      medir("reservar");
       window.open(url, "_blank", "noopener");
     });
   }
@@ -89,6 +120,7 @@
         .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
         .then(function (res) {
           if (res.ok && res.j.ok) {
+            medir("evento");
             forma.reset();
             msg.textContent = "Listo. Te escribimos por WhatsApp en menos de 24 horas con la propuesta (folio " + res.j.folio + ").";
             msg.classList.add("ok");
