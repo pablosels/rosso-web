@@ -79,7 +79,7 @@ def leer_filas():
             "instagram": _ig(d.get("instagram")),
             "preventa": d.get("preventa", "") if d.get("preventa", "").startswith("http") else "",
             "destacado": d.get("destacado", "").strip().lower() in ("si", "sí", "x", "1", "true"),
-            "notas": d.get("notas", ""),
+            "_notas": d.get("notas", ""),
         })
     out.sort(key=lambda x: (x["fecha"], x["hora"]))
     return out
