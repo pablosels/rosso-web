@@ -92,7 +92,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
 <body class="{clase}" data-api="{e(SITE['api'])}" data-base="{B}">
 <a class="salto" href="#contenido">Ir al contenido</a>
 <header class="cabecera">
-  <a class="marca" href="{B}/" aria-label="ROSSO, inicio"><img src="{B}/assets/rosso-wordmark-solid.svg" alt="ROSSO" width="586" height="121"></a>
+  <a class="marca" href="{B}/" aria-label="ROSSO, inicio"><img src="{B}/assets/rosso-wordmark-letras.svg" alt="ROSSO" width="1280" height="252"></a>
   <button class="menu-btn" aria-expanded="false" aria-controls="nav">Menú</button>
   <nav id="nav" class="nav">{nav}</nav>
 </header>

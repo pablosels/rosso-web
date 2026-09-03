@@ -38,7 +38,8 @@ p{margin:0 0 1em;max-width:62ch}
 
 /* cabecera */
 .cabecera{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:18px var(--gutter);background:color-mix(in srgb,var(--vermouth) 86%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--linea)}
-.marca img{width:118px;height:auto}
+.marca img{width:150px;height:auto;display:block}
+@media (max-width:760px){.marca img{width:124px}}
 .nav{display:flex;gap:2.2rem}
 .nav a{font-family:var(--mono);font-size:12px;letter-spacing:.28em;text-transform:uppercase;padding:6px 0;border-bottom:1px solid transparent}
 .nav a:hover,.nav a.activo{border-bottom-color:var(--carmin-claro);color:var(--carmin-claro)}
