@@ -11,14 +11,14 @@ falla con "provide a main.py or app.py file".
 cd C:\Users\minis\Downloads\rosso-web\api
 if (-not (Test-Path .refresh_key)) { python -c "import secrets;print(secrets.token_urlsafe(24))" | Out-File -Encoding ascii -NoNewline .refresh_key }
 $KEY = (Get-Content .refresh_key -Raw).Trim()
-gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest" --set-env-vars "^|^BUCKET=motor-facturas-respaldos|REFRESH_KEY=$KEY|AGENDA_SHEET_ID=1dim5ILrXKBH4iMCPe9misxg9dQBQwM_h-yMkOyS6MZQ|ALLOWED_ORIGINS=https://rossospeakeasy.com,http://rossospeakeasy.com,https://www.rossospeakeasy.com,http://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8765"
+gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest" --set-env-vars "^|^BUCKET=motor-facturas-respaldos|REFRESH_KEY=$KEY|AGENDA_SHEET_ID=19r4AcTUgtYO2SL8dxvSgQxTF2oeGOJOOgk2xFJjd6NY|ALLOWED_ORIGINS=https://rossospeakeasy.com,http://rossospeakeasy.com,https://www.rossospeakeasy.com,http://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8765"
 ```
 
 (El `^|^` al inicio cambia el separador a `|` porque ALLOWED_ORIGINS lleva comas.)
 
 ## Agenda de DJs (hoja "Agenda ROSSO")
 
-Hoja en el Drive de pabloseldner87: `1dim5ILrXKBH4iMCPe9misxg9dQBQwM_h-yMkOyS6MZQ`, compartida como
+Hoja en el Drive de pabloseldner87: `19r4AcTUgtYO2SL8dxvSgQxTF2oeGOJOOgk2xFJjd6NY`, compartida como
 lector con `motor-facturas-job@motor-facturas.iam.gserviceaccount.com`. Columnas: fecha (AAAA-MM-DD),
 hora, dj, genero, instagram, preventa (liga), destacado (SI), notas. Las filas cuyo dj empieza con
 "Ejemplo" se ignoran. `GET /agenda` devuelve las próximas 3 semanas (caché 5 min).

@@ -185,6 +185,15 @@ def recordatorio_agenda():
                  f"Llena la hoja y el sitio se actualiza solo en 5 minutos:\n{liga}")
     else:
         texto = f"🎧 <b>Agenda de la semana</b>: completa. Ya está en rossospeakeasy.com/noches/\n{liga}"
+    try:
+        pendientes = agenda_mod.pagos_pendientes()
+    except Exception:
+        pendientes = []
+    if pendientes:
+        total = sum(p["_pago"] for p in pendientes)
+        texto += ("\n\n💸 <b>Pagos a DJs pendientes</b> (" + dinero(total) + "):\n"
+                  + "\n".join(f"· {p['dj']} — {p['fecha_larga']} — {dinero(p['_pago'])}" for p in pendientes)
+                  + "\nMarca SI en la columna <i>pagado</i> cuando los liquides.")
     telegram(texto)
     with _lock:
         _agenda_cache.update(datos=None, t=0)

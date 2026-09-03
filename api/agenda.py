@@ -66,7 +66,10 @@ def leer_filas():
         dj = d.get("dj", "")
         if not fecha or not dj or dj.lower().startswith("ejemplo"):
             continue
+        pago = re.sub(r"[^0-9.]", "", d.get("pago", "") or "")
         out.append({
+            "_pago": float(pago) if pago else 0.0,          # privado: nunca sale por /agenda
+            "_pagado": d.get("pagado", "").strip().lower() in ("si", "sí", "x", "1", "true", "pagado"),
             "fecha": fecha.isoformat(),
             "dia": DIAS[fecha.weekday()],
             "fecha_larga": f"{DIAS[fecha.weekday()].capitalize()} {fecha.day} de {MESES[fecha.month - 1]}",
@@ -82,10 +85,22 @@ def leer_filas():
     return out
 
 
+def _publica(x):
+    return {k: v for k, v in x.items() if not k.startswith("_")}
+
+
 def proximas(dias=21, hoy=None):
     hoy = hoy or dt.date.today()
     lim = hoy + dt.timedelta(days=dias)
-    return [x for x in leer_filas() if hoy.isoformat() <= x["fecha"] <= lim.isoformat()]
+    return [_publica(x) for x in leer_filas() if hoy.isoformat() <= x["fecha"] <= lim.isoformat()]
+
+
+def pagos_pendientes(dias=45, hoy=None):
+    """DJs ya tocaron (fecha pasada), con monto y sin marcar pagado."""
+    hoy = hoy or dt.date.today()
+    desde = hoy - dt.timedelta(days=dias)
+    return [x for x in leer_filas()
+            if desde.isoformat() <= x["fecha"] < hoy.isoformat() and x["_pago"] > 0 and not x["_pagado"]]
 
 
 def semana_faltante(hoy=None):
