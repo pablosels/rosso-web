@@ -270,6 +270,16 @@ def pag_noches():
 
 def pag_reservar():
     rid = SITE["opentable_rid"]
+    hoy = dt.date.today().isoformat()
+    slots = []
+    for h, m in [(h, m) for h in range(18, 24) for m in (0, 30)] + [(0, 0), (0, 30), (1, 0)]:
+        val = f"{h:02d}:{m:02d}"
+        h12 = h % 12 or 12
+        etiqueta = f"{h12}:{m:02d} {'pm' if h >= 12 else 'am'}"
+        slots.append(f'<option value="{val}"{" selected" if val == "20:00" else ""}>{etiqueta}</option>')
+    horas = "".join(slots)
+    personas = "".join(f'<option value="{n}"{" selected" if n == 2 else ""}>{n} {"persona" if n == 1 else "personas"}</option>'
+                       for n in range(1, SITE["max_widget"] + 1))
     widget = (f"//www.opentable.com.mx/widget/reservation/loader?rid={rid}&type=standard&theme=standard&iframe=true"
               f"&domain=commx&lang=es-MX&newtab=false&ot_source=Restaurant%20website")
     cuerpo = f"""
@@ -281,8 +291,15 @@ def pag_reservar():
 <section class="foto-sola">{foto("espacio_01", "Interior de ROSSO: sillones rojos, luz azul al fondo y techo de círculos", "ancha")}</section>
 <section class="reserva">
   <div class="widget-caja">
-    <script type="text/javascript" src="{widget}"></script>
-    <noscript><a class="btn" href="{SITE['opentable_url']}">Reservar en OpenTable</a></noscript>
+    <form class="reserva-forma" id="forma-reserva" action="{SITE['opentable_url']}" method="get" target="_blank" rel="noopener">
+      <div class="campo"><label for="r-fecha">Fecha</label><input id="r-fecha" name="fecha" type="date" required min="{hoy}" value="{hoy}"></div>
+      <div class="fila">
+        <div class="campo"><label for="r-hora">Hora</label><select id="r-hora" name="hora">{horas}</select></div>
+        <div class="campo"><label for="r-personas">Personas</label><select id="r-personas" name="personas">{personas}</select></div>
+      </div>
+      <button class="btn" type="submit">Buscar mesa en OpenTable</button>
+      <p class="reserva-nota">Se abre OpenTable con tu selección; ahí confirmas con tu tarjeta. Para más de {SITE['max_widget']} personas, escríbenos por WhatsApp.</p>
+    </form>
   </div>
   <aside class="reserva-lado">
     <div class="etiqueta">5 personas o más</div>

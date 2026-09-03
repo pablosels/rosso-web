@@ -181,3 +181,11 @@ main{min-height:60vh}
 .fotos-fila .foto{aspect-ratio:4/5;background:#d9d6d3}
 @media (max-width:760px){.fotos-fila{grid-template-columns:repeat(3,1fr);gap:4px}.fotos-fila .foto{aspect-ratio:3/4}}
 .pag-carta .fotos-fila{background:var(--blanco)}
+
+/* reservar: formulario propio hacia OpenTable */
+.reserva-forma{display:grid;gap:1rem;max-width:420px}
+.reserva-forma .campo label{color:rgba(40,35,35,.6)}
+.reserva-forma .campo input,.reserva-forma .campo select{color:var(--negro);border-color:rgba(40,35,35,.3);background:#fff}
+.reserva-forma .campo input[type=date]{color-scheme:light}
+.reserva-forma .campo input:focus,.reserva-forma .campo select:focus{border-color:var(--carmin)}
+.reserva-nota{font-size:14px;color:rgba(40,35,35,.62);margin:0}
