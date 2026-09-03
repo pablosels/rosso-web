@@ -159,6 +159,12 @@ def fecha_carta(carta):
     except Exception:
         return ""
 
+def foto(nombre, alt, clase="", lazy=True):
+    """<figure> con srcset (900/1800 px) desde assets/fotos/."""
+    return (f'<figure class="foto {clase}"><img src="{B}/assets/fotos/{nombre}.jpg" '
+            f'srcset="{B}/assets/fotos/{nombre}-m.jpg 900w, {B}/assets/fotos/{nombre}.jpg 1800w" '
+            f'sizes="(max-width: 760px) 100vw, 60vw" alt="{e(alt)}"{" loading=lazy decoding=async" if lazy else ""}></figure>')
+
 
 # ---------------------------------------------------------------- páginas
 def pag_inicio():
@@ -179,6 +185,12 @@ def pag_inicio():
     <a class="btn" href="{B}/reservar/">Reservar mesa</a>
     <a class="btn btn-linea" href="{B}/carta/">Ver la carta</a>
   </div>
+</section>
+
+<section class="fotos-banda" aria-label="El lugar">
+  {foto("espacio_corner", "Sillón curvo rojo con mesas de cóctel en ROSSO", "alta")}
+  {foto("espacio_vistaconsola", "Vista de la consola de DJ bajo el techo de luces circulares", "ancha")}
+  {foto("coctel_queridodiario", "Cóctel Querido Diario servido en la barra", "alta")}
 </section>
 
 <section class="franja">
@@ -211,6 +223,11 @@ def pag_carta():
   <h1>Cócteles de la casa, clásicos y algo para picar.</h1>
   <p class="nota" id="carta-nota">Precios en pesos, IVA incluido. Actualizada desde nuestro punto de venta el {e(fecha_carta(CARTA))}.</p>
 </section>
+<section class="fotos-fila claro" aria-label="Cócteles de ROSSO">
+  {foto("barra_picarilla", "Picarilla, cóctel de la casa, sobre la barra")}
+  {foto("coctel_loriginedumonde", "L'Origine du Monde, martini de la casa")}
+  {foto("coctel_kamazotz", "Camasotz, cóctel de la casa en copa coupe")}
+</section>
 <div class="carta claro" id="carta">
 {render_carta(CARTA)}
 </div>
@@ -242,6 +259,7 @@ def pag_noches():
   <div class="etiqueta">Noches</div>
   <h1>Lo que pasa cada semana en ROSSO.</h1>
 </section>
+<section class="foto-sola">{foto("espacio_vistaconsola", "La consola de DJ de ROSSO bajo el techo de luces", "ancha")}</section>
 <section class="noches">{series}</section>
 <section class="fechas-sec">{lista}
   <p class="nota">Para las noches con música la mesa se reserva igual: hasta {SITE['max_widget']} personas <a href="{B}/reservar/">por OpenTable</a>, grupos por <a href="{wa('Hola, ROSSO. Quiero reservar para un grupo.')}">WhatsApp</a>.</p>
@@ -260,6 +278,7 @@ def pag_reservar():
   <h1>Mesas hasta {SITE['max_widget']} personas, aquí mismo.</h1>
   <p class="nota">Elige fecha, hora y personas. La confirmación llega al instante por OpenTable, sin costo.</p>
 </section>
+<section class="foto-sola">{foto("espacio_01", "Interior de ROSSO: sillones rojos, luz azul al fondo y techo de círculos", "ancha")}</section>
 <section class="reserva">
   <div class="widget-caja">
     <script type="text/javascript" src="{widget}"></script>
@@ -288,6 +307,10 @@ def pag_eventos():
   <div class="etiqueta">Eventos privados</div>
   <h1>Cerramos la puerta y la casa es de ustedes.</h1>
   <p class="nota">Cumpleaños, cenas de equipo, lanzamientos, afters. Cuéntanos la fecha y cuántos son; te mandamos una propuesta por WhatsApp en menos de 24 horas.</p>
+</section>
+<section class="fotos-banda" aria-label="El espacio para eventos">
+  {foto("cortinaentrada", "La cortina roja de la entrada a ROSSO", "ancha")}
+  {foto("voyeur", "Invitados brindando en el sillón de ROSSO", "alta")}
 </section>
 <section class="eventos">
   <div class="eventos-datos">

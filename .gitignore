@@ -6,3 +6,4 @@ carta_wansoft.json
 productos_raw.xml
 *.docx
 !api/plantilla/*.docx
+fotos_originales/
