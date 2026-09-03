@@ -212,3 +212,16 @@ figure{margin:0}
   .d-chica img{box-shadow:none}
   .d-chica .pie-foto{text-align:left}
 }
+
+/* agenda de DJs (hoja Agenda ROSSO) */
+.agenda{list-style:none;margin:0 0 1.5rem;padding:0}
+.agenda li{display:grid;grid-template-columns:220px 1fr;gap:1rem;padding:14px 0;border-bottom:1px solid var(--linea);align-items:baseline}
+.agenda .f{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-suave)}
+.agenda .t{font-size:19px;line-height:1.3}
+.agenda .g{color:var(--ink-suave);font-size:16px;margin-left:.4rem}
+.agenda .ig{font-family:var(--mono);font-size:12px;letter-spacing:.12em;margin-left:.6rem;color:var(--carmin-claro);white-space:nowrap}
+.agenda .enlace-mini{margin:0 0 0 .8rem;font-size:11px;padding-bottom:1px}
+.agenda li.destacada .t strong{color:var(--carmin-claro)}
+.franja .agenda li{grid-template-columns:150px 1fr}
+.franja .agenda .t{font-size:18px}
+@media (max-width:640px){.agenda li,.franja .agenda li{grid-template-columns:1fr;gap:.2rem}}

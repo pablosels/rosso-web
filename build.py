@@ -224,7 +224,8 @@ def pag_inicio():
 <section class="franja">
   <div class="franja-col">
     <div class="etiqueta">Esta semana</div>
-    <ul class="series">{series}</ul>
+    <ul class="series agenda-vacia">{series}</ul>
+    <div data-agenda="6" hidden></div>
     <a class="enlace" href="{B}/noches/">Todas las noches</a>
   </div>
   <div class="franja-col">
@@ -291,7 +292,11 @@ def pag_noches():
 </section>
 {cine("espacio_vistaconsola", "La consola de DJ de ROSSO bajo el techo de luces", "Miércoles a sábado · sesiones de DJ · 9 pm – 1 am", "50% 72%")}
 <section class="noches">{series}</section>
-<section class="fechas-sec">{lista}
+<section class="fechas-sec">
+  <div class="etiqueta">Quién toca</div>
+  <p class="agenda-vacia nota">La programación de la semana se publica cada lunes. Síguenos en <a href="https://www.instagram.com/{SITE['instagram']}/">@{SITE['instagram']}</a>.</p>
+  <div data-agenda="21" hidden></div>
+  {lista}
   <p class="nota">Para las noches con música la mesa se reserva igual: hasta {SITE['max_widget']} personas <a href="{B}/reservar/">por OpenTable</a>, grupos por <a href="{wa('Hola, ROSSO. Quiero reservar para un grupo.')}">WhatsApp</a>.</p>
 </section>
 """

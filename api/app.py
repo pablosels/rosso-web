@@ -19,6 +19,7 @@ import time
 import requests
 from flask import Flask, jsonify, request, make_response
 
+import agenda as agenda_mod
 import carta as carta_mod
 import cotizador
 import tarifario as tf
@@ -145,6 +146,49 @@ def refresh_carta():
     with _lock:
         _cache.update(carta=datos, t=time.time())
     return jsonify(ok=True, productos=n, ventana=datos["ventana"])
+
+
+# ------------------------------------------------------------------ agenda de DJs
+_agenda_cache = {"datos": None, "t": 0}
+
+
+@app.get("/agenda")
+def get_agenda():
+    with _lock:
+        if _agenda_cache["datos"] is not None and time.time() - _agenda_cache["t"] < 300:
+            datos = _agenda_cache["datos"]
+        else:
+            try:
+                datos = agenda_mod.proximas(dias=21)
+            except Exception as e:
+                print("agenda fallo:", e)
+                datos = _agenda_cache["datos"] or []
+            _agenda_cache.update(datos=datos, t=time.time())
+    resp = jsonify({"hoy": dt.date.today().isoformat(), "noches": datos})
+    resp.headers["Cache-Control"] = "public, max-age=300"
+    return resp
+
+
+@app.post("/agenda/recordatorio")
+def recordatorio_agenda():
+    """Cloud Scheduler, lunes y martes 10:00: avisa por Telegram qué noches de la semana faltan."""
+    if not REFRESH_KEY or request.headers.get("X-Refresh-Key") != REFRESH_KEY:
+        return jsonify(error="no autorizado"), 401
+    try:
+        faltan = agenda_mod.semana_faltante()
+    except Exception as e:
+        telegram(f"⚠️ No pude leer la hoja Agenda ROSSO: {e}")
+        return jsonify(error=str(e)), 500
+    liga = f"https://docs.google.com/spreadsheets/d/{agenda_mod.SHEET_ID}/edit"
+    if faltan:
+        texto = ("🎧 <b>Agenda de la semana</b>\nFaltan los DJs de: <b>" + ", ".join(faltan) + "</b>.\n"
+                 f"Llena la hoja y el sitio se actualiza solo en 5 minutos:\n{liga}")
+    else:
+        texto = f"🎧 <b>Agenda de la semana</b>: completa. Ya está en rossospeakeasy.com/noches/\n{liga}"
+    telegram(texto)
+    with _lock:
+        _agenda_cache.update(datos=None, t=0)
+    return jsonify(ok=True, faltan=faltan)
 
 
 # ------------------------------------------------------------------ eventos

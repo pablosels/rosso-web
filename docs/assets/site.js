@@ -39,6 +39,26 @@
     }).catch(function () { /* se queda el snapshot */ });
   }
 
+  // agenda de DJs: la hoja "Agenda ROSSO" vía la API
+  var agendaCajas = document.querySelectorAll("[data-agenda]");
+  if (agendaCajas.length && API) {
+    fetch(API + "/agenda", { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (data) {
+      if (!data || !data.noches || !data.noches.length) return;
+      agendaCajas.forEach(function (caja) {
+        var max = parseInt(caja.dataset.agenda, 10) || 99;
+        var lista = data.noches.slice(0, max);
+        caja.innerHTML = '<ul class="agenda">' + lista.map(function (n) {
+          var ig = n.instagram ? ' <a class="ig" href="https://www.instagram.com/' + esc(n.instagram) + '/" rel="noopener">@' + esc(n.instagram) + "</a>" : "";
+          var pre = n.preventa ? ' <a class="enlace enlace-mini" href="' + esc(n.preventa) + '" rel="noopener">Preventa</a>' : "";
+          return '<li' + (n.destacado ? ' class="destacada"' : "") + '><span class="f">' + esc(n.fecha_larga) + (n.hora ? " · " + esc(n.hora) : "") + '</span><span class="t"><strong>' + esc(n.dj) + "</strong>" + (n.genero ? ' <span class="g">' + esc(n.genero) + "</span>" : "") + ig + pre + "</span></li>";
+        }).join("") + "</ul>";
+        caja.hidden = false;
+        var vacio = caja.previousElementSibling;
+        if (vacio && vacio.classList.contains("agenda-vacia")) vacio.hidden = true;
+      });
+    }).catch(function () { /* se queda el texto general */ });
+  }
+
   // reservar: arma el link de OpenTable con fecha, hora y personas (tope = opciones del select)
   var reserva = document.getElementById("forma-reserva");
   if (reserva) {
