@@ -479,7 +479,7 @@ def pag_regalo_tarjeta():
     cuerpo = f"""
 <section class="tarjeta-envoltura">
   <article class="tarjeta" id="tarjeta">
-    <img class="tarjeta-marca" src="{B}/assets/oficial_ROSSO_ID_Logotipo-BLANCO.svg" alt="ROSSO" width="400" height="80">
+    <img class="tarjeta-marca" src="{B}/assets/rosso-wordmark-letras.svg" alt="ROSSO" width="1280" height="252">
     <div class="tarjeta-tipo">Tarjeta de regalo</div>
     <div class="tarjeta-monto" id="t-monto">$ —</div>
     <div class="tarjeta-para" id="t-para"></div>
