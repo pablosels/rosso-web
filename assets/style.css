@@ -276,3 +276,5 @@ figure{margin:0}
 .tarjeta-nota{text-align:center}
 @media print{body{background:#fff}.cabecera,.pie,.tarjeta-nota,.tarjeta-acciones,.salto{display:none!important}.tarjeta-envoltura{padding:0}.tarjeta{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 @media (max-width:760px){.regalo{grid-template-columns:1fr;gap:2rem}.montos{grid-template-columns:repeat(2,1fr)}}
+
+[hidden]{display:none!important}
