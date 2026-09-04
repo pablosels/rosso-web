@@ -278,3 +278,13 @@ figure{margin:0}
 @media (max-width:760px){.regalo{grid-template-columns:1fr;gap:2rem}.montos{grid-template-columns:repeat(2,1fr)}}
 
 [hidden]{display:none!important}
+
+/* club y legal */
+.club{padding:0 var(--gutter) 4rem;max-width:560px;margin:0 auto}
+.acepto{display:flex;gap:.7rem;align-items:flex-start;font-size:14px;color:var(--ink-suave);line-height:1.45}
+.acepto input{margin-top:.25em;accent-color:var(--carmin);width:18px;height:18px;flex:none}
+.acepto a{text-decoration:underline;color:var(--ink)}
+.legal{padding:0 var(--gutter) 4rem;max-width:680px;margin:0 auto}
+.legal p{margin:0 0 1.1rem;color:var(--ink-suave)}
+.legal p strong{color:var(--ink);font-weight:500}
+.legal .mini{font-size:13px}

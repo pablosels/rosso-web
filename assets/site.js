@@ -257,3 +257,27 @@
     });
   }
 })();
+
+/* club ROSSO: alta de clientes */
+(function () {
+  var API = document.body.dataset.api || "", forma = document.getElementById("forma-club"), msg = document.getElementById("forma-msg");
+  if (!forma) return;
+  function canal() { try { var g = JSON.parse(localStorage.getItem("rosso_canal") || "null"); return g && g.c ? g.c : "directo"; } catch (e) { return "directo"; } }
+  forma.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    msg.className = "forma-msg";
+    var d = { nombre: forma.nombre.value.trim(), whatsapp: forma.whatsapp.value.trim(), email: forma.email.value.trim(), cumple: forma.cumple.value.trim(), acepto: forma.acepto.checked ? 1 : 0, empresa_web: forma.empresa_web.value, canal: canal() };
+    if (!d.nombre || !d.whatsapp) { msg.textContent = "Nos faltan tu nombre y tu WhatsApp."; msg.classList.add("error"); return; }
+    if (!d.acepto) { msg.textContent = "Marca la casilla del aviso de privacidad para continuar."; msg.classList.add("error"); return; }
+    if (!API) { msg.textContent = "El formulario no está conectado; escríbenos por WhatsApp."; msg.classList.add("error"); return; }
+    var boton = forma.querySelector("button[type=submit]"); boton.disabled = true; msg.textContent = "Guardando…";
+    fetch(API + "/clientes", { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (res.ok && res.j.ok) { forma.reset(); msg.textContent = res.j.nuevo ? "Listo, ya estás dentro. Nos vemos en la barra." : "Ya estabas en la lista. Nos vemos en la barra."; msg.classList.add("ok"); }
+        else { msg.textContent = (res.j && res.j.error) || "No se pudo guardar. Inténtalo otra vez."; msg.classList.add("error"); }
+      })
+      .catch(function () { msg.textContent = "No se pudo guardar. Inténtalo otra vez."; msg.classList.add("error"); })
+      .finally(function () { boton.disabled = false; });
+  });
+})();

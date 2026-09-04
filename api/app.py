@@ -23,6 +23,7 @@ import agenda as agenda_mod
 import carta as carta_mod
 import metricas as metricas_mod
 import regalo as regalo_mod
+import clientes as clientes_mod
 import cotizador
 import tarifario as tf
 
@@ -329,6 +330,46 @@ def regalo_canjear():
     except Exception:
         pass
     return jsonify(ok=True, tarjeta=t)
+
+
+# ------------------------------------------------------------------ club ROSSO (clientes y cumpleaños)
+@app.post("/clientes")
+def clientes_alta():
+    d = request.get_json(silent=True, force=True) or {}
+    if d.get("empresa_web"):
+        return jsonify(ok=True, nuevo=False)   # miel para bots
+    nombre = regalo_mod.limpiar_texto(d.get("nombre"), 80)
+    whatsapp = clientes_mod.limpiar_whatsapp(d.get("whatsapp"))
+    email = regalo_mod.limpiar_texto(d.get("email"), 120).lower()
+    cumple = clientes_mod.limpiar_cumple(d.get("cumple"))
+    if not nombre or not whatsapp:
+        return jsonify(error="nos faltan tu nombre y tu WhatsApp"), 400
+    if email and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return jsonify(error="revisa el correo"), 400
+    if d.get("cumple") and not cumple:
+        return jsonify(error="escribe tu cumpleaños como día/mes, por ejemplo 14/02"), 400
+    if not d.get("acepto"):
+        return jsonify(error="necesitamos que aceptes el aviso de privacidad"), 400
+    try:
+        r = clientes_mod.alta(nombre, whatsapp, email, cumple, regalo_mod.limpiar_texto(d.get("canal"), 24))
+    except Exception as e:
+        print("alta cliente fallo:", e)
+        return jsonify(error="no se pudo guardar; inténtalo otra vez"), 502
+    if r["nuevo"]:
+        try:
+            telegram(f"👋 <b>Nuevo en Club ROSSO</b>: {nombre}" + (f" · cumple {cumple}" if cumple else "") + f" · <a href=\"https://wa.me/{whatsapp}\">WhatsApp</a>")
+        except Exception as e:
+            print("telegram fallo:", e)
+    return jsonify(ok=True, nuevo=r["nuevo"])
+
+
+@app.post("/clientes/cumples")
+def clientes_cumples():
+    if request.headers.get("X-Refresh-Key") != REFRESH_KEY:
+        return jsonify(error="no autorizado"), 403
+    texto = clientes_mod.texto_cumples()
+    telegram(texto)
+    return jsonify(ok=True)
 
 
 # ------------------------------------------------------------------ eventos

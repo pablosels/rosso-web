@@ -127,7 +127,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
   </div>
   <div class="pie-col pie-legal">
     <p>Reservaciones hasta {SITE['max_widget']} personas por <a href="{SITE['opentable_url']}">OpenTable</a>. Grupos y eventos por WhatsApp.</p>
-    <p class="mini">© {dt.date.today().year} Rosso Speakeasy · Puebla 329, Roma Norte, CDMX</p>
+    <p class="mini">© {dt.date.today().year} Rosso Speakeasy · Puebla 329, Roma Norte, CDMX · <a href="{B}/club/">Club ROSSO</a> · <a href="{B}/privacidad/">Privacidad</a></p>
   </div>
 </footer>
 <script src="{B}/assets/site.js?v={V_JS}" defer></script>
@@ -520,6 +520,54 @@ def pag_regalo_canje():
     return pagina("Canje · ROSSO", cuerpo, "/regalo/canje/", "Uso interno.", clase="pag-regalo", extra_head='<meta name="robots" content="noindex,nofollow">')
 
 
+# ---------------------------------------------------------------- club ROSSO y privacidad
+def pag_club():
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">Club ROSSO</div>
+  <h1>Los de la casa se enteran primero.</h1>
+  <p class="nota">Déjanos tu WhatsApp y te avisamos de las noches especiales, los DJs invitados y lo nuevo de la carta. Si nos dices cuándo cumples años, la casa invita un cóctel esa semana.</p>
+</section>
+{cine("espacio_corner", "Rincón de ROSSO con luz roja y sillones", "El rincón, para quedarse", "50% 50%")}
+<section class="club">
+  <form class="forma" id="forma-club" novalidate>
+    <div class="campo"><label for="k-nombre">Nombre</label><input id="k-nombre" name="nombre" required maxlength="80" autocomplete="name"></div>
+    <div class="campo"><label for="k-whatsapp">WhatsApp</label><input id="k-whatsapp" name="whatsapp" required inputmode="tel" autocomplete="tel" placeholder="55 1234 5678"></div>
+    <div class="fila">
+      <div class="campo"><label for="k-email">Correo <span>(opcional)</span></label><input id="k-email" name="email" type="email" autocomplete="email"></div>
+      <div class="campo"><label for="k-cumple">Cumpleaños <span>(día/mes, opcional)</span></label><input id="k-cumple" name="cumple" placeholder="14/02" inputmode="numeric" maxlength="10"></div>
+    </div>
+    <label class="acepto"><input type="checkbox" name="acepto" value="1"> <span>Acepto el <a href="{B}/privacidad/">aviso de privacidad</a>. Solo mensajes de ROSSO, nunca más de dos al mes, y me puedo dar de baja cuando quiera.</span></label>
+    <div class="campo miel" aria-hidden="true"><label for="empresa_web">Sitio web</label><input id="empresa_web" name="empresa_web" tabindex="-1" autocomplete="off"></div>
+    <button class="btn" type="submit">Unirme</button>
+    <p class="forma-msg" id="forma-msg" role="status"></p>
+  </form>
+</section>
+"""
+    return pagina("Club ROSSO", cuerpo, "/club/", "Únete al Club ROSSO: noches especiales, DJs invitados y un cóctel de cumpleaños por cuenta de la casa.", clase="pag-club")
+
+
+def pag_privacidad():
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">Aviso de privacidad</div>
+  <h1>Qué hacemos con tus datos.</h1>
+  <p class="nota">Versión corta: solo los usamos para escribirte de ROSSO. No los vendemos ni los compartimos.</p>
+</section>
+<section class="legal">
+  <p><strong>Responsable.</strong> {e(SITE.get('razon_social', SITE['nombre_largo']))}, con domicilio en Puebla 329, Roma Norte, 06700, Ciudad de México, es responsable del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.</p>
+  <p><strong>Datos que recabamos.</strong> Nombre, número de WhatsApp y, si nos los das, correo electrónico y fecha de cumpleaños (día y mes). Al reservar o cotizar un evento, también la fecha, hora y número de personas.</p>
+  <p><strong>Para qué.</strong> Para avisarte de noches especiales, DJs invitados y novedades de la carta; para invitarte un cóctel en tu cumpleaños; para atender tu reservación o cotización; y para medir de dónde llegan nuestras visitas, sin identificarte. No usamos tus datos para ningún otro fin.</p>
+  <p><strong>Cuántos mensajes.</strong> No más de dos al mes. Puedes darte de baja en cualquier momento contestando "baja" al WhatsApp o escribiendo a hola@rossospeakeasy.com.</p>
+  <p><strong>Con quién se comparten.</strong> Con nadie. Los datos se guardan en servicios de Google (hojas de cálculo y nube) y, si compras una tarjeta de regalo, el pago lo procesa Stripe con sus propios términos. Las reservaciones de hasta 4 personas se hacen a través de OpenTable, sujeto a su aviso de privacidad.</p>
+  <p><strong>Tus derechos (ARCO).</strong> Puedes acceder, rectificar, cancelar u oponerte al uso de tus datos, o revocar tu consentimiento, escribiendo a <a href="mailto:hola@rossospeakeasy.com">hola@rossospeakeasy.com</a> con tu nombre y el dato que quieres consultar o borrar. Respondemos en un máximo de 20 días hábiles.</p>
+  <p><strong>Cambios.</strong> Si este aviso cambia, publicamos la nueva versión en esta misma página.</p>
+  <p class="mini">Última actualización: {dt.date.today().strftime('%d/%m/%Y')}.</p>
+</section>
+"""
+    return pagina("Aviso de privacidad · ROSSO", cuerpo, "/privacidad/", "Aviso de privacidad de Rosso Speakeasy.", clase="pag-legal")
+
+
 def pag_404():
     cuerpo = f"""
 <section class="encabezado">
@@ -556,7 +604,8 @@ def main():
     paginas = {"index.html": pag_inicio(), "carta/index.html": pag_carta(), "noches/index.html": pag_noches(),
                "reservar/index.html": pag_reservar(), "eventos/index.html": pag_eventos(), "404.html": pag_404(),
                "regalo/index.html": pag_regalo(), "regalo/gracias/index.html": pag_regalo_gracias(),
-               "regalo/tarjeta/index.html": pag_regalo_tarjeta(), "regalo/canje/index.html": pag_regalo_canje()}
+               "regalo/tarjeta/index.html": pag_regalo_tarjeta(), "regalo/canje/index.html": pag_regalo_canje(),
+               "club/index.html": pag_club(), "privacidad/index.html": pag_privacidad()}
     for ruta, contenido in paginas.items():
         destino = DOCS / ruta
         destino.parent.mkdir(parents=True, exist_ok=True)
@@ -579,7 +628,7 @@ def main():
     (DOCS / "carta.json").write_text(json.dumps(CARTA, ensure_ascii=False), encoding="utf-8")
     (DOCS / ".nojekyll").write_text("")
     (DOCS / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {URL}/sitemap.xml\n")
-    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/"] + (["/regalo/"] if SITE.get("regalo_activo") else [])
+    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/", "/club/", "/privacidad/"] + (["/regalo/"] if SITE.get("regalo_activo") else [])
     (DOCS / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{URL}{u}</loc></url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")

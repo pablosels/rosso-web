@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Gracias · ROSSO</title>
-<meta name="description" content="Tu tarjeta de regalo de ROSSO.">
-<link rel="canonical" href="https://rossospeakeasy.com/regalo/gracias/">
-<meta property="og:title" content="Gracias · ROSSO">
-<meta property="og:description" content="Tu tarjeta de regalo de ROSSO.">
+<title>Club ROSSO</title>
+<meta name="description" content="Únete al Club ROSSO: noches especiales, DJs invitados y un cóctel de cumpleaños por cuenta de la casa.">
+<link rel="canonical" href="https://rossospeakeasy.com/club/">
+<meta property="og:title" content="Club ROSSO">
+<meta property="og:description" content="Únete al Club ROSSO: noches especiales, DJs invitados y un cóctel de cumpleaños por cuenta de la casa.">
 <meta property="og:image" content="https://rossospeakeasy.com/assets/og.png">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="es_MX">
@@ -18,9 +18,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;900&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/assets/style.css?v=70085393">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BarOrPub", "name": "Rosso Speakeasy", "url": "https://rossospeakeasy.com", "telephone": "+525664357899", "servesCuisine": "Cocktails", "address": {"@type": "PostalAddress", "streetAddress": "Puebla 329", "addressLocality": "Ciudad de México", "addressRegion": "CDMX", "postalCode": "06700", "addressCountry": "MX"}, "acceptsReservations": "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico", "menu": "https://rossospeakeasy.com/carta/", "sameAs": ["https://www.instagram.com/rosso.speakeasy/", "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico"], "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "opens": "18:00", "closes": "02:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "16:00", "closes": "23:00"}]}</script>
-<meta name="robots" content="noindex">
+
 </head>
-<body class="pag-regalo" data-api="https://rosso-web-api-703407013960.us-central1.run.app" data-base="">
+<body class="pag-club" data-api="https://rosso-web-api-703407013960.us-central1.run.app" data-base="">
 <a class="salto" href="#contenido">Ir al contenido</a>
 <header class="cabecera">
   <a class="marca" href="/" aria-label="ROSSO, inicio"><img src="/assets/rosso-wordmark-letras.svg" alt="ROSSO" width="1280" height="252"></a>
@@ -30,22 +30,24 @@
 <main id="contenido">
 
 <section class="encabezado">
-  <div class="etiqueta">Tarjeta de regalo</div>
-  <h1 id="g-titulo">Confirmando tu pago…</h1>
-  <p class="nota" id="g-nota">Un momento, estamos generando tu código.</p>
+  <div class="etiqueta">Club ROSSO</div>
+  <h1>Los de la casa se enteran primero.</h1>
+  <p class="nota">Déjanos tu WhatsApp y te avisamos de las noches especiales, los DJs invitados y lo nuevo de la carta. Si nos dices cuándo cumples años, la casa invita un cóctel esa semana.</p>
 </section>
-<section class="regalo-resultado" id="g-resultado" hidden>
-  <div class="codigo-caja">
-    <div class="etiqueta">Código</div>
-    <div class="codigo" id="g-codigo">ROSSO-····-····</div>
-    <div class="codigo-datos" id="g-datos"></div>
-    <div class="codigo-acciones">
-      <button class="btn" type="button" id="g-copiar">Copiar código</button>
-      <a class="btn btn-linea" id="g-ver" href="#">Ver la tarjeta</a>
-      <a class="btn btn-linea" id="g-wa" href="#" rel="noopener">Enviar por WhatsApp</a>
+<figure class="cine"><div class="cine-img" style="--pos:50% 50%"><img src="/assets/fotos/espacio_corner.jpg" srcset="/assets/fotos/espacio_corner-m.jpg 900w, /assets/fotos/espacio_corner.jpg 1800w" sizes="100vw" alt="Rincón de ROSSO con luz roja y sillones" loading=lazy decoding=async></div><figcaption class="pie-foto">El rincón, para quedarse</figcaption></figure>
+<section class="club">
+  <form class="forma" id="forma-club" novalidate>
+    <div class="campo"><label for="k-nombre">Nombre</label><input id="k-nombre" name="nombre" required maxlength="80" autocomplete="name"></div>
+    <div class="campo"><label for="k-whatsapp">WhatsApp</label><input id="k-whatsapp" name="whatsapp" required inputmode="tel" autocomplete="tel" placeholder="55 1234 5678"></div>
+    <div class="fila">
+      <div class="campo"><label for="k-email">Correo <span>(opcional)</span></label><input id="k-email" name="email" type="email" autocomplete="email"></div>
+      <div class="campo"><label for="k-cumple">Cumpleaños <span>(día/mes, opcional)</span></label><input id="k-cumple" name="cumple" placeholder="14/02" inputmode="numeric" maxlength="10"></div>
     </div>
-  </div>
-  <p class="nota mini">Guarda este código: es lo único que se necesita en barra. También te llegó el recibo de Stripe al correo que pusiste.</p>
+    <label class="acepto"><input type="checkbox" name="acepto" value="1"> <span>Acepto el <a href="/privacidad/">aviso de privacidad</a>. Solo mensajes de ROSSO, nunca más de dos al mes, y me puedo dar de baja cuando quiera.</span></label>
+    <div class="campo miel" aria-hidden="true"><label for="empresa_web">Sitio web</label><input id="empresa_web" name="empresa_web" tabindex="-1" autocomplete="off"></div>
+    <button class="btn" type="submit">Unirme</button>
+    <p class="forma-msg" id="forma-msg" role="status"></p>
+  </form>
 </section>
 
 </main>
