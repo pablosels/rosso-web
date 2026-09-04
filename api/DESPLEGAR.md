@@ -78,7 +78,10 @@ La API ya sabe cobrar; solo faltan dos secretos de Stripe. Pablo, en el panel de
 Luego, en PowerShell (pegar cada valor cuando lo pida):
 
 ```powershell
-Read-Host "rk_live" | Set-Content -NoNewline $env:TEMPk.txt; gcloud secrets create stripe-key-rosso --data-file=$env:TEMPk.txt --project motor-facturas; Remove-Item $env:TEMPk.txt
+Read-Host "rk_live" | Set-Content -NoNewline $env:TEMP
+k.txt; gcloud secrets create stripe-key-rosso --data-file=$env:TEMP
+k.txt --project motor-facturas; Remove-Item $env:TEMP
+k.txt
 Read-Host "whsec" | Set-Content -NoNewline $env:TEMP\wh.txt; gcloud secrets create stripe-webhook-rosso --data-file=$env:TEMP\wh.txt --project motor-facturas; Remove-Item $env:TEMP\wh.txt
 gcloud secrets add-iam-policy-binding stripe-key-rosso --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project motor-facturas
 gcloud secrets add-iam-policy-binding stripe-webhook-rosso --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project motor-facturas
