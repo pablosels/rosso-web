@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarjeta de regalo · ROSSO</title>
+<meta name="description" content="Regala una noche en ROSSO: tarjeta de regalo canjeable en barra, pago en línea, código al instante, vigencia de 12 meses.">
+<link rel="canonical" href="https://rossospeakeasy.com/regalo/">
+<meta property="og:title" content="Tarjeta de regalo · ROSSO">
+<meta property="og:description" content="Regala una noche en ROSSO: tarjeta de regalo canjeable en barra, pago en línea, código al instante, vigencia de 12 meses.">
+<meta property="og:image" content="https://rossospeakeasy.com/assets/og.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_MX">
+<meta name="theme-color" content="#28000F">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;900&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/assets/style.css?v=175f3903">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BarOrPub", "name": "Rosso Speakeasy", "url": "https://rossospeakeasy.com", "telephone": "+525664357899", "servesCuisine": "Cocktails", "address": {"@type": "PostalAddress", "streetAddress": "Puebla 329", "addressLocality": "Ciudad de México", "addressRegion": "CDMX", "postalCode": "06700", "addressCountry": "MX"}, "acceptsReservations": "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico", "menu": "https://rossospeakeasy.com/carta/", "sameAs": ["https://www.instagram.com/rosso.speakeasy/", "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico"], "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "opens": "18:00", "closes": "02:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "16:00", "closes": "23:00"}]}</script>
+
+</head>
+<body class="pag-regalo" data-api="https://rosso-web-api-703407013960.us-central1.run.app" data-base="">
+<a class="salto" href="#contenido">Ir al contenido</a>
+<header class="cabecera">
+  <a class="marca" href="/" aria-label="ROSSO, inicio"><img src="/assets/rosso-wordmark-letras.svg" alt="ROSSO" width="1280" height="252"></a>
+  <button class="menu-btn" aria-expanded="false" aria-controls="nav">Menú</button>
+  <nav id="nav" class="nav"><a href="/carta/">Carta</a><a href="/noches/">Noches</a><a href="/eventos/">Eventos</a><a href="/reservar/">Reservar</a></nav>
+</header>
+<main id="contenido">
+
+<section class="encabezado">
+  <div class="etiqueta">Tarjeta de regalo</div>
+  <h1>Regala una noche en ROSSO.</h1>
+  <p class="nota">Eliges el monto, escribes a quién va y pagas en línea. El código aparece al instante y se canjea en barra: cócteles, botanas o la cuenta completa. Vale 12 meses y el saldo que sobre se queda para la siguiente visita.</p>
+</section>
+<figure class="cine"><div class="cine-img" style="--pos:50% 60%"><img src="/assets/fotos/coctel_queridodiario.jpg" srcset="/assets/fotos/coctel_queridodiario-m.jpg 900w, /assets/fotos/coctel_queridodiario.jpg 1800w" sizes="100vw" alt="Cóctel Querido Diario sobre la barra de ROSSO" loading=lazy decoding=async></div><figcaption class="pie-foto">Querido Diario, uno de la casa</figcaption></figure>
+<section class="regalo" id="regalo">
+  <div class="regalo-pasos">
+    <ol class="pasos">
+      <li><strong>Eliges y pagas.</strong> Tarjeta de crédito o débito, cobro seguro con Stripe.</li>
+      <li><strong>Recibes el código.</strong> En pantalla al terminar, con una tarjeta para compartir o imprimir.</li>
+      <li><strong>Se canjea en barra.</strong> Quien lo reciba dicta el código y se descuenta de su cuenta.</li>
+    </ol>
+    <p class="nota mini">Vigencia de 12 meses desde la compra. No es canjeable por efectivo. Para más de 4 personas o eventos, <a href="/eventos/">ver eventos privados</a>.</p>
+  </div>
+  <form class="forma" id="forma-regalo" novalidate>
+    <fieldset class="montos"><legend>Monto</legend><label class="monto"><input type="radio" name="monto" value="500"><span class="monto-cifra">$500</span><span class="monto-nota">Dos cócteles y algo de picar</span></label><label class="monto"><input type="radio" name="monto" value="1000" checked><span class="monto-cifra">$1,000</span><span class="monto-nota">Una noche para dos</span></label><label class="monto"><input type="radio" name="monto" value="2000"><span class="monto-cifra">$2,000</span><span class="monto-nota">La cuenta de una mesa</span></label><label class="monto"><input type="radio" name="monto" value="3000"><span class="monto-cifra">$3,000</span><span class="monto-nota">Una celebración</span></label></fieldset>
+    <div class="fila">
+      <div class="campo"><label for="g-de">De parte de</label><input id="g-de" name="de" maxlength="80" autocomplete="name" required></div>
+      <div class="campo"><label for="g-para">Para</label><input id="g-para" name="para" maxlength="80" required></div>
+    </div>
+    <div class="campo"><label for="g-mensaje">Mensaje <span>(opcional, va en la tarjeta)</span></label><textarea id="g-mensaje" name="mensaje" rows="2" maxlength="200"></textarea></div>
+    <div class="campo"><label for="g-email">Tu correo <span>(para el recibo)</span></label><input id="g-email" name="email" type="email" autocomplete="email" required></div>
+    <button class="btn" type="submit" id="g-pagar">Pagar $1,000</button>
+    <p class="forma-msg" id="forma-msg" role="status"></p>
+  </form>
+</section>
+
+</main>
+<footer class="pie">
+  <div class="pie-col">
+    <div class="etiqueta">Dónde</div>
+    <p><a href="https://maps.google.com/?q=Rosso+Speakeasy+Puebla+329+Roma+Norte+CDMX">Puebla 329, Roma Norte<br>Ciudad de México, 06700</a></p>
+  </div>
+  <div class="pie-col">
+    <div class="etiqueta">Cuándo</div>
+    <p>Martes a sábado · 6:00 pm – 2:00 am<br>Domingo · 4:00 pm – 11:00 pm<br>Lunes · cerrado</p>
+  </div>
+  <div class="pie-col">
+    <div class="etiqueta">Contacto</div>
+    <p><a href="https://wa.me/525664357899?text=Hola%2C%20ROSSO.">WhatsApp +52 56 6435 7899</a><br><a href="https://www.instagram.com/rosso.speakeasy/">@rosso.speakeasy</a></p>
+  </div>
+  <div class="pie-col pie-legal">
+    <p>Reservaciones hasta 4 personas por <a href="https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico">OpenTable</a>. Grupos y eventos por WhatsApp.</p>
+    <p class="mini">© 2026 Rosso Speakeasy · Puebla 329, Roma Norte, CDMX</p>
+  </div>
+</footer>
+<script src="/assets/site.js?v=e9ce3341" defer></script>
+
+</body>
+</html>

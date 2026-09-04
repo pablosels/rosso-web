@@ -73,7 +73,7 @@ def leer_filas():
             "fecha": fecha.isoformat(),
             "dia": DIAS[fecha.weekday()],
             "fecha_larga": f"{DIAS[fecha.weekday()].capitalize()} {fecha.day} de {MESES[fecha.month - 1]}",
-            "hora": d.get("hora", ""),
+            "hora": re.sub(r"s*(AM|PM)$", lambda m: " " + m.group(1).lower(), d.get("hora", "").strip()),
             "dj": dj,
             "genero": d.get("genero", ""),
             "instagram": _ig(d.get("instagram")),

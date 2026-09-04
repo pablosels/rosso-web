@@ -31,5 +31,12 @@
   "max_widget": 4,
   "aforo_sentados": 32,
   "aforo_total": 50,
-  "cocina_cierra": "11:00 pm"
+  "cocina_cierra": "11:00 pm",
+  "regalo_activo": false,
+  "regalo_montos": [
+    500,
+    1000,
+    2000,
+    3000
+  ]
 }

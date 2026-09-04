@@ -22,6 +22,7 @@ from flask import Flask, jsonify, request, make_response
 import agenda as agenda_mod
 import carta as carta_mod
 import metricas as metricas_mod
+import regalo as regalo_mod
 import cotizador
 import tarifario as tf
 
@@ -236,6 +237,98 @@ def metricas_json():
         return jsonify(error="no autorizado"), 401
     metricas_mod.vaciar()
     return jsonify(metricas_mod.resumen(int(request.args.get("dias", 7))))
+
+
+# ------------------------------------------------------------------ tarjetas de regalo
+@app.get("/regalo/config")
+def regalo_config():
+    return jsonify(activo=regalo_mod.configurado(), montos=list(regalo_mod.MONTOS), vigencia_dias=regalo_mod.VIGENCIA_DIAS)
+
+
+@app.post("/regalo/checkout")
+def regalo_checkout():
+    if not regalo_mod.configurado():
+        return jsonify(error="las tarjetas de regalo todavía no están activas"), 503
+    d = request.get_json(silent=True, force=True) or {}
+    try:
+        monto = int(d.get("monto") or 0)
+    except (TypeError, ValueError):
+        monto = 0
+    if monto not in regalo_mod.MONTOS:
+        return jsonify(error="elige un monto válido"), 400
+    email = regalo_mod.limpiar_texto(d.get("email"), 120)
+    if email and not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return jsonify(error="revisa el correo"), 400
+    try:
+        sid, url = regalo_mod.crear_sesion(monto, regalo_mod.limpiar_texto(d.get("de"), 80),
+                                           regalo_mod.limpiar_texto(d.get("para"), 80),
+                                           regalo_mod.limpiar_texto(d.get("mensaje"), 200), email,
+                                           regalo_mod.limpiar_texto(d.get("canal"), 24) or "directo")
+    except Exception as e:
+        print("stripe checkout fallo:", e)
+        return jsonify(error="no se pudo iniciar el pago; inténtalo de nuevo"), 502
+    return jsonify(ok=True, url=url, sesion=sid)
+
+
+@app.post("/stripe/webhook")
+def stripe_webhook():
+    if not regalo_mod.configurado():
+        return jsonify(error="no configurado"), 503
+    payload = request.get_data()
+    if not regalo_mod.verificar_firma(payload, request.headers.get("Stripe-Signature", "")):
+        return jsonify(error="firma inválida"), 400
+    evento = json.loads(payload)
+    if evento.get("type") == "checkout.session.completed":
+        ses = evento["data"]["object"]
+        if (ses.get("metadata") or {}).get("tipo") == "regalo":
+            d = regalo_mod.registrar_pago(ses)
+            if d:
+                try:
+                    telegram(f"🎁 <b>Tarjeta de regalo vendida</b>: {dinero(d['monto'])}\n"
+                             f"Código <code>{d['codigo']}</code> · de {d['comprador'] or '—'} para {d['para'] or '—'}"
+                             + (f" · {d['email']}" if d['email'] else "")
+                             + f"\nVence {d['vence']}. Hoja: https://docs.google.com/spreadsheets/d/{regalo_mod.SHEET_ID}/edit")
+                except Exception as e:
+                    print("telegram fallo:", e)
+    return jsonify(ok=True)
+
+
+@app.get("/regalo/estado")
+def regalo_estado():
+    sid = re.sub(r"[^A-Za-z0-9_]", "", request.args.get("s", ""))[:80]
+    if not sid.startswith("cs_"):
+        return jsonify(error="sesión inválida"), 400
+    fila, d = regalo_mod.buscar(sesion=sid)
+    if not d:
+        return jsonify(listo=False)
+    return jsonify(listo=True, tarjeta=regalo_mod.publica(d))
+
+
+@app.get("/regalo/saldo")
+def regalo_saldo():
+    codigo = re.sub(r"[^A-Za-z0-9-]", "", request.args.get("c", "")).upper()[:16]
+    fila, d = regalo_mod.buscar(codigo=codigo)
+    if not d:
+        return jsonify(error="ese código no existe"), 404
+    return jsonify(tarjeta=regalo_mod.publica(d))
+
+
+@app.post("/regalo/canjear")
+def regalo_canjear():
+    d = request.get_json(silent=True, force=True) or {}
+    try:
+        t = regalo_mod.canjear(regalo_mod.limpiar_texto(d.get("codigo"), 16), d.get("monto"), str(d.get("pin", "")))
+    except PermissionError as e:
+        return jsonify(error=str(e)), 403
+    except LookupError as e:
+        return jsonify(error=str(e)), 404
+    except (ValueError, TypeError) as e:
+        return jsonify(error=str(e)), 400
+    try:
+        telegram(f"🎁 Canje: <code>{t['codigo']}</code> −{dinero(int(d.get('monto') or 0))} · saldo {dinero(t['saldo'])} ({t['estado']})")
+    except Exception:
+        pass
+    return jsonify(ok=True, tarjeta=t)
 
 
 # ------------------------------------------------------------------ eventos

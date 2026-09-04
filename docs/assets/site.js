@@ -134,3 +134,126 @@
     });
   }
 })();
+
+/* tarjetas de regalo: compra, gracias, tarjeta y canje */
+(function () {
+  var API = document.body.dataset.api || "", B = document.body.dataset.base || "";
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function pesos(n) { return "$" + Number(n || 0).toLocaleString("es-MX"); }
+  function fechaLarga(iso) {
+    if (!iso) return "";
+    var p = iso.split("-"), M = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+    return parseInt(p[2], 10) + " de " + M[parseInt(p[1], 10) - 1] + " de " + p[0];
+  }
+  function canal() { try { var g = JSON.parse(localStorage.getItem("rosso_canal") || "null"); return g && g.c ? g.c : "directo"; } catch (e) { return "directo"; } }
+  var msg = document.getElementById("forma-msg");
+  function aviso(t, clase) { if (!msg) return; msg.textContent = t; msg.className = "forma-msg" + (clase ? " " + clase : ""); }
+
+  // compra
+  var forma = document.getElementById("forma-regalo");
+  if (forma) {
+    var pagar = document.getElementById("g-pagar");
+    var montoElegido = function () { var r = forma.querySelector("input[name=monto]:checked"); return r ? parseInt(r.value, 10) : 0; };
+    forma.addEventListener("change", function () { pagar.textContent = "Pagar " + pesos(montoElegido()); });
+    if (API) fetch(API + "/regalo/config", { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (c) {
+      if (c && !c.activo) { pagar.disabled = true; aviso("Las tarjetas de regalo están por activarse. Mientras, escríbenos por WhatsApp y te la armamos a mano.", "error"); }
+    }).catch(function () { /* nada */ });
+    forma.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var d = { monto: montoElegido(), de: forma.de.value.trim(), para: forma.para.value.trim(), mensaje: forma.mensaje.value.trim(), email: forma.email.value.trim(), canal: canal() };
+      if (!d.de || !d.para || !d.email) { aviso("Nos faltan de parte de quién, para quién y tu correo.", "error"); return; }
+      if (!API) { aviso("El pago todavía no está conectado; escríbenos por WhatsApp.", "error"); return; }
+      pagar.disabled = true; aviso("Abriendo el pago seguro…");
+      fetch(API + "/regalo/checkout", { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d) })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (res) {
+          if (res.ok && res.j.url) { location.href = res.j.url; return; }
+          aviso((res.j && res.j.error) || "No se pudo iniciar el pago. Inténtalo otra vez.", "error"); pagar.disabled = false;
+        })
+        .catch(function () { aviso("No se pudo iniciar el pago. Inténtalo otra vez.", "error"); pagar.disabled = false; });
+    });
+  }
+
+  // gracias: espera el código que genera el webhook de Stripe
+  var res = document.getElementById("g-resultado");
+  if (res && API) {
+    var sid = new URLSearchParams(location.search).get("s") || "", intentos = 0;
+    var titulo = document.getElementById("g-titulo"), nota = document.getElementById("g-nota");
+    var pinta = function (t) {
+      titulo.textContent = "Listo. Aquí está tu regalo.";
+      nota.textContent = "Tarjeta de " + pesos(t.monto) + (t.para ? " para " + t.para : "") + ". Vale hasta el " + fechaLarga(t.vence) + ".";
+      document.getElementById("g-codigo").textContent = t.codigo;
+      document.getElementById("g-datos").innerHTML = (t.de ? "De " + esc(t.de) : "") + (t.para ? " para " + esc(t.para) : "") + (t.mensaje ? " · <em>" + esc(t.mensaje) + "</em>" : "");
+      var liga = location.origin + B + "/regalo/tarjeta/?c=" + encodeURIComponent(t.codigo);
+      document.getElementById("g-ver").href = liga;
+      document.getElementById("g-wa").href = "https://wa.me/?text=" + encodeURIComponent("Te regalo una noche en ROSSO. Tarjeta de " + pesos(t.monto) + ". Tu código: " + t.codigo + " · " + liga);
+      document.getElementById("g-copiar").addEventListener("click", function () {
+        var b = this; (navigator.clipboard ? navigator.clipboard.writeText(t.codigo) : Promise.reject()).then(function () { b.textContent = "Copiado"; }, function () { b.textContent = t.codigo; });
+      });
+      res.hidden = false;
+    };
+    var consulta = function () {
+      fetch(API + "/regalo/estado?s=" + encodeURIComponent(sid), { mode: "cors" }).then(function (r) { return r.json(); }).then(function (j) {
+        if (j.listo) { pinta(j.tarjeta); return; }
+        if (++intentos < 30) setTimeout(consulta, 2000);
+        else { titulo.textContent = "Tu pago quedó registrado."; nota.innerHTML = "El código tarda unos minutos en generarse. Si no te llega, <a href=\"https://wa.me/525664357899?text=" + encodeURIComponent("Hola, compré una tarjeta de regalo y no vi mi código. Mi correo es: ") + "\">escríbenos por WhatsApp</a> con el correo que usaste."; }
+      }).catch(function () { if (++intentos < 30) setTimeout(consulta, 3000); });
+    };
+    if (sid) consulta(); else { titulo.textContent = "Falta el número de pago."; nota.textContent = "Abre esta página desde la liga que te dio Stripe."; }
+  }
+
+  // tarjeta imprimible
+  var tarjeta = document.getElementById("tarjeta");
+  if (tarjeta && API) {
+    var cod = (new URLSearchParams(location.search).get("c") || "").toUpperCase();
+    if (cod) fetch(API + "/regalo/saldo?c=" + encodeURIComponent(cod), { mode: "cors" }).then(function (r) { return r.json(); }).then(function (j) {
+      var n = document.getElementById("t-nota");
+      if (!j.tarjeta) { n.textContent = j.error || "No encontramos ese código."; return; }
+      var t = j.tarjeta;
+      document.getElementById("t-monto").textContent = pesos(t.monto);
+      document.getElementById("t-para").textContent = (t.para ? "Para " + t.para : "") + (t.de ? (t.para ? ", de " : "De ") + t.de : "");
+      document.getElementById("t-mensaje").textContent = t.mensaje || "";
+      document.getElementById("t-codigo").textContent = t.codigo;
+      document.getElementById("t-vence").textContent = "Vale hasta " + fechaLarga(t.vence);
+      n.textContent = t.estado === "activa" ? "Saldo disponible: " + pesos(t.saldo) + ". Preséntala en barra; con el código basta." : "Esta tarjeta está " + t.estado + ".";
+      document.title = "Tarjeta " + t.codigo + " · ROSSO";
+    }).catch(function () { document.getElementById("t-nota").textContent = "No se pudo cargar la tarjeta."; });
+  }
+
+  // canje en barra
+  var buscar = document.getElementById("forma-canje-buscar"), canje = document.getElementById("forma-canje"), info = document.getElementById("c-info");
+  if (buscar && API) {
+    var actual = null;
+    var muestra = function (t) {
+      actual = t;
+      info.innerHTML = "<div class=\"estado\">" + esc(t.estado) + "</div><div class=\"saldo\">" + pesos(t.saldo) + " de " + pesos(t.monto) + "</div><div>" + (t.para ? "Para " + esc(t.para) : "") + (t.de ? " · de " + esc(t.de) : "") + "</div><div class=\"mini\">Vence " + esc(fechaLarga(t.vence)) + "</div>";
+      info.hidden = false; canje.hidden = t.estado !== "activa";
+      if (!canje.hidden) { canje.monto.max = t.saldo; canje.monto.value = ""; canje.monto.focus(); }
+    };
+    buscar.addEventListener("submit", function (ev) {
+      ev.preventDefault(); aviso("Buscando…"); info.hidden = true; canje.hidden = true;
+      var c = buscar.codigo.value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, "");
+      if (c.length === 8 && c.indexOf("-") < 0) c = "ROSSO-" + c.slice(0, 4) + "-" + c.slice(4);
+      if (c.length === 13 && c.indexOf("ROSSO") === 0 && c.indexOf("-") < 0) c = "ROSSO-" + c.slice(5, 9) + "-" + c.slice(9);
+      buscar.codigo.value = c;
+      fetch(API + "/regalo/saldo?c=" + encodeURIComponent(c), { mode: "cors" }).then(function (r) { return r.json(); }).then(function (j) {
+        if (!j.tarjeta) { aviso(j.error || "No existe.", "error"); return; }
+        aviso(""); muestra(j.tarjeta);
+      }).catch(function () { aviso("Sin conexión con la API.", "error"); });
+    });
+    canje.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (!actual) return;
+      var monto = parseInt(canje.monto.value, 10) || 0, pin = canje.pin.value.trim();
+      if (!monto || !pin) { aviso("Pon el monto y el PIN.", "error"); return; }
+      aviso("Descontando…");
+      fetch(API + "/regalo/canjear", { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ codigo: actual.codigo, monto: monto, pin: pin }) })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+        .then(function (r) {
+          if (!r.ok) { aviso(r.j.error || "No se pudo.", "error"); return; }
+          canje.pin.value = ""; muestra(r.j.tarjeta);
+          aviso("Descontado " + pesos(monto) + ". Saldo: " + pesos(r.j.tarjeta.saldo) + ".", "ok");
+        }).catch(function () { aviso("Sin conexión con la API.", "error"); });
+    });
+  }
+})();

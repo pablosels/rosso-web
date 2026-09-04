@@ -67,3 +67,25 @@ gcloud scheduler jobs create http rosso-carta-diaria --location us-central1 --pr
 
 `overrides.json` manda: nombres bonitos, descripciones, qué excluir y qué incluir
 aunque venda poco. Cambiarlo requiere redeploy (va dentro de la imagen).
+
+## Tarjetas de regalo (Stripe)
+
+La API ya sabe cobrar; solo faltan dos secretos de Stripe. Pablo, en el panel de Stripe (cuenta ROSSO SPEAKEASY, modo real):
+
+1. **Llave restringida**: Desarrolladores > Claves de API > "Crear clave restringida". Nombre `rosso-web`. Permisos: *Checkout Sessions* = Escritura; todo lo demás Ninguno. Copiar la clave `rk_live_...`.
+2. **Webhook**: Desarrolladores > Webhooks > "Agregar endpoint". URL `https://rosso-web-api-703407013960.us-central1.run.app/stripe/webhook`. Evento: `checkout.session.completed`. Copiar el "Secreto de firma" `whsec_...`.
+
+Luego, en PowerShell (pegar cada valor cuando lo pida):
+
+```powershell
+Read-Host "rk_live" | Set-Content -NoNewline $env:TEMPk.txt; gcloud secrets create stripe-key-rosso --data-file=$env:TEMPk.txt --project motor-facturas; Remove-Item $env:TEMPk.txt
+Read-Host "whsec" | Set-Content -NoNewline $env:TEMP\wh.txt; gcloud secrets create stripe-webhook-rosso --data-file=$env:TEMP\wh.txt --project motor-facturas; Remove-Item $env:TEMP\wh.txt
+gcloud secrets add-iam-policy-binding stripe-key-rosso --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project motor-facturas
+gcloud secrets add-iam-policy-binding stripe-webhook-rosso --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project motor-facturas
+gcloud run services update rosso-web-api --region us-central1 --project motor-facturas --update-secrets=STRIPE_KEY=stripe-key-rosso:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-rosso:latest
+```
+
+Después: `content/site.json` → `"regalo_activo": true`, `python build.py`, commit y push (aparece "Regalo" en el menú).
+
+Variables ya puestas: `REGALO_SHEET_ID` (hoja "Tarjetas ROSSO", 1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM) y `CANJE_PIN` (guardado en `api/.canje_pin`, no se sube a git).
+Páginas: `/regalo/` compra · `/regalo/gracias/?s=cs_...` código · `/regalo/tarjeta/?c=ROSSO-XXXX-XXXX` tarjeta imprimible · `/regalo/canje/` barra (PIN).

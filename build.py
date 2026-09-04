@@ -59,6 +59,8 @@ def wa(texto):
 
 # ---------------------------------------------------------------- plantilla
 NAV = [("Carta", "/carta/"), ("Noches", "/noches/"), ("Eventos", "/eventos/"), ("Reservar", "/reservar/")]
+if SITE.get("regalo_activo"):
+    NAV.append(("Regalo", "/regalo/"))
 
 
 def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", script=""):
@@ -409,6 +411,115 @@ def pag_eventos():
     return pagina("Eventos privados · ROSSO", cuerpo, "/eventos/", "Renta ROSSO para tu evento privado en Roma Norte: hasta 50 personas, barra completa, propuesta en 24 horas.", clase="pag-eventos")
 
 
+# ---------------------------------------------------------------- tarjetas de regalo
+def pag_regalo():
+    montos = SITE.get("regalo_montos", [500, 1000, 2000, 3000])
+    notas = {500: "Dos cócteles y algo de picar", 1000: "Una noche para dos", 2000: "La cuenta de una mesa", 3000: "Una celebración"}
+    opciones = "".join(
+        f'<label class="monto"><input type="radio" name="monto" value="{m}"{" checked" if i == 1 else ""}>'
+        f'<span class="monto-cifra">${m:,}</span><span class="monto-nota">{notas.get(m, "")}</span></label>'
+        for i, m in enumerate(montos))
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">Tarjeta de regalo</div>
+  <h1>Regala una noche en ROSSO.</h1>
+  <p class="nota">Eliges el monto, escribes a quién va y pagas en línea. El código aparece al instante y se canjea en barra: cócteles, botanas o la cuenta completa. Vale 12 meses y el saldo que sobre se queda para la siguiente visita.</p>
+</section>
+{cine("coctel_queridodiario", "Cóctel Querido Diario sobre la barra de ROSSO", "Querido Diario, uno de la casa", "50% 60%")}
+<section class="regalo" id="regalo">
+  <div class="regalo-pasos">
+    <ol class="pasos">
+      <li><strong>Eliges y pagas.</strong> Tarjeta de crédito o débito, cobro seguro con Stripe.</li>
+      <li><strong>Recibes el código.</strong> En pantalla al terminar, con una tarjeta para compartir o imprimir.</li>
+      <li><strong>Se canjea en barra.</strong> Quien lo reciba dicta el código y se descuenta de su cuenta.</li>
+    </ol>
+    <p class="nota mini">Vigencia de 12 meses desde la compra. No es canjeable por efectivo. Para más de 4 personas o eventos, <a href="{B}/eventos/">ver eventos privados</a>.</p>
+  </div>
+  <form class="forma" id="forma-regalo" novalidate>
+    <fieldset class="montos"><legend>Monto</legend>{opciones}</fieldset>
+    <div class="fila">
+      <div class="campo"><label for="g-de">De parte de</label><input id="g-de" name="de" maxlength="80" autocomplete="name" required></div>
+      <div class="campo"><label for="g-para">Para</label><input id="g-para" name="para" maxlength="80" required></div>
+    </div>
+    <div class="campo"><label for="g-mensaje">Mensaje <span>(opcional, va en la tarjeta)</span></label><textarea id="g-mensaje" name="mensaje" rows="2" maxlength="200"></textarea></div>
+    <div class="campo"><label for="g-email">Tu correo <span>(para el recibo)</span></label><input id="g-email" name="email" type="email" autocomplete="email" required></div>
+    <button class="btn" type="submit" id="g-pagar">Pagar $1,000</button>
+    <p class="forma-msg" id="forma-msg" role="status"></p>
+  </form>
+</section>
+"""
+    return pagina("Tarjeta de regalo · ROSSO", cuerpo, "/regalo/", "Regala una noche en ROSSO: tarjeta de regalo canjeable en barra, pago en línea, código al instante, vigencia de 12 meses.", clase="pag-regalo")
+
+
+def pag_regalo_gracias():
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">Tarjeta de regalo</div>
+  <h1 id="g-titulo">Confirmando tu pago…</h1>
+  <p class="nota" id="g-nota">Un momento, estamos generando tu código.</p>
+</section>
+<section class="regalo-resultado" id="g-resultado" hidden>
+  <div class="codigo-caja">
+    <div class="etiqueta">Código</div>
+    <div class="codigo" id="g-codigo">ROSSO-····-····</div>
+    <div class="codigo-datos" id="g-datos"></div>
+    <div class="codigo-acciones">
+      <button class="btn" type="button" id="g-copiar">Copiar código</button>
+      <a class="btn btn-linea" id="g-ver" href="#">Ver la tarjeta</a>
+      <a class="btn btn-linea" id="g-wa" href="#" rel="noopener">Enviar por WhatsApp</a>
+    </div>
+  </div>
+  <p class="nota mini">Guarda este código: es lo único que se necesita en barra. También te llegó el recibo de Stripe al correo que pusiste.</p>
+</section>
+"""
+    return pagina("Gracias · ROSSO", cuerpo, "/regalo/gracias/", "Tu tarjeta de regalo de ROSSO.", clase="pag-regalo", extra_head='<meta name="robots" content="noindex">')
+
+
+def pag_regalo_tarjeta():
+    cuerpo = f"""
+<section class="tarjeta-envoltura">
+  <article class="tarjeta" id="tarjeta">
+    <img class="tarjeta-marca" src="{B}/assets/oficial_ROSSO_ID_Logotipo-BLANCO.svg" alt="ROSSO" width="400" height="80">
+    <div class="tarjeta-tipo">Tarjeta de regalo</div>
+    <div class="tarjeta-monto" id="t-monto">$ —</div>
+    <div class="tarjeta-para" id="t-para"></div>
+    <p class="tarjeta-mensaje" id="t-mensaje"></p>
+    <div class="tarjeta-codigo" id="t-codigo">—</div>
+    <div class="tarjeta-pie"><span id="t-vence"></span><span>Canjeable en barra · Puebla 329, Roma Norte</span></div>
+  </article>
+  <p class="nota mini tarjeta-nota" id="t-nota">Abre esta página desde la liga de tu tarjeta.</p>
+  <p class="tarjeta-acciones"><button class="btn" type="button" onclick="window.print()">Imprimir o guardar en PDF</button></p>
+</section>
+"""
+    return pagina("Tu tarjeta · ROSSO", cuerpo, "/regalo/tarjeta/", "Tarjeta de regalo de ROSSO.", clase="pag-regalo pag-tarjeta", extra_head='<meta name="robots" content="noindex">')
+
+
+def pag_regalo_canje():
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">Barra · uso interno</div>
+  <h1>Canje de tarjetas.</h1>
+  <p class="nota">Escribe el código que dicta el cliente. Si tiene saldo, pon el monto de la cuenta y el PIN de la barra.</p>
+</section>
+<section class="canje">
+  <form class="forma" id="forma-canje-buscar" novalidate>
+    <div class="campo"><label for="c-codigo">Código</label><input id="c-codigo" name="codigo" placeholder="ROSSO-XXXX-XXXX" autocomplete="off" autocapitalize="characters" maxlength="16"></div>
+    <button class="btn" type="submit">Consultar</button>
+  </form>
+  <div class="canje-tarjeta" id="c-info" hidden></div>
+  <form class="forma" id="forma-canje" novalidate hidden>
+    <div class="fila">
+      <div class="campo"><label for="c-monto">Monto a descontar</label><input id="c-monto" name="monto" type="number" inputmode="numeric" min="1" step="1"></div>
+      <div class="campo"><label for="c-pin">PIN de barra</label><input id="c-pin" name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div>
+    </div>
+    <button class="btn" type="submit">Descontar</button>
+  </form>
+  <p class="forma-msg" id="forma-msg" role="status"></p>
+</section>
+"""
+    return pagina("Canje · ROSSO", cuerpo, "/regalo/canje/", "Uso interno.", clase="pag-regalo", extra_head='<meta name="robots" content="noindex,nofollow">')
+
+
 def pag_404():
     cuerpo = f"""
 <section class="encabezado">
@@ -443,7 +554,9 @@ def main():
     og_image()
 
     paginas = {"index.html": pag_inicio(), "carta/index.html": pag_carta(), "noches/index.html": pag_noches(),
-               "reservar/index.html": pag_reservar(), "eventos/index.html": pag_eventos(), "404.html": pag_404()}
+               "reservar/index.html": pag_reservar(), "eventos/index.html": pag_eventos(), "404.html": pag_404(),
+               "regalo/index.html": pag_regalo(), "regalo/gracias/index.html": pag_regalo_gracias(),
+               "regalo/tarjeta/index.html": pag_regalo_tarjeta(), "regalo/canje/index.html": pag_regalo_canje()}
     for ruta, contenido in paginas.items():
         destino = DOCS / ruta
         destino.parent.mkdir(parents=True, exist_ok=True)
@@ -466,7 +579,7 @@ def main():
     (DOCS / "carta.json").write_text(json.dumps(CARTA, ensure_ascii=False), encoding="utf-8")
     (DOCS / ".nojekyll").write_text("")
     (DOCS / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {URL}/sitemap.xml\n")
-    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/"]
+    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/"] + (["/regalo/"] if SITE.get("regalo_activo") else [])
     (DOCS / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{URL}{u}</loc></url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")
