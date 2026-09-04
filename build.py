@@ -36,6 +36,17 @@ DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "doming
 e = html.escape
 
 
+def version_de(nombre):
+    """Hash corto del archivo para romper caché (style.css?v=abc123)."""
+    import hashlib
+    p = ASSETS / nombre
+    return hashlib.md5(p.read_bytes()).hexdigest()[:8] if p.exists() else "0"
+
+
+V_CSS = version_de("style.css")
+V_JS = version_de("site.js")
+
+
 def fecha_larga(iso):
     d = dt.date.fromisoformat(iso)
     return f"{DIAS[d.weekday()].capitalize()} {d.day} de {MESES[d.month - 1]}"
@@ -85,7 +96,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;900&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="{B}/assets/style.css">
+<link rel="stylesheet" href="{B}/assets/style.css?v={V_CSS}">
 <script type="application/ld+json">{jsonld}</script>
 {extra_head}
 </head>
@@ -117,7 +128,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
     <p class="mini">© {dt.date.today().year} Rosso Speakeasy · Puebla 329, Roma Norte, CDMX</p>
   </div>
 </footer>
-<script src="{B}/assets/site.js" defer></script>
+<script src="{B}/assets/site.js?v={V_JS}" defer></script>
 {script}
 </body>
 </html>"""
