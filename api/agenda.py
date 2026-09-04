@@ -29,14 +29,29 @@ def _session():
     return _sesion
 
 
-def _fecha(txt):
+def _fecha(txt, hoy=None):
+    """Lee la fecha de la celda. Si la hoja esta en formato gringo y volteo dia y mes
+    (03/09 -> 9 de marzo), lo detecta: una fecha ya pasada cuyo volteo cae en los
+    proximos meses se toma como el volteo."""
     t = (txt or "").strip()
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d"):
+    fecha = None
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d", "%m/%d/%Y"):
         try:
-            return dt.datetime.strptime(t, fmt).date()
+            fecha = dt.datetime.strptime(t, fmt).date()
+            break
         except ValueError:
             pass
-    return None
+    if not fecha:
+        return None
+    hoy = hoy or dt.date.today()
+    if fecha < hoy - dt.timedelta(days=3) and fecha.day <= 12:
+        try:
+            volteada = fecha.replace(month=fecha.day, day=fecha.month)
+        except ValueError:
+            volteada = None
+        if volteada and hoy - dt.timedelta(days=3) <= volteada <= hoy + dt.timedelta(days=120):
+            return volteada
+    return fecha
 
 
 def _ig(handle):
