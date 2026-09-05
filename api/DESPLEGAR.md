@@ -92,3 +92,16 @@ Después: `content/site.json` → `"regalo_activo": true`, `python build.py`, co
 
 Variables ya puestas: `REGALO_SHEET_ID` (hoja "Tarjetas ROSSO", 1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM) y `CANJE_PIN` (guardado en `api/.canje_pin`, no se sube a git).
 Páginas: `/regalo/` compra · `/regalo/gracias/?s=cs_...` código · `/regalo/tarjeta/?c=ROSSO-XXXX-XXXX` tarjeta imprimible · `/regalo/canje/` barra (PIN).
+
+## Vigilante (servicio aparte)
+
+Carpeta `vigilante/`. Cloud Run `rosso-vigilante` + Cloud Scheduler `rosso-vigilante` cada 10 min (POST /revisar, header X-Refresh-Key).
+Redesplegar: `gcloud run deploy rosso-vigilante --source vigilante --region us-central1 --project motor-facturas` (conserva secretos y variables).
+
+## Variables nuevas de la API
+
+`DESCRIPCIONES_SHEET_ID` = hoja "Carta ROSSO descripciones" (1f5moe2Io6ZqH0CD7QlOmelUl3dPvsF5v7gtpVbhfdkk). GET /carta cruza descripciones por nombre.
+
+## Sitio bilingüe
+
+`python build.py` genera / y /en/. Textos con t(es, en) en build.py; site.js usa tt() según <html lang>. Campos *_en en content/site.json y content/noches.json.
