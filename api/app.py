@@ -428,10 +428,8 @@ def produccion():
         f"{nombre} · <a href=\"https://wa.me/{whatsapp.lstrip('+')}\">WhatsApp</a>" + (f" · {sol['email']}" if sol['email'] else "") + "\n"
         f"{TIPOS_PRODUCCION[sol['tipo']]}" + (f" — {sol['proyecto']}" if sol['proyecto'] else "") + "\n"
         f"{dia} {fecha.day}/{fecha.month} desde las {sol['hora']} · {horas} h · equipo de {crew}{aviso}\n"
-        f"Tarifa de referencia solo del lugar: <b>{dinero(referencia)}</b> + IVA
-"
-        + (f"Necesita (extra): {', '.join(NECESIDADES[n] for n in nec)}
-" if nec else "")
+        f"Tarifa de referencia solo del lugar: <b>{dinero(referencia)}</b> + IVA\n"
+        + (f"Necesita (extra): {', '.join(NECESIDADES[n] for n in nec)}\n" if nec else "")
         + (f"«{sol['mensaje']}»" if sol['mensaje'] else "")
     )
     return jsonify(ok=True, folio=folio)
