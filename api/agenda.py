@@ -17,6 +17,8 @@ RANGO = "A1:L400"
 DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
          "septiembre", "octubre", "noviembre", "diciembre"]
+DIAS_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+MESES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
 _sesion = None
 
@@ -88,6 +90,7 @@ def leer_filas():
             "fecha": fecha.isoformat(),
             "dia": DIAS[fecha.weekday()],
             "fecha_larga": f"{DIAS[fecha.weekday()].capitalize()} {fecha.day} de {MESES[fecha.month - 1]}",
+            "fecha_larga_en": f"{DIAS_EN[fecha.weekday()]}, {MESES_EN[fecha.month - 1]} {fecha.day}",
             "hora": re.sub(r"\s*(AM|PM)$", lambda m: " " + m.group(1).lower(), d.get("hora", "").strip()),
             "dj": dj,
             "genero": d.get("genero", ""),

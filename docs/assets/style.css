@@ -294,3 +294,8 @@ figure{margin:0}
 .opciones legend{font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-suave);padding:0;margin-bottom:.4rem}
 .opcion{display:flex;gap:.6rem;align-items:center;font-size:15px;color:var(--ink)}
 .opcion input{accent-color:var(--carmin);width:18px;height:18px;flex:none;margin:0}
+
+/* selector de idioma */
+.nav .idioma{opacity:.7;margin-left:.6rem;padding-left:.9rem;border-left:1px solid var(--linea)}
+.nav .idioma:hover{opacity:1}
+@media (max-width:760px){.nav .idioma{margin-left:0;padding-left:0;border-left:0}}

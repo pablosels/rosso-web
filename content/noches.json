@@ -5,13 +5,21 @@
       "dia": "Miércoles a sábado",
       "titulo": "Sesiones de DJ",
       "hora": "9:00 pm – 1:00 am",
-      "texto": "Selectores invitados en la consola, del primer trago al cierre. La mesa se reserva; la pista se llena."
+      "texto": "Selectores invitados en la consola, del primer trago al cierre. La mesa se reserva; la pista se llena.",
+      "dia_en": "Wednesday to Saturday",
+      "titulo_en": "DJ sessions",
+      "hora_en": "9:00 pm – 1:00 am",
+      "texto_en": "Guest selectors at the booth, from the first drink to closing. Tables are booked; the floor fills up."
     },
     {
       "dia": "Domingo",
       "titulo": "Vinilos completos",
       "hora": "4:00 pm – 11:00 pm",
-      "texto": "Discos enteros, de principio a fin, sin saltar canciones. Carta de domingo: Bull, Clamato Signature y micheladas."
+      "texto": "Discos enteros, de principio a fin, sin saltar canciones. Carta de domingo: Bull, Clamato Signature y micheladas.",
+      "dia_en": "Sunday",
+      "titulo_en": "Full vinyl sessions",
+      "hora_en": "4:00 pm – 11:00 pm",
+      "texto_en": "Whole records, start to finish, no skipping. Sunday menu: Bull, Clamato Signature and micheladas."
     }
   ],
   "fechas": []

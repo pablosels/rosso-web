@@ -24,6 +24,7 @@ import carta as carta_mod
 import metricas as metricas_mod
 import regalo as regalo_mod
 import clientes as clientes_mod
+import descripciones as descripciones_mod
 import cotizador
 import tarifario as tf
 
@@ -131,7 +132,7 @@ def get_carta():
                 _cache.update(carta=datos, t=time.time())
     if not datos:
         return jsonify(error="carta no generada todavía"), 503
-    resp = jsonify(datos)
+    resp = jsonify(descripciones_mod.aplicar(datos))
     resp.headers["Cache-Control"] = "public, max-age=600"
     return resp
 
