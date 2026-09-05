@@ -568,7 +568,7 @@ def pag_privacidad():
   <p><strong>Con quién se comparten.</strong> Con nadie. Los datos se guardan en servicios de Google (hojas de cálculo y nube) y, si compras una tarjeta de regalo, el pago lo procesa Stripe con sus propios términos. Las reservaciones de hasta 4 personas se hacen a través de OpenTable, sujeto a su aviso de privacidad.</p>
   <p><strong>Tus derechos (ARCO).</strong> Puedes acceder, rectificar, cancelar u oponerte al uso de tus datos, o revocar tu consentimiento, escribiendo a <a href="mailto:hola@rossospeakeasy.com">hola@rossospeakeasy.com</a> con tu nombre y el dato que quieres consultar o borrar. Respondemos en un máximo de 20 días hábiles.</p>
   <p><strong>Cambios.</strong> Si este aviso cambia, publicamos la nueva versión en esta misma página.</p>
-  <p class="mini">Última actualización: {dt.date.today().strftime('%d/%m/%Y')}.</p>
+  <p class="mini">Última actualización: {SITE.get('privacidad_fecha', '05/09/2026')}.</p>
 </section>
 """
     return pagina("Aviso de privacidad · ROSSO", cuerpo, "/privacidad/", "Aviso de privacidad de Rosso Speakeasy.", clase="pag-legal")
