@@ -578,9 +578,7 @@ def pag_privacidad():
 def pag_producciones():
     hoy = dt.date.today()
     minimo = (hoy + dt.timedelta(days=2)).isoformat()
-    tarifa = SITE.get("produccion_hora")
-    precio = (f"Desde {tarifa} por hora, según horario y tamaño de la producción." if tarifa
-              else "Se cotiza por hora según el horario y el tamaño de la producción.")
+    precio = "$1,800 por hora con mínimo de 3 horas. Jornada de 8 horas, $12,000. Lunes, jornada completa de 12 horas, $16,000. Más IVA."
     tipos = [("foto", "Fotografía"), ("video", "Video / comercial"), ("cine", "Cine / serie"), ("redes", "Contenido para redes"), ("podcast", "Podcast / grabación"), ("otro", "Otro")]
     necesidades = [("barra", "Barra con bartender"), ("audio", "Audio y cabina de DJ"), ("cocina", "Cocina de Pavorosso"), ("vestidor", "Espacio de vestidor y maquillaje"), ("carga", "Carga y descarga por la calle")]
     cuerpo = f"""
@@ -595,11 +593,12 @@ def pag_producciones():
 <section class="eventos">
   <div class="eventos-datos">
     <dl class="ficha">
-      <dt>Espacio</dt><dd>Salón principal con techo de luces, barra completa, cabina de DJ y rincón de sillones. Se entra por la cocina de Pavorosso.</dd>
+      <dt>Espacio</dt><dd>40 m² de salón con techo de luces, barra completa, cabina de DJ y rincón de sillones. Se entra por la cocina de Pavorosso.</dd>
       <dt>Cuándo</dt><dd>Lunes todo el día. Martes a sábado hasta las 4:00 pm. Domingo hasta las 2:00 pm.</dd>
-      <dt>Incluye</dt><dd>Acceso, luz de sala, energía y audio de la casa. Bartender, cocina y personal se cotizan aparte.</dd>
+      <dt>Incluye</dt><dd>Solo el lugar: acceso, luz de sala y energía. Bartender, barra, cocina, audio y personal se cotizan aparte.</dd>
       <dt>Aforo</dt><dd>Hasta {SITE['aforo_total']} personas entre equipo y talento.</dd>
-      <dt>Tarifa</dt><dd>{e(precio)} Te respondemos en menos de 24 horas.</dd>
+      <dt>Tarifa</dt><dd>{e(precio)}</dd>
+      <dt>Apartado</dt><dd>50% para bloquear la fecha; el resto el día del llamado. Respondemos en menos de 24 horas.</dd>
     </dl>
     <p class="nota">Para fiestas y cenas privadas, la página es <a href="{B}/eventos/">eventos</a>.</p>
   </div>
