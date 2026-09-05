@@ -95,6 +95,11 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
 <meta property="og:locale" content="es_MX">
 <meta name="theme-color" content="#28000F">
 <link rel="icon" href="{B}/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="{B}/assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{B}/assets/apple-touch-icon.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;900&family=Geist+Mono:wght@400;500&display=swap">
@@ -224,7 +229,7 @@ def pag_inicio():
     <div class="ficha-l">PUEBLA, 329<br>ROMA NTE.<br>( CDMX )</div>
     <div class="ficha-r">SPEAKEASY<br>MAR – DOM<br>DESDE 6 PM</div>
   </div>
-  <p class="hero-texto">Un bar que explora el placer a través de los sentidos. Escondido dentro de Pavorosso, se entra por la cocina: ahí empieza una experiencia íntima e inmersiva.</p>
+  <p class="hero-texto">Un bar que explora el placer a través de los sentidos. Una experiencia íntima e inmersiva que se esconde detrás de la cocina de Pavorosso.</p>
   <p class="hero-texto hero-texto-2">Inspirado en el rojo como símbolo del deseo, ROSSO envuelve a sus invitados con atmósfera, música y ritmo.</p>
   <div class="hero-cta">
     <a class="btn" href="{B}/reservar/">Reservar mesa</a>
@@ -580,14 +585,8 @@ def pag_404():
 
 # ---------------------------------------------------------------- assets
 def og_image():
-    from PIL import Image
-    fondo = Image.new("RGBA", (1200, 630), (0x28, 0x00, 0x0F, 255))
-    marca = Image.open(ASSETS / "rosso-wordmark-solid.png").convert("RGBA")
-    w = 900
-    h = int(marca.height * w / marca.width)
-    marca = marca.resize((w, h), Image.LANCZOS)
-    fondo.alpha_composite(marca, ((1200 - w) // 2, (630 - h) // 2))
-    fondo.convert("RGB").save(DOCS / "assets" / "og.png", optimize=True)
+    """La miniatura para compartir (assets/og.png) la genera herramientas/logos.py: foto + wordmark."""
+    return
 
 
 def main():
