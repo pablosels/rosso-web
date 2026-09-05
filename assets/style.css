@@ -288,3 +288,9 @@ figure{margin:0}
 .legal p{margin:0 0 1.1rem;color:var(--ink-suave)}
 .legal p strong{color:var(--ink);font-weight:500}
 .legal .mini{font-size:13px}
+
+/* locación: casillas */
+.opciones{border:0;padding:0;margin:0;display:grid;gap:.5rem}
+.opciones legend{font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink-suave);padding:0;margin-bottom:.4rem}
+.opcion{display:flex;gap:.6rem;align-items:center;font-size:15px;color:var(--ink)}
+.opcion input{accent-color:var(--carmin);width:18px;height:18px;flex:none;margin:0}

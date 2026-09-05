@@ -132,7 +132,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
   </div>
   <div class="pie-col pie-legal">
     <p>Reservaciones hasta {SITE['max_widget']} personas por <a href="{SITE['opentable_url']}">OpenTable</a>. Grupos y eventos por WhatsApp.</p>
-    <p class="mini">© {dt.date.today().year} Rosso Speakeasy · Puebla 329, Roma Norte, CDMX · <a href="{B}/club/">Club ROSSO</a> · <a href="{B}/privacidad/">Privacidad</a></p>
+    <p class="mini">© {dt.date.today().year} Rosso Speakeasy · Puebla 329, Roma Norte, CDMX · <a href="{B}/producciones/">Locación</a> · <a href="{B}/club/">Club ROSSO</a> · <a href="{B}/privacidad/">Privacidad</a></p>
   </div>
 </footer>
 <script src="{B}/assets/site.js?v={V_JS}" defer></script>
@@ -390,6 +390,7 @@ def pag_eventos():
       <dt>Música</dt><dd>DJ de la casa o el suyo; audio incluido</dd>
     </dl>
     <p class="nota">Si son entre 5 y 8 y sólo quieren mesa, mejor <a href="{wa('Hola, ROSSO. Quiero reservar para un grupo.')}">escríbenos por WhatsApp</a>.</p>
+    <p class="nota">¿Es una producción de foto o video? Ve a <a href="{B}/producciones/">locación</a>.</p>
   </div>
   <form class="forma" id="forma-eventos" novalidate>
     <div class="campo"><label for="nombre">Nombre</label><input id="nombre" name="nombre" required maxlength="80" autocomplete="name"></div>
@@ -573,6 +574,64 @@ def pag_privacidad():
     return pagina("Aviso de privacidad · ROSSO", cuerpo, "/privacidad/", "Aviso de privacidad de Rosso Speakeasy.", clase="pag-legal")
 
 
+# ---------------------------------------------------------------- locación para producciones
+def pag_producciones():
+    hoy = dt.date.today()
+    minimo = (hoy + dt.timedelta(days=2)).isoformat()
+    tarifa = SITE.get("produccion_hora")
+    precio = (f"Desde {tarifa} por hora, según horario y tamaño de la producción." if tarifa
+              else "Se cotiza por hora según el horario y el tamaño de la producción.")
+    tipos = [("foto", "Fotografía"), ("video", "Video / comercial"), ("cine", "Cine / serie"), ("redes", "Contenido para redes"), ("podcast", "Podcast / grabación"), ("otro", "Otro")]
+    necesidades = [("barra", "Barra con bartender"), ("audio", "Audio y cabina de DJ"), ("cocina", "Cocina de Pavorosso"), ("vestidor", "Espacio de vestidor y maquillaje"), ("carga", "Carga y descarga por la calle")]
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">Locación</div>
+  <h1>ROSSO también se renta como set.</h1>
+  <p class="nota">Fotografía, video, cine, contenido de marca y grabaciones. Un speakeasy de luz roja con techo de focos, sillones, barra y cabina de DJ, disponible en las horas en que el bar está cerrado.</p>
+</section>
+{mosaico(("voyeur", "Detalle del salón de ROSSO bajo luz roja", "El salón"),
+         ("espacio_corner", "Rincón con sillones y luz roja", "El rincón"),
+         ("shake_barra", "Bartender agitando un cóctel en la barra", "La barra"))}
+<section class="eventos">
+  <div class="eventos-datos">
+    <dl class="ficha">
+      <dt>Espacio</dt><dd>Salón principal con techo de luces, barra completa, cabina de DJ y rincón de sillones. Se entra por la cocina de Pavorosso.</dd>
+      <dt>Cuándo</dt><dd>Lunes todo el día. Martes a sábado hasta las 4:00 pm. Domingo hasta las 2:00 pm.</dd>
+      <dt>Incluye</dt><dd>Acceso, luz de sala, energía y audio de la casa. Bartender, cocina y personal se cotizan aparte.</dd>
+      <dt>Aforo</dt><dd>Hasta {SITE['aforo_total']} personas entre equipo y talento.</dd>
+      <dt>Tarifa</dt><dd>{e(precio)} Te respondemos en menos de 24 horas.</dd>
+    </dl>
+    <p class="nota">Para fiestas y cenas privadas, la página es <a href="{B}/eventos/">eventos</a>.</p>
+  </div>
+  <form class="forma" id="forma-produccion" novalidate>
+    <div class="campo"><label for="p-nombre">Nombre</label><input id="p-nombre" name="nombre" required maxlength="80" autocomplete="name"></div>
+    <div class="fila">
+      <div class="campo"><label for="p-whatsapp">WhatsApp</label><input id="p-whatsapp" name="whatsapp" required inputmode="tel" autocomplete="tel" placeholder="55 1234 5678"></div>
+      <div class="campo"><label for="p-email">Correo <span>(opcional)</span></label><input id="p-email" name="email" type="email" autocomplete="email"></div>
+    </div>
+    <div class="fila">
+      <div class="campo"><label for="p-proyecto">Productora o proyecto <span>(opcional)</span></label><input id="p-proyecto" name="proyecto" maxlength="120"></div>
+      <div class="campo"><label for="p-tipo">Tipo de producción</label><select id="p-tipo" name="tipo">{"".join(f'<option value="{v}">{t}</option>' for v, t in tipos)}</select></div>
+    </div>
+    <div class="fila">
+      <div class="campo"><label for="p-fecha">Fecha</label><input id="p-fecha" name="fecha" type="date" required min="{minimo}"></div>
+      <div class="campo"><label for="p-hora">Hora de llamado</label><input id="p-hora" name="hora" placeholder="9:00 am" required></div>
+    </div>
+    <div class="fila">
+      <div class="campo"><label for="p-horas">Horas en locación</label><select id="p-horas" name="horas">{"".join(f'<option value="{h}"{" selected" if h == 4 else ""}>{h} horas</option>' for h in range(2, 13))}</select></div>
+      <div class="campo"><label for="p-crew">Personas en el equipo</label><input id="p-crew" name="crew" type="number" min="1" max="80" required></div>
+    </div>
+    <fieldset class="opciones"><legend>Necesitan</legend>{"".join(f'<label class="opcion"><input type="checkbox" name="necesidades" value="{v}"> <span>{t}</span></label>' for v, t in necesidades)}</fieldset>
+    <div class="campo"><label for="p-mensaje">Cuéntanos del proyecto <span>(opcional)</span></label><textarea id="p-mensaje" name="mensaje" rows="3" maxlength="1000"></textarea></div>
+    <div class="campo miel" aria-hidden="true"><label for="empresa_web">Sitio web</label><input id="empresa_web" name="empresa_web" tabindex="-1" autocomplete="off"></div>
+    <button class="btn" type="submit">Pedir cotización</button>
+    <p class="forma-msg" id="forma-msg" role="status"></p>
+  </form>
+</section>
+"""
+    return pagina("Locación para producciones · ROSSO", cuerpo, "/producciones/", "Renta ROSSO como locación para fotografía, video, cine y contenido: speakeasy de luz roja en Roma Norte, disponible cuando el bar está cerrado.", clase="pag-producciones")
+
+
 def pag_404():
     cuerpo = f"""
 <section class="encabezado">
@@ -604,7 +663,8 @@ def main():
                "reservar/index.html": pag_reservar(), "eventos/index.html": pag_eventos(), "404.html": pag_404(),
                "regalo/index.html": pag_regalo(), "regalo/gracias/index.html": pag_regalo_gracias(),
                "regalo/tarjeta/index.html": pag_regalo_tarjeta(), "regalo/canje/index.html": pag_regalo_canje(),
-               "club/index.html": pag_club(), "privacidad/index.html": pag_privacidad()}
+               "club/index.html": pag_club(), "privacidad/index.html": pag_privacidad(),
+               "producciones/index.html": pag_producciones()}
     for ruta, contenido in paginas.items():
         destino = DOCS / ruta
         destino.parent.mkdir(parents=True, exist_ok=True)
@@ -627,7 +687,7 @@ def main():
     (DOCS / "carta.json").write_text(json.dumps(CARTA, ensure_ascii=False), encoding="utf-8")
     (DOCS / ".nojekyll").write_text("")
     (DOCS / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {URL}/sitemap.xml\n")
-    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/", "/club/", "/privacidad/"] + (["/regalo/"] if SITE.get("regalo_activo") else [])
+    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/", "/producciones/", "/club/", "/privacidad/"] + (["/regalo/"] if SITE.get("regalo_activo") else [])
     (DOCS / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + "".join(f"  <url><loc>{URL}{u}</loc></url>\n" for u in urls) + "</urlset>\n", encoding="utf-8")

@@ -281,3 +281,27 @@
       .finally(function () { boton.disabled = false; });
   });
 })();
+
+/* locación para producciones */
+(function () {
+  var API = document.body.dataset.api || "", forma = document.getElementById("forma-produccion"), msg = document.getElementById("forma-msg");
+  if (!forma) return;
+  function canal() { try { var g = JSON.parse(localStorage.getItem("rosso_canal") || "null"); return g && g.c ? g.c : "directo"; } catch (e) { return "directo"; } }
+  forma.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    msg.className = "forma-msg";
+    var d = { necesidades: [], canal: canal() };
+    new FormData(forma).forEach(function (v, k) { if (k === "necesidades") d.necesidades.push(v); else d[k] = v; });
+    if (!d.nombre || !d.whatsapp || !d.fecha || !d.hora || !d.crew) { msg.textContent = "Nos faltan nombre, WhatsApp, fecha, hora y tamaño del equipo."; msg.classList.add("error"); return; }
+    if (!API) { msg.textContent = "El formulario no está conectado; escríbenos por WhatsApp."; msg.classList.add("error"); return; }
+    var boton = forma.querySelector("button[type=submit]"); boton.disabled = true; msg.textContent = "Enviando…";
+    fetch(API + "/produccion", { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        if (res.ok && res.j.ok) { forma.reset(); msg.textContent = "Listo. Te escribimos por WhatsApp en menos de 24 horas (folio " + res.j.folio + ")."; msg.classList.add("ok"); }
+        else { msg.textContent = (res.j && res.j.error) || "No se pudo enviar. Inténtalo otra vez."; msg.classList.add("error"); }
+      })
+      .catch(function () { msg.textContent = "No se pudo enviar. Inténtalo otra vez o escríbenos por WhatsApp."; msg.classList.add("error"); })
+      .finally(function () { boton.disabled = false; });
+  });
+})();
