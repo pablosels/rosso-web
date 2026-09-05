@@ -416,13 +416,22 @@ def produccion():
         print("bucket fallo:", e)
     dia = tf.nombre_dia(fecha)
     abierto = fecha.weekday() != 0   # lunes cerrado: día libre completo
+    if horas >= 12 and not abierto:
+        referencia = 16000
+    elif horas >= 8:
+        referencia = 12000 + (horas - 8) * 1500
+    else:
+        referencia = max(3, horas) * 1800
     aviso = "" if not abierto else " ⚠️ ese día abrimos; la producción tendría que terminar antes de la apertura."
     telegram(
         f"🎬 <b>Solicitud de locación</b> · folio {folio}\n"
         f"{nombre} · <a href=\"https://wa.me/{whatsapp.lstrip('+')}\">WhatsApp</a>" + (f" · {sol['email']}" if sol['email'] else "") + "\n"
         f"{TIPOS_PRODUCCION[sol['tipo']]}" + (f" — {sol['proyecto']}" if sol['proyecto'] else "") + "\n"
         f"{dia} {fecha.day}/{fecha.month} desde las {sol['hora']} · {horas} h · equipo de {crew}{aviso}\n"
-        + (f"Necesita: {', '.join(NECESIDADES[n] for n in nec)}\n" if nec else "")
+        f"Tarifa de referencia solo del lugar: <b>{dinero(referencia)}</b> + IVA
+"
+        + (f"Necesita (extra): {', '.join(NECESIDADES[n] for n in nec)}
+" if nec else "")
         + (f"«{sol['mensaje']}»" if sol['mensaje'] else "")
     )
     return jsonify(ok=True, folio=folio)
