@@ -100,7 +100,7 @@ Redesplegar: `gcloud run deploy rosso-vigilante --source vigilante --region us-c
 
 ## Variables nuevas de la API
 
-`DESCRIPCIONES_SHEET_ID` = hoja "Carta ROSSO descripciones" (1f5moe2Io6ZqH0CD7QlOmelUl3dPvsF5v7gtpVbhfdkk). GET /carta cruza descripciones por nombre.
+`DESCRIPCIONES_SHEET_ID` = hoja "Carta ROSSO descripciones" (1Z-0yeDD-nMJnR0hvnSKyh6Adu2TmI7GER38TzerZzwY). GET /carta cruza descripciones por nombre.
 
 ## Sitio bilingüe
 
