@@ -25,6 +25,7 @@ import metricas as metricas_mod
 import regalo as regalo_mod
 import clientes as clientes_mod
 import descripciones as descripciones_mod
+import vinilos as vinilos_mod
 import cotizador
 import tarifario as tf
 
@@ -193,6 +194,12 @@ def recordatorio_agenda():
         pendientes = agenda_mod.pagos_pendientes()
     except Exception:
         pendientes = []
+    try:
+        if vinilos_mod.SHEET_ID and vinilos_mod.falta_domingo():
+            texto += (f"\n\n💿 <b>Vinilo del domingo</b>: falta capturar el disco del {vinilos_mod.proximo_domingo().strftime('%d/%m')}."
+                      f"\nHoja: https://docs.google.com/spreadsheets/d/{vinilos_mod.SHEET_ID}/edit")
+    except Exception as e:
+        print("vinilo recordatorio fallo:", e)
     if pendientes:
         total = sum(p["_pago"] for p in pendientes)
         texto += ("\n\n💸 <b>Pagos a DJs pendientes</b> (" + dinero(total) + "):\n"
@@ -202,6 +209,19 @@ def recordatorio_agenda():
     with _lock:
         _agenda_cache.update(datos=None, t=0)
     return jsonify(ok=True, faltan=faltan)
+
+
+# ------------------------------------------------------------------ vinilo del domingo
+@app.get("/vinilo")
+def get_vinilo():
+    try:
+        datos = vinilos_mod.actual()
+    except Exception as e:
+        print("vinilo fallo:", e)
+        datos = {"domingo": vinilos_mod.proximo_domingo().isoformat(), "vinilo": None, "anteriores": []}
+    resp = jsonify(datos)
+    resp.headers["Cache-Control"] = "public, max-age=600"
+    return resp
 
 
 # ------------------------------------------------------------------ métricas de origen

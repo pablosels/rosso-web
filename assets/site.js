@@ -317,3 +317,31 @@
       .finally(function () { boton.disabled = false; });
   });
 })();
+
+/* vinilo del domingo */
+(function () {
+  var API = document.body.dataset.api || "", EN = window.ROSSO_EN, tt = window.ROSSO_tt;
+  var caja = document.querySelector("[data-vinilo]"), mini = document.querySelector("[data-vinilo-mini]");
+  if (!(caja || mini) || !API) return;
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function fecha(iso) {
+    var p = iso.split("-"), M = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"], ME = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    return EN ? "Sunday, " + ME[+p[1] - 1] + " " + (+p[2]) : "Domingo " + (+p[2]) + " de " + M[+p[1] - 1];
+  }
+  fetch(API + "/vinilo", { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    if (!d || !d.vinilo) return;
+    var v = d.vinilo, hoy = v.fecha === d.domingo;
+    var titulo = esc(v.disco) + (v.anio ? ' <span class="g">(' + esc(v.anio) + ")</span>" : "");
+    var portada = v.portada ? '<img src="' + esc(v.portada) + '" alt="' + esc(v.artista + " — " + v.disco) + '" loading="lazy">' : "";
+    if (caja) {
+      var ant = (d.anteriores || []).map(function (x) { return "<li>" + (x.portada ? '<img src="' + esc(x.portada) + '" alt="" loading="lazy">' : "") + "<strong>" + esc(x.disco) + "</strong>" + esc(x.artista) + "</li>"; }).join("");
+      caja.innerHTML = '<div class="vinilo"><div class="vinilo-portada">' + portada + '</div><div><div class="vinilo-fecha">' + esc(fecha(v.fecha)) + (hoy ? "" : " · " + tt("último disco", "latest record")) + "</div><h2>" + titulo + '</h2><p class="artista">' + esc(v.artista) + (v.selector ? " · " + tt("elige", "picked by") + " " + esc(v.selector) : "") + "</p>" + (v.nota ? '<p class="nota">' + esc(v.nota) + "</p>" : "") + (v.embed ? '<iframe src="' + esc(v.embed) + '?theme=0" loading="lazy" allow="encrypted-media" title="Spotify"></iframe>' : v.spotify ? '<a class="enlace" href="' + esc(v.spotify) + '" rel="noopener">Spotify</a>' : "") + "</div></div>" + (ant ? '<div class="etiqueta" style="margin-top:2.5rem">' + tt("Domingos anteriores", "Past Sundays") + '</div><ul class="vinilo-anteriores">' + ant + "</ul>" : "");
+      caja.hidden = false;
+      var vacio = document.querySelector(".vinilo-vacio"); if (vacio) vacio.hidden = true;
+    }
+    if (mini && hoy) {
+      mini.innerHTML = '<a class="vinilo-mini" href="' + document.body.dataset.base + '/noches/#vinilo">' + portada + '<span class="t"><strong>' + tt("Vinilo del domingo", "Sunday vinyl") + "</strong>" + esc(v.artista) + " — " + esc(v.disco) + "</span></a>";
+      mini.hidden = false;
+    }
+  }).catch(function () { /* nada */ });
+})();

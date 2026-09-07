@@ -105,3 +105,5 @@ Redesplegar: `gcloud run deploy rosso-vigilante --source vigilante --region us-c
 ## Sitio bilingüe
 
 `python build.py` genera / y /en/. Textos con t(es, en) en build.py; site.js usa tt() según <html lang>. Campos *_en en content/site.json y content/noches.json.
+
+`VINILOS_SHEET_ID` = hoja "Vinilos ROSSO" (1Cu9DkIA_yHkblMxnoW3_WtZ0NgGtErRhs4HF9gqYdcA). GET /vinilo; el recordatorio del lunes avisa si falta el disco del domingo.

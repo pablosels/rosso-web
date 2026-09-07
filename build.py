@@ -267,6 +267,7 @@ def pag_inicio():
     <div class="etiqueta">{t("Esta semana", "This week")}</div>
     <ul class="series agenda-vacia">{series}</ul>
     <div data-agenda="6" hidden></div>
+    <div data-vinilo-mini hidden></div>
     <a class="enlace" href="{B}/noches/">{t("Todas las noches", "All the nights")}</a>
   </div>
   <div class="franja-col">
@@ -333,6 +334,11 @@ def pag_noches():
 </section>
 {cine("espacio_vistaconsola", t("La consola de DJ de ROSSO bajo el techo de luces", "ROSSO's DJ booth under the ceiling of lights"), t("Miércoles a sábado · sesiones de DJ · 9 pm – 1 am", "Wednesday to Saturday · DJ sessions · 9 pm – 1 am"), "50% 72%")}
 <section class="noches">{series}</section>
+<section class="vinilo-sec" id="vinilo">
+  <div class="etiqueta">{t("Vinilo del domingo", "Sunday vinyl")}</div>
+  <p class="nota vinilo-vacio">{t("Cada domingo suena un disco completo, de principio a fin. El de esta semana se anuncia aquí y en", "Every Sunday one record plays start to finish. This week's is announced here and on")} <a href="https://www.instagram.com/{SITE['instagram']}/">@{SITE['instagram']}</a>.</p>
+  <div data-vinilo hidden></div>
+</section>
 <section class="fechas-sec">
   <div class="etiqueta">{t("Quién toca", "Who's playing")}</div>
   <p class="agenda-vacia nota">{t("La programación de la semana se publica cada lunes. Síguenos en", "The week's lineup is posted every Monday. Follow us at")} <a href="https://www.instagram.com/{SITE['instagram']}/">@{SITE['instagram']}</a>.</p>

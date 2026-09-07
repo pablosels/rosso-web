@@ -299,3 +299,23 @@ figure{margin:0}
 .nav .idioma{opacity:.7;margin-left:.6rem;padding-left:.9rem;border-left:1px solid var(--linea)}
 .nav .idioma:hover{opacity:1}
 @media (max-width:760px){.nav .idioma{margin-left:0;padding-left:0;border-left:0}}
+
+/* vinilo del domingo */
+.vinilo-sec{padding:0 var(--gutter) 3rem;max-width:var(--ancho);margin:0 auto}
+.vinilo{display:grid;grid-template-columns:minmax(180px,320px) 1fr;gap:2rem;align-items:start}
+.vinilo-portada{aspect-ratio:1;background:rgba(229,232,232,.06);overflow:hidden}
+.vinilo-portada img{width:100%;height:100%;object-fit:cover;display:block}
+.vinilo-fecha{font-family:var(--mono);font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--carmin-claro);margin-bottom:.6rem}
+.vinilo h2{margin:0 0 .2rem}
+.vinilo .artista{font-size:clamp(17px,1.6vw,20px);color:var(--ink-suave);margin:0 0 1rem}
+.vinilo .nota{margin:0 0 1rem}
+.vinilo iframe{width:100%;max-width:520px;height:152px;border:0;border-radius:12px;margin-top:.6rem}
+.vinilo-anteriores{margin:2.5rem 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:1rem}
+.vinilo-anteriores li{font-size:13px;color:var(--ink-suave)}
+.vinilo-anteriores img{width:100%;aspect-ratio:1;object-fit:cover;display:block;margin-bottom:.4rem;background:rgba(229,232,232,.06)}
+.vinilo-anteriores strong{display:block;color:var(--ink);font-weight:500}
+.vinilo-mini{display:flex;gap:.9rem;align-items:center;margin:1rem 0 0;padding-top:1rem;border-top:1px solid var(--linea)}
+.vinilo-mini img{width:56px;height:56px;object-fit:cover;flex:none}
+.vinilo-mini .t{font-size:14px;line-height:1.35}
+.vinilo-mini .t strong{display:block;font-weight:500}
+@media (max-width:760px){.vinilo{grid-template-columns:1fr}.vinilo-portada{max-width:320px}}
