@@ -78,29 +78,69 @@ def spotify_info(url):
     return info
 
 
+_itunes = {}
+
+
+def itunes_portada(artista, disco):
+    """Portada 600x600 desde la búsqueda pública de iTunes cuando no hay liga de Spotify."""
+    clave = (artista + "|" + disco).lower()
+    if clave in _itunes:
+        return _itunes[clave]
+    portada = ""
+    try:
+        r = requests.get("https://itunes.apple.com/search", params={"term": f"{artista} {disco}", "entity": "album", "limit": 5}, timeout=10)
+        if r.ok:
+            for res in r.json().get("results", []):
+                if disco.lower().split("(")[0].strip()[:12] in res.get("collectionName", "").lower():
+                    portada = res.get("artworkUrl100", "").replace("100x100bb", "600x600bb")
+                    break
+            if not portada and r.json().get("results"):
+                portada = r.json()["results"][0].get("artworkUrl100", "").replace("100x100bb", "600x600bb")
+    except Exception as e:
+        print("itunes fallo:", e)
+    _itunes[clave] = portada
+    return portada
+
+
 def filas(hoy=None):
     hoy = hoy or dt.date.today()
     if not SHEET_ID:
         return []
     if time.time() - _cache["t"] < 600 and _cache["filas"]:
         return _cache["filas"]
-    r = _session().get(f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/A1:H400", timeout=20)
+    r = None
+    for intento in range(3):                 # Sheets a veces contesta 503; se reintenta
+        r = _session().get(f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/A1:H400", timeout=20)
+        if r.status_code < 500:
+            break
+        time.sleep(1.5)
     r.raise_for_status()
     vals = r.json().get("values", [])
     if not vals:
         return []
     cab = [c.strip().lower() for c in vals[0]]
-    out = []
+    con_fecha, cola = [], []
     for f in vals[1:]:
         d = {cab[i]: (f[i].strip() if i < len(f) else "") for i in range(len(cab))}
-        fecha = _fecha(d.get("fecha"), hoy)
-        if not fecha or not d.get("disco") or d.get("artista", "").lower().startswith("ejemplo"):
+        if not d.get("disco") or d.get("artista", "").lower().startswith("ejemplo"):
             continue
+        fecha = _fecha(d.get("fecha"), hoy)
+        (con_fecha if fecha else cola).append((fecha, d))
+    ocupados = {f.isoformat() for f, _ in con_fecha}
+    dom = proximo_domingo(hoy)
+    for _, d in cola:                       # sin fecha: siguiente domingo libre, en el orden de la hoja
+        while dom.isoformat() in ocupados:
+            dom += dt.timedelta(days=7)
+        ocupados.add(dom.isoformat())
+        con_fecha.append((dom, d))
+    out = []
+    for fecha, d in con_fecha:
         sp = spotify_info(d.get("spotify", ""))
+        portada = sp.get("portada", "") or itunes_portada(d.get("artista", ""), d.get("disco", ""))
         out.append({
             "fecha": fecha.isoformat(), "artista": d.get("artista", ""), "disco": d.get("disco", ""),
             "anio": d.get("anio", "") or d.get("año", ""), "nota": d.get("nota", ""), "selector": d.get("selector", ""),
-            "spotify": sp.get("url", ""), "embed": sp.get("embed", ""), "portada": sp.get("portada", ""),
+            "spotify": sp.get("url", ""), "embed": sp.get("embed", ""), "portada": portada, "auto": not d.get("fecha"),
         })
     out.sort(key=lambda x: x["fecha"])
     _cache.update(t=time.time(), filas=out)
