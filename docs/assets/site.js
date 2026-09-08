@@ -383,7 +383,7 @@
 (function () {
   var API = document.body.dataset.api || "", B = document.body.dataset.base || "", EN = window.ROSSO_EN, tt = window.ROSSO_tt;
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
-  function fl(iso) { var p = iso.split("-"), M = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"], ME = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; return EN ? ME[+p[1] - 1] + " " + (+p[2]) + ", " + p[0] : (+p[2]) + " de " + M[+p[1] - 1] + " de " + p[0]; }
+  function fl(iso) { var p = iso.split("-"), M = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"], ME = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; return EN ? ME[+p[1] - 1] + " " + (+p[2]) : (+p[2]) + " de " + M[+p[1] - 1]; }
   var lista = document.querySelector("[data-djs]");
   if (lista && API) fetch(API + "/djs", { mode: "cors" }).then(function (r) { return r.json(); }).then(function (d) {
     if (!d.djs || !d.djs.length) return;
@@ -416,6 +416,7 @@
       function li(n) { return '<li><span class="f">' + esc(EN && n.fecha_larga_en ? n.fecha_larga_en : n.fecha_larga) + (n.hora ? " · " + esc(n.hora) : "") + '</span><span class="t">' + (n.genero ? '<span class="g">' + esc(n.genero) + "</span>" : "") + (n.preventa ? ' <a class="enlace enlace-mini" href="' + esc(n.preventa) + '" rel="noopener">' + tt("Preventa", "Tickets") + "</a>" : "") + "</span></li>"; }
       document.getElementById("dj-proximas").innerHTML = d.proximas.length ? d.proximas.map(li).join("") : "<li><span class=\"t\">" + tt("Sin fecha programada todavía.", "No date scheduled yet.") + "</span></li>";
       document.getElementById("dj-pasadas").innerHTML = d.pasadas.map(li).join("");
+      if (!d.pasadas.length) { var hp = document.getElementById("dj-pasadas"); hp.hidden = true; hp.previousElementSibling.hidden = true; }
       perfil.hidden = false;
     }).catch(function () { document.getElementById("dj-error").hidden = false; });
   }
