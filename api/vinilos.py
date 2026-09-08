@@ -38,13 +38,22 @@ def _fecha(txt, hoy):
             pass
     if not f:
         return None
-    if f < hoy - dt.timedelta(days=3) and f.day <= 12:     # hoja en formato gringo: día y mes volteados
+        # La hoja está en formato gringo: lo que Pablo escribe como 10/09 (10 de septiembre) se guarda
+    # como 9 de octubre. Si día y mes son intercambiables, se prefiere la lectura que cae en la
+    # ventana de la agenda (de 3 días atrás a 21 adelante); si ninguna cae ahí, la que no sea pasado.
+    volteada = None
+    if f.day <= 12 and f.day != f.month:
         try:
-            v = f.replace(month=f.day, day=f.month)
-            if hoy - dt.timedelta(days=3) <= v <= hoy + dt.timedelta(days=120):
-                return v
+            volteada = f.replace(month=f.day, day=f.month)
         except ValueError:
-            pass
+            volteada = None
+    if volteada:
+        ini, fin = hoy - dt.timedelta(days=3), hoy + dt.timedelta(days=21)
+        en_ventana = [f for f in (f, volteada) if ini <= f <= fin]
+        if len(en_ventana) == 1:
+            return en_ventana[0]
+        if f < ini <= volteada <= hoy + dt.timedelta(days=120):
+            return volteada
     return f
 
 
