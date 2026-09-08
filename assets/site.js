@@ -30,11 +30,15 @@
   try {
     if (!sessionStorage.getItem("rosso_visita")) { sessionStorage.setItem("rosso_visita", "1"); medir("visita"); }
   } catch (e) { medir("visita"); }
-  if (location.pathname.indexOf("/carta") === 0) medir("carta");
+  var ruta = location.pathname.replace(/^\/en/, "");
+  ["carta", "noches", "club", "producciones", "regalo"].forEach(function (p) {
+    if (ruta.indexOf("/" + p) === 0) medir(p === "producciones" ? "produccion" : p);
+  });
   document.addEventListener("click", function (ev) {
-    var a = ev.target.closest && ev.target.closest("a[href*='wa.me'], a[href*='opentable.com']");
+    var a = ev.target.closest && ev.target.closest("a[href*='wa.me'], a[href*='opentable.com'], a[href*='instagram.com'], a[href*='spotify.com']");
     if (!a) return;
-    medir(a.href.indexOf("wa.me") >= 0 ? "whatsapp" : "opentable");
+    var h = a.href;
+    medir(h.indexOf("wa.me") >= 0 ? "whatsapp" : h.indexOf("opentable") >= 0 ? "opentable" : h.indexOf("instagram") >= 0 ? "instagram" : "spotify");
   });
 
   // menú móvil

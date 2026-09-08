@@ -15,7 +15,7 @@ import google.auth
 from google.auth.transport.requests import AuthorizedSession
 
 SHEET_ID = os.environ.get("METRICAS_SHEET_ID", "")
-TIPOS = {"visita", "reservar", "whatsapp", "evento", "carta", "opentable"}
+TIPOS = {"visita", "reservar", "whatsapp", "evento", "carta", "opentable", "noches", "club", "produccion", "regalo", "spotify", "instagram"}
 CANAL_RE = re.compile(r"^[a-z0-9_-]{1,24}$")
 
 _sesion = None
@@ -92,7 +92,10 @@ def texto_resumen(dias=7):
     t = r["total"]
     lineas = [f"📊 <b>Sitio web, últimos {dias} días</b>",
               f"Visitas {t.get('visita', 0)} · Buscaron mesa {t.get('reservar', 0)} · "
-              f"WhatsApp {t.get('whatsapp', 0)} · Eventos {t.get('evento', 0)}", ""]
+              f"WhatsApp {t.get('whatsapp', 0)} · Eventos {t.get('evento', 0)}",
+              f"Páginas: carta {t.get('carta', 0)} · noches {t.get('noches', 0)} · club {t.get('club', 0)} · "
+              f"locación {t.get('produccion', 0)} · regalo {t.get('regalo', 0)}",
+              f"Clics: OpenTable {t.get('opentable', 0)} · Instagram {t.get('instagram', 0)} · Spotify {t.get('spotify', 0)}", ""]
     canales = sorted(r["canales"].items(), key=lambda kv: -kv[1].get("visita", 0))
     for canal, v in canales:
         conv = v.get("reservar", 0) + v.get("whatsapp", 0) + v.get("evento", 0)
