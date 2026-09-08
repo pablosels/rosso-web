@@ -254,6 +254,7 @@ def pag_inicio():
   </div>
   <p class="hero-texto">{t("Un bar que explora el placer a través de los sentidos. Una experiencia íntima e inmersiva que se esconde detrás de la cocina de Pavorosso.", "A bar that explores pleasure through the senses. An intimate, immersive experience hidden behind the kitchen of Pavorosso.")}</p>
   <p class="hero-texto hero-texto-2">{t("Inspirado en el rojo como símbolo del deseo, ROSSO envuelve a sus invitados con atmósfera, música y ritmo.", "Inspired by red as the color of desire, ROSSO wraps its guests in atmosphere, music and rhythm.")}</p>
+  <div class="hoy" data-hoy hidden></div>
   <div class="hero-cta">
     <a class="btn" href="{B}/reservar/">{t("Reservar mesa", "Book a table")}</a>
     <a class="btn btn-linea" href="{B}/carta/">{t("Ver la carta", "See the menu")}</a>
@@ -334,6 +335,7 @@ def pag_noches():
 </section>
 {cine("espacio_vistaconsola", t("La consola de DJ de ROSSO bajo el techo de luces", "ROSSO's DJ booth under the ceiling of lights"), t("Miércoles a sábado · sesiones de DJ · 9 pm – 1 am", "Wednesday to Saturday · DJ sessions · 9 pm – 1 am"), "50% 72%")}
 <section class="noches">{series}</section>
+{f'<section class="playlist-sec"><div class="etiqueta">Sonido ROSSO</div><p class="nota">{t("Lo que suena en la casa, en una playlist que crece cada semana.", "What plays at the house, in a playlist that grows every week.")}</p><a class="btn btn-linea" href="{e(SITE["spotify_playlist"])}" rel="noopener">{t("Seguir en Spotify", "Follow on Spotify")}</a></section>' if SITE.get("spotify_playlist") else ""}
 <section class="vinilo-sec" id="vinilo">
   <div class="etiqueta">{t("Vinilo del domingo", "Sunday vinyl")}</div>
   <p class="nota vinilo-vacio">{t("Cada domingo suena un disco completo, de principio a fin. El de esta semana se anuncia aquí y en", "Every Sunday one record plays start to finish. This week's is announced here and on")} <a href="https://www.instagram.com/{SITE['instagram']}/">@{SITE['instagram']}</a>.</p>
@@ -344,6 +346,8 @@ def pag_noches():
   <p class="agenda-vacia nota">{t("La programación de la semana se publica cada lunes. Síguenos en", "The week's lineup is posted every Monday. Follow us at")} <a href="https://www.instagram.com/{SITE['instagram']}/">@{SITE['instagram']}</a>.</p>
   <div data-agenda="21" hidden></div>
   {lista}
+  <div class="etiqueta" style="margin-top:2.5rem">{t("Selectores", "Selectors")}</div>
+  <div data-djs hidden></div>
   <p class="nota">{t(f"Para las noches con música la mesa se reserva igual: hasta {SITE['max_widget']} personas", f"On music nights tables are booked the same way: up to {SITE['max_widget']} guests")} <a href="{B}/reservar/">{t("por OpenTable", "on OpenTable")}</a>, {t("grupos por", "groups via")} <a href="{wa(t('Hola, ROSSO. Quiero reservar para un grupo.', 'Hi ROSSO, I would like to book for a group.'))}">WhatsApp</a>.</p>
 </section>
 """
@@ -680,6 +684,53 @@ def pag_producciones():
     return pagina(t("Locación para producciones · ROSSO", "Location hire · ROSSO"), cuerpo, "/producciones/", t("Renta ROSSO como locación para fotografía, video, cine y contenido: speakeasy de luz roja en Roma Norte, disponible cuando el bar está cerrado.", "Hire ROSSO as a location for photo, video, film and content: a red-lit speakeasy in Roma Norte, available when the bar is closed."), clase="pag-producciones")
 
 
+# ---------------------------------------------------------------- perfil de DJ y Sello ROSSO
+def pag_dj():
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">{t("Selector", "Selector")}</div>
+  <h1 id="dj-nombre">…</h1>
+  <p class="nota" id="dj-genero"></p>
+</section>
+<section class="dj-sec" id="dj" hidden>
+  <div class="dj-datos">
+    <p id="dj-ig"></p>
+    <p id="dj-resumen" class="nota"></p>
+  </div>
+  <div class="etiqueta">{t("Próximas fechas", "Upcoming dates")}</div>
+  <ul class="agenda" id="dj-proximas"></ul>
+  <div class="etiqueta" style="margin-top:2rem">{t("Ha tocado en ROSSO", "Has played at ROSSO")}</div>
+  <ul class="agenda agenda-pasada" id="dj-pasadas"></ul>
+  <p class="nota"><a class="enlace" href="{B}/noches/">{t("Todas las noches", "All the nights")}</a></p>
+</section>
+<p class="nota" id="dj-error" hidden>{t("No encontramos a ese selector.", "We could not find that selector.")}</p>
+"""
+    return pagina(t("Selector · ROSSO", "Selector · ROSSO"), cuerpo, "/dj/", t("Selectores que tocan en ROSSO.", "Selectors who play at ROSSO."), clase="pag-dj", extra_head='<meta name="robots" content="noindex">')
+
+
+def pag_sello():
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">Barra · uso interno</div>
+  <h1>Sello ROSSO.</h1>
+  <p class="nota">Busca al cliente por los últimos dígitos de su WhatsApp o por nombre. Cada {SITE.get('sello_premio_cada', 5)} visitas, cóctel de la casa.</p>
+</section>
+<section class="canje">
+  <form class="forma" id="forma-sello-buscar" novalidate>
+    <div class="fila">
+      <div class="campo"><label for="s-q">WhatsApp o nombre</label><input id="s-q" name="q" placeholder="4 últimos dígitos" autocomplete="off"></div>
+      <div class="campo"><label for="s-pin">PIN de barra</label><input id="s-pin" name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8"></div>
+    </div>
+    <button class="btn" type="submit">Buscar</button>
+  </form>
+  <div id="s-lista" class="sello-lista"></div>
+  <p class="forma-msg" id="forma-msg" role="status"></p>
+  <p class="nota mini">¿No está en el Club? Que se dé de alta en <a href="{A}/club/">rossospeakeasy.com/club</a> desde su teléfono y vuelve a buscar.</p>
+</section>
+"""
+    return pagina("Sello ROSSO · barra", cuerpo, "/club/sello/", "Uso interno.", clase="pag-sello", extra_head='<meta name="robots" content="noindex,nofollow">')
+
+
 def pag_404():
     cuerpo = f"""
 <section class="encabezado">
@@ -716,9 +767,10 @@ def main():
                    "regalo/index.html": pag_regalo(), "regalo/gracias/index.html": pag_regalo_gracias(),
                    "regalo/tarjeta/index.html": pag_regalo_tarjeta(), "regalo/canje/index.html": pag_regalo_canje(),
                    "club/index.html": pag_club(), "privacidad/index.html": pag_privacidad(),
-                   "producciones/index.html": pag_producciones()}
+                   "producciones/index.html": pag_producciones(), "dj/index.html": pag_dj(), "club/sello/index.html": pag_sello()}
         if idioma == "en":
             paginas.pop("regalo/canje/index.html")     # la barra trabaja en español
+            paginas.pop("club/sello/index.html")
         for ruta, contenido in paginas.items():
             destino = DOCS / ("en/" if idioma == "en" else "") / ruta
             destino.parent.mkdir(parents=True, exist_ok=True)

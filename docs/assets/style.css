@@ -319,3 +319,27 @@ figure{margin:0}
 .vinilo-mini .t{font-size:14px;line-height:1.35}
 .vinilo-mini .t strong{display:block;font-weight:500}
 @media (max-width:760px){.vinilo{grid-template-columns:1fr}.vinilo-portada{max-width:320px}}
+
+/* esta noche */
+.hoy{margin:0 0 1.6rem;padding:1rem 1.2rem;border:1px solid var(--linea);display:flex;gap:1rem;align-items:center;flex-wrap:wrap;max-width:560px}
+.hoy .k{font-family:var(--mono);font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--carmin-claro);flex:none}
+.hoy .t{flex:1 1 200px;line-height:1.35}
+.hoy .t strong{font-weight:500}
+.hoy img{width:48px;height:48px;object-fit:cover;flex:none}
+.hoy a.enlace{margin:0}
+/* selectores y perfil */
+.djs{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.8rem}
+.djs li{border:1px solid var(--linea);padding:.9rem 1rem;font-size:14px;color:var(--ink-suave)}
+.djs li a{display:block;color:var(--ink);font-weight:500;font-size:16px}
+.djs .g{display:block}
+.djs .p{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--carmin-claro);margin-top:.4rem;display:block}
+.dj-sec{padding:0 var(--gutter) 4rem;max-width:var(--ancho);margin:0 auto}
+.agenda-pasada li{opacity:.7}
+.playlist-sec{padding:0 var(--gutter) 3rem;max-width:var(--ancho);margin:0 auto}
+/* sello */
+.sello-lista{display:grid;gap:.7rem}
+.sello-item{border:1px solid var(--linea);padding:1rem 1.1rem;display:flex;gap:1rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.sello-item .n{font-weight:500}
+.sello-item .d{font-size:14px;color:var(--ink-suave)}
+.sello-item .sellos{font-family:var(--mono);letter-spacing:.3em;font-size:18px}
+.sello-item.premio{border-color:var(--carmin-claro);background:rgba(180,5,25,.14)}

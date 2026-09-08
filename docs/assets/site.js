@@ -349,3 +349,111 @@
     }
   }).catch(function () { /* nada */ });
 })();
+
+/* esta noche (inicio) + reservar con fecha en la liga */
+(function () {
+  var API = document.body.dataset.api || "", B = document.body.dataset.base || "", EN = window.ROSSO_EN, tt = window.ROSSO_tt;
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function hoyISO() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  var fecha = document.getElementById("r-fecha");
+  if (fecha) { var q = new URLSearchParams(location.search).get("fecha"); if (q && /^\d{4}-\d{2}-\d{2}$/.test(q) && q >= fecha.min) fecha.value = q; }
+  var caja = document.querySelector("[data-hoy]");
+  if (!caja || !API) return;
+  var hoy = hoyISO(), dow = new Date().getDay();   // 0 domingo, 1 lunes
+  function pinta(html) { caja.innerHTML = html; caja.hidden = false; }
+  var reservaHoy = '<a class="enlace" href="' + B + '/reservar/?fecha=' + hoy + '">' + tt("Reservar hoy", "Book tonight") + "</a>";
+  if (dow === 1) { pinta('<span class="k">' + tt("Hoy", "Today") + '</span><span class="t">' + tt("Lunes cerrado. Nos vemos mañana desde las 6 pm.", "Closed on Mondays. See you tomorrow from 6 pm.") + "</span>"); return; }
+  if (dow === 0) {
+    fetch(API + "/vinilo", { mode: "cors" }).then(function (r) { return r.json(); }).then(function (d) {
+      var v = d && d.vinilo;
+      if (v && v.fecha === hoy) pinta('<span class="k">' + tt("Hoy", "Today") + "</span>" + (v.portada ? '<img src="' + esc(v.portada) + '" alt="">' : "") + '<span class="t"><strong>' + tt("Vinilo del domingo", "Sunday vinyl") + ":</strong> " + esc(v.artista) + " — " + esc(v.disco) + " · 4 pm</span>" + reservaHoy);
+      else pinta('<span class="k">' + tt("Hoy", "Today") + '</span><span class="t">' + tt("Domingo de vinilos completos, 4 a 11 pm.", "Full-vinyl Sunday, 4 to 11 pm.") + "</span>" + reservaHoy);
+    }).catch(function () { });
+    return;
+  }
+  fetch(API + "/agenda", { mode: "cors" }).then(function (r) { return r.json(); }).then(function (d) {
+    var n = (d.noches || []).filter(function (x) { return x.fecha === hoy; })[0];
+    if (n) pinta('<span class="k">' + tt("Hoy", "Today") + '</span><span class="t"><strong>' + esc(n.dj) + "</strong>" + (n.genero ? " · " + esc(n.genero) : "") + (n.hora ? " · " + esc(n.hora) : "") + "</span>" + reservaHoy);
+    else if (dow === 2) pinta('<span class="k">' + tt("Hoy", "Today") + '</span><span class="t">' + tt("Martes tranquilo: barra abierta desde las 6 pm.", "Quiet Tuesday: bar open from 6 pm.") + "</span>" + reservaHoy);
+    else pinta('<span class="k">' + tt("Hoy", "Today") + '</span><span class="t">' + tt("Sesión de DJ desde las 9 pm.", "DJ session from 9 pm.") + "</span>" + reservaHoy);
+  }).catch(function () { });
+})();
+
+/* selectores: lista en noches, liga en la agenda y perfil */
+(function () {
+  var API = document.body.dataset.api || "", B = document.body.dataset.base || "", EN = window.ROSSO_EN, tt = window.ROSSO_tt;
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function fl(iso) { var p = iso.split("-"), M = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"], ME = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; return EN ? ME[+p[1] - 1] + " " + (+p[2]) + ", " + p[0] : (+p[2]) + " de " + M[+p[1] - 1] + " de " + p[0]; }
+  var lista = document.querySelector("[data-djs]");
+  if (lista && API) fetch(API + "/djs", { mode: "cors" }).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d.djs || !d.djs.length) return;
+    lista.innerHTML = '<ul class="djs">' + d.djs.map(function (x) {
+      return '<li><a href="' + B + "/dj/?n=" + encodeURIComponent(x.slug) + '">' + esc(x.dj) + "</a>" + (x.genero ? '<span class="g">' + esc(x.genero) + "</span>" : "") + '<span class="p">' + (x.proxima ? tt("vuelve el ", "back on ") + esc(fl(x.proxima)) : x.fechas + " " + tt(x.fechas === 1 ? "noche" : "noches", x.fechas === 1 ? "night" : "nights")) + "</span></li>";
+    }).join("") + "</ul>";
+    lista.hidden = false;
+  }).catch(function () { });
+  // en las agendas, el nombre del DJ enlaza a su perfil
+  document.querySelectorAll("[data-agenda]").forEach(function (caja) {
+    new MutationObserver(function () {
+      caja.querySelectorAll("li .t > strong").forEach(function (st) {
+        if (st.querySelector("a")) return;
+        var slug = st.textContent.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+        st.innerHTML = '<a href="' + B + "/dj/?n=" + encodeURIComponent(slug) + '">' + esc(st.textContent) + "</a>";
+      });
+    }).observe(caja, { childList: true, subtree: true });
+  });
+  var perfil = document.getElementById("dj");
+  if (perfil && API) {
+    var k = (new URLSearchParams(location.search).get("n") || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    fetch(API + "/dj/" + k, { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d) { document.getElementById("dj-nombre").textContent = "…"; document.getElementById("dj-error").hidden = false; return; }
+      var p = d.perfil || {};
+      document.getElementById("dj-nombre").textContent = p.dj || k;
+      document.title = (p.dj || k) + " · ROSSO";
+      document.getElementById("dj-genero").textContent = p.genero || "";
+      document.getElementById("dj-ig").innerHTML = p.instagram ? '<a class="enlace" href="https://www.instagram.com/' + esc(p.instagram) + '/" rel="noopener">@' + esc(p.instagram) + "</a>" : "";
+      document.getElementById("dj-resumen").textContent = tt(p.fechas + (p.fechas === 1 ? " noche" : " noches") + " en ROSSO.", p.fechas + (p.fechas === 1 ? " night" : " nights") + " at ROSSO.");
+      function li(n) { return '<li><span class="f">' + esc(EN && n.fecha_larga_en ? n.fecha_larga_en : n.fecha_larga) + (n.hora ? " · " + esc(n.hora) : "") + '</span><span class="t">' + (n.genero ? '<span class="g">' + esc(n.genero) + "</span>" : "") + (n.preventa ? ' <a class="enlace enlace-mini" href="' + esc(n.preventa) + '" rel="noopener">' + tt("Preventa", "Tickets") + "</a>" : "") + "</span></li>"; }
+      document.getElementById("dj-proximas").innerHTML = d.proximas.length ? d.proximas.map(li).join("") : "<li><span class=\"t\">" + tt("Sin fecha programada todavía.", "No date scheduled yet.") + "</span></li>";
+      document.getElementById("dj-pasadas").innerHTML = d.pasadas.map(li).join("");
+      perfil.hidden = false;
+    }).catch(function () { document.getElementById("dj-error").hidden = false; });
+  }
+})();
+
+/* Sello ROSSO (barra) */
+(function () {
+  var API = document.body.dataset.api || "", forma = document.getElementById("forma-sello-buscar"), lista = document.getElementById("s-lista"), msg = document.getElementById("forma-msg");
+  if (!forma || !API) return;
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function aviso(t, c) { msg.textContent = t; msg.className = "forma-msg" + (c ? " " + c : ""); }
+  function sellos(n, cada) { var k = n % cada, s = ""; for (var i = 0; i < cada; i++) s += i < k ? "●" : "○"; return s; }
+  function pinta(cl, cada) {
+    lista.innerHTML = cl.map(function (c) {
+      return '<div class="sello-item" data-wa="' + esc(c.whatsapp) + '"><div><div class="n">' + esc(c.nombre) + ' <span class="d">· …' + esc(c.fin) + "</span></div><div class=\"d\">" + c.visitas + " visitas" + (c.ultima ? " · última " + esc(c.ultima.slice(0, 10)) : "") + " · faltan " + c.faltan + " para el cóctel</div></div><div class=\"sellos\">" + sellos(c.visitas, cada) + '</div><button class="btn" type="button">Registrar visita</button></div>';
+    }).join("");
+  }
+  forma.addEventListener("submit", function (ev) {
+    ev.preventDefault(); aviso("Buscando…"); lista.innerHTML = "";
+    var pin = forma.pin.value.trim();
+    fetch(API + "/sello/buscar?q=" + encodeURIComponent(forma.q.value.trim()), { mode: "cors", headers: { "X-Pin": pin } })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (r) {
+        if (!r.ok) { aviso(r.j.error || "No se pudo.", "error"); return; }
+        if (!r.j.clientes.length) { aviso("No está en el Club con esos datos.", "error"); return; }
+        aviso(""); pinta(r.j.clientes, r.j.premio_cada);
+      }).catch(function () { aviso("Sin conexión con la API.", "error"); });
+  });
+  lista.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button"); if (!b) return;
+    var item = b.closest(".sello-item"); b.disabled = true; aviso("Registrando…");
+    fetch(API + "/sello/registrar", { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ whatsapp: item.dataset.wa, pin: forma.pin.value.trim(), quien: "barra" }) })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (r) {
+        if (!r.ok) { aviso(r.j.error || "No se pudo.", "error"); b.disabled = false; return; }
+        item.classList.toggle("premio", r.j.premio);
+        aviso(r.j.premio ? "¡Visita " + r.j.visitas + "! Toca cóctel de la casa para " + r.j.nombre + "." : "Visita " + r.j.visitas + " registrada. Faltan " + r.j.faltan + " para el cóctel.", "ok");
+        b.textContent = r.j.premio ? "¡Premio!" : "Registrada";
+      }).catch(function () { aviso("Sin conexión con la API.", "error"); b.disabled = false; });
+  });
+})();

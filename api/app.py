@@ -26,6 +26,7 @@ import regalo as regalo_mod
 import clientes as clientes_mod
 import descripciones as descripciones_mod
 import vinilos as vinilos_mod
+import sello as sello_mod
 import cotizador
 import tarifario as tf
 
@@ -211,6 +212,75 @@ def recordatorio_agenda():
     return jsonify(ok=True, faltan=faltan)
 
 
+# ------------------------------------------------------------------ perfiles de DJs
+_djs_cache = {"t": 0, "datos": None}
+
+
+@app.get("/djs")
+def get_djs():
+    if _djs_cache["datos"] is None or time.time() - _djs_cache["t"] > 300:
+        try:
+            _djs_cache.update(datos=agenda_mod.djs(), t=time.time())
+        except Exception as e:
+            print("djs fallo:", e)
+            _djs_cache.update(datos=_djs_cache["datos"] or [], t=time.time())
+    resp = jsonify({"djs": _djs_cache["datos"]})
+    resp.headers["Cache-Control"] = "public, max-age=300"
+    return resp
+
+
+@app.get("/dj/<k>")
+def get_dj(k):
+    k = re.sub(r"[^a-z0-9-]", "", k.lower())[:60]
+    try:
+        d = agenda_mod.dj(k)
+    except Exception as e:
+        print("dj fallo:", e)
+        d = None
+    if not d:
+        return jsonify(error="no encontramos a ese selector"), 404
+    resp = jsonify(d)
+    resp.headers["Cache-Control"] = "public, max-age=300"
+    return resp
+
+
+# ------------------------------------------------------------------ Sello ROSSO (lealtad por visitas)
+@app.get("/sello/buscar")
+def sello_buscar():
+    if not regalo_mod.CANJE_PIN or request.headers.get("X-Pin") != regalo_mod.CANJE_PIN:
+        return jsonify(error="PIN incorrecto"), 403
+    q = regalo_mod.limpiar_texto(request.args.get("q"), 40)
+    if len(q) < 3:
+        return jsonify(error="escribe al menos 3 caracteres"), 400
+    try:
+        return jsonify(clientes=sello_mod.buscar(q), premio_cada=sello_mod.PREMIO_CADA)
+    except Exception as e:
+        print("sello buscar fallo:", e)
+        return jsonify(error="no se pudo consultar; inténtalo otra vez"), 502
+
+
+@app.post("/sello/registrar")
+def sello_registrar():
+    d = request.get_json(silent=True, force=True) or {}
+    if not regalo_mod.CANJE_PIN or str(d.get("pin", "")) != regalo_mod.CANJE_PIN:
+        return jsonify(error="PIN incorrecto"), 403
+    try:
+        r = sello_mod.registrar(d.get("whatsapp"), regalo_mod.limpiar_texto(d.get("quien"), 40))
+    except LookupError as e:
+        return jsonify(error=str(e)), 404
+    except ValueError as e:
+        return jsonify(error=str(e)), 400
+    except Exception as e:
+        print("sello registrar fallo:", e)
+        return jsonify(error="no se pudo registrar; inténtalo otra vez"), 502
+    if r["premio"]:
+        try:
+            telegram(f"🏅 <b>Sello ROSSO</b>: {r['nombre']} llegó a su visita {r['visitas']}. Toca cóctel de la casa.")
+        except Exception:
+            pass
+    return jsonify(ok=True, **r)
+
+
 # ------------------------------------------------------------------ vinilo del domingo
 @app.get("/vinilo")
 def get_vinilo():
@@ -389,6 +459,12 @@ def clientes_cumples():
     if request.headers.get("X-Refresh-Key") != REFRESH_KEY:
         return jsonify(error="no autorizado"), 403
     texto = clientes_mod.texto_cumples()
+    try:
+        if sello_mod.SHEET_ID:
+            r = sello_mod.resumen_semana()
+            texto += f"\n\n🏅 Sello ROSSO, 7 días: {r['visitas']} visitas de {r['personas']} personas · {r['premios']} cócteles de premio."
+    except Exception as e:
+        print("sello resumen fallo:", e)
     telegram(texto)
     return jsonify(ok=True)
 

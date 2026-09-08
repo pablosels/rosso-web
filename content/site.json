@@ -56,5 +56,7 @@
       "closed"
     ]
   ],
-  "cocina_cierra_en": "11:00 pm"
+  "cocina_cierra_en": "11:00 pm",
+  "spotify_playlist": "",
+  "sello_premio_cada": 5
 }

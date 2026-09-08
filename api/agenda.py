@@ -102,6 +102,7 @@ def leer_filas():
             "fecha_larga_en": f"{DIAS_EN[fecha.weekday()]}, {MESES_EN[fecha.month - 1]} {fecha.day}",
             "hora": re.sub(r"\s*(AM|PM)$", lambda m: " " + m.group(1).lower(), d.get("hora", "").strip()),
             "dj": dj,
+            "slug": slug(dj),
             "genero": d.get("genero", ""),
             "instagram": _ig(d.get("instagram")),
             "preventa": d.get("preventa", "") if d.get("preventa", "").startswith("http") else "",
@@ -110,6 +111,45 @@ def leer_filas():
         })
     out.sort(key=lambda x: (x["fecha"], x["hora"]))
     return out
+
+
+def slug(nombre):
+    import unicodedata
+    s = unicodedata.normalize("NFKD", str(nombre or "")).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+
+
+def djs(hoy=None):
+    """Todos los selectores con cuántas veces han tocado y cuándo vuelven."""
+    hoy = hoy or dt.date.today()
+    por = {}
+    for x in leer_filas():
+        k = slug(x["dj"])
+        if not k:
+            continue
+        d = por.setdefault(k, {"slug": k, "dj": x["dj"], "genero": x["genero"], "instagram": x["instagram"], "fechas": 0, "proxima": None, "ultima": None})
+        d["fechas"] += 1
+        if x["genero"]:
+            d["genero"] = x["genero"]
+        if x["instagram"]:
+            d["instagram"] = x["instagram"]
+        if x["fecha"] >= hoy.isoformat():
+            if not d["proxima"] or x["fecha"] < d["proxima"]:
+                d["proxima"] = x["fecha"]
+        else:
+            if not d["ultima"] or x["fecha"] > d["ultima"]:
+                d["ultima"] = x["fecha"]
+    return sorted(por.values(), key=lambda d: (d["proxima"] or "9999", -d["fechas"]))
+
+
+def dj(k, hoy=None):
+    hoy = hoy or dt.date.today()
+    filas = [_publica(x) for x in leer_filas() if slug(x["dj"]) == k]
+    if not filas:
+        return None
+    base = next((d for d in djs(hoy) if d["slug"] == k), None)
+    return {"perfil": base, "proximas": [x for x in filas if x["fecha"] >= hoy.isoformat()],
+            "pasadas": [x for x in filas if x["fecha"] < hoy.isoformat()][::-1][:24]}
 
 
 def _publica(x):
