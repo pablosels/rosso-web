@@ -76,7 +76,7 @@ def wa(texto):
 
 
 # ---------------------------------------------------------------- plantilla
-NAV = [("Carta", "Menu", "/carta/"), ("Noches", "Nights", "/noches/"), ("Eventos", "Events", "/eventos/"), ("Reservar", "Book", "/reservar/")]
+NAV = [("Carta", "Menu", "/carta/"), ("Noches", "Nights", "/noches/"), ("Eventos", "Events", "/eventos/"), ("Locación", "Location hire", "/producciones/"), ("Reservar", "Book", "/reservar/")]
 if SITE.get("regalo_activo"):
     NAV.append(("Regalo", "Gift card", "/regalo/"))
 
@@ -287,6 +287,7 @@ def pag_inicio():
   <h2>{t("La casa entera, para ustedes.", "The whole house, for you.")}</h2>
   <p>{t(f"Cenas de cumpleaños, lanzamientos, afters. Hasta {SITE['aforo_total']} personas entre sentadas y de pie, barra completa y equipo dedicado. Cotizamos según la fecha.", f"Birthday dinners, launches, afterparties. Up to {SITE['aforo_total']} guests seated and standing, full bar and a dedicated team. Quotes depend on the date.")}</p>
   <a class="btn btn-linea" href="{B}/eventos/">{t("Cotizar un evento", "Get a quote")}</a>
+  <a class="btn btn-linea" href="{B}/producciones/">{t("Locación para foto y video", "Location for photo and video")}</a>
 </section>
 """
     return pagina(t("ROSSO · Speakeasy en Roma Norte", "ROSSO · Speakeasy in Roma Norte"), cuerpo, "/", clase="inicio")

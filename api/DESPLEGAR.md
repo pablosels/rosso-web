@@ -109,3 +109,5 @@ Redesplegar: `gcloud run deploy rosso-vigilante --source vigilante --region us-c
 `VINILOS_SHEET_ID` = hoja "Vinilos ROSSO" (1Cu9DkIA_yHkblMxnoW3_WtZ0NgGtErRhs4HF9gqYdcA). GET /vinilo; el recordatorio del lunes avisa si falta el disco del domingo.
 
 `VISITAS_SHEET_ID` = hoja "Visitas ROSSO" (1bjMJKcMpXk2aG-qGx8wnYpbXWgK08hGX_6L8vzP4l24, SA writer). Sello ROSSO: /club/sello/ con CANJE_PIN; GET /sello/buscar (X-Pin), POST /sello/registrar. Perfiles: GET /djs, GET /dj/<slug>, página /dj/?n=. Playlist: site.json spotify_playlist.
+
+`FECHAS_LITERAL=1` (15-sep): las hojas Agenda y Vinilos ya están en locale es_MX (POST /hojas/arreglar lo puso y reescribió las fechas); con la variable puesta el parser NO adivina día/mes. Si alguien vuelve a poner la hoja en inglés, quitar la variable.

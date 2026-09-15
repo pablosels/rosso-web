@@ -38,23 +38,28 @@ def _fecha(txt, hoy):
             pass
     if not f:
         return None
-        # La hoja está en formato gringo: lo que Pablo escribe como 10/09 (10 de septiembre) se guarda
-    # como 9 de octubre. Si día y mes son intercambiables, se prefiere la lectura que cae en la
-    # ventana de la agenda (de 3 días atrás a 21 adelante); si ninguna cae ahí, la que no sea pasado.
-    volteada = None
+    if os.environ.get("FECHAS_LITERAL") == "1":   # hoja ya en locale es_MX: sin adivinanzas
+        return f
+        # La hoja estaba en formato gringo: lo que se escribe como 10/09 (10 de septiembre) se guarda
+    # como 9 de octubre, y 15/09 se vuelve 15 de diciembre. Se generan las lecturas posibles y se
+    # toma la más cercana a hoy.
+    cand = [f]
     if f.day <= 12 and f.day != f.month:
         try:
-            volteada = f.replace(month=f.day, day=f.month)
+            cand.append(f.replace(month=f.day, day=f.month))
         except ValueError:
-            volteada = None
-    if volteada:
-        ini, fin = hoy - dt.timedelta(days=3), hoy + dt.timedelta(days=21)
-        en_ventana = [f for f in (f, volteada) if ini <= f <= fin]
-        if len(en_ventana) == 1:
-            return en_ventana[0]
-        if f < ini <= volteada <= hoy + dt.timedelta(days=120):
-            return volteada
-    return f
+            pass
+    else:
+        lejos = abs((f.year - hoy.year) * 12 + f.month - hoy.month) >= 2
+        if lejos:
+            for m in (hoy.month, hoy.month % 12 + 1):
+                try:
+                    c = f.replace(year=hoy.year + (1 if m < hoy.month else 0), month=m)
+                except ValueError:
+                    continue
+                if hoy - dt.timedelta(days=3) <= c <= hoy + dt.timedelta(days=21):
+                    cand.append(c)
+    return min(cand, key=lambda c: abs((c - hoy).days))
 
 
 def spotify_info(url):

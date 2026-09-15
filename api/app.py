@@ -212,6 +212,46 @@ def recordatorio_agenda():
     return jsonify(ok=True, faltan=faltan)
 
 
+# ------------------------------------------------------------------ mantenimiento de hojas
+@app.post("/hojas/arreglar")
+def hojas_arreglar():
+    """Pone locale es_MX en Agenda y Vinilos y reescribe la columna fecha de la agenda con las
+    fechas corregidas por el parser, como texto ISO. Idempotente."""
+    if not REFRESH_KEY or request.headers.get("X-Refresh-Key") != REFRESH_KEY:
+        return jsonify(error="no autorizado"), 401
+    import google.auth
+    from google.auth.transport.requests import AuthorizedSession
+    creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/spreadsheets"])
+    ses = AuthorizedSession(creds)
+    out = {}
+    for sid in (agenda_mod.SHEET_ID, vinilos_mod.SHEET_ID):
+        if not sid:
+            continue
+        r = ses.post(f"https://sheets.googleapis.com/v4/spreadsheets/{sid}:batchUpdate", timeout=20,
+                     json={"requests": [{"updateSpreadsheetProperties": {"properties": {"locale": "es_MX", "timeZone": "America/Mexico_City"}, "fields": "locale,timeZone"}}]})
+        out[sid[:8]] = r.status_code
+    # fechas de la agenda
+    r = ses.get(f"https://sheets.googleapis.com/v4/spreadsheets/{agenda_mod.SHEET_ID}/values/A1:C400", timeout=20)
+    vals = r.json().get("values", [])
+    hoy = dt.date.today()
+    filas, cambios = [], []
+    for i, f in enumerate(vals[1:], start=2):
+        txt = f[0] if f else ""
+        fecha = agenda_mod._fecha(txt, hoy) if txt else None
+        nuevo = fecha.isoformat() if fecha else txt
+        filas.append([nuevo])
+        if nuevo != txt:
+            cambios.append(f"{txt} -> {nuevo} ({f[2] if len(f) > 2 else ''})")
+    if filas:
+        r = ses.put(f"https://sheets.googleapis.com/v4/spreadsheets/{agenda_mod.SHEET_ID}/values/A2:A{len(filas) + 1}?valueInputOption=RAW",
+                    json={"values": filas}, timeout=20)
+        out["fechas"] = r.status_code
+    with _lock:
+        _agenda_cache.update(datos=None, t=0)
+    _djs_cache.update(datos=None, t=0)
+    return jsonify(ok=True, resultado=out, cambios=cambios)
+
+
 # ------------------------------------------------------------------ perfiles de DJs
 _djs_cache = {"t": 0, "datos": None}
 
