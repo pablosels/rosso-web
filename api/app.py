@@ -28,6 +28,7 @@ import descripciones as descripciones_mod
 import vinilos as vinilos_mod
 import sello as sello_mod
 import cotizador
+import pdf_cotizacion
 import tarifario as tf
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -516,6 +517,49 @@ NECESIDADES = {"barra": "Barra con bartender", "audio": "Audio y cabina de DJ", 
                "vestidor": "Espacio de vestidor / maquillaje", "carga": "Carga y descarga por la calle"}
 
 
+def armar_cotizacion_locacion(sol, fecha, horas, crew, nec, renta, abierto):
+    """Cotización de locación: renta del lugar por horas + IVA; extras listados como aparte."""
+    dia = tf.fecha_larga(fecha, "es")
+    iva = round(renta * 0.16)
+    total = renta + iva
+    if horas >= 12 and not abierto:
+        concepto = "Jornada completa de 12 horas, lunes"
+    elif horas >= 8:
+        concepto = f"Jornada de 8 horas" + (f" + {horas - 8} hora{'s' if horas - 8 > 1 else ''} extra" if horas > 8 else "")
+    else:
+        concepto = f"{max(3, horas)} horas de locación" + (" (mínimo 3)" if horas < 3 else "")
+    extras = [NECESIDADES[n] for n in nec]
+    tipo = TIPOS_PRODUCCION.get(sol["tipo"], "Producción")
+    return {
+        "archivo": f"ROSSO_Locacion_{fecha.isoformat()}_{re.sub(r'[^A-Za-z0-9]+', '-', sol['nombre'])[:30]}.pdf",
+        "idioma": "es",
+        "kicker": "Cotización de locación",
+        "titulo": (sol["proyecto"] or tipo) + " en ROSSO",
+        "subtitulo": f"{dia} · llamado {sol['hora']} · {horas} h · equipo de {crew}",
+        "cliente": sol["nombre"] + (f" · {sol['proyecto']}" if sol["proyecto"] else ""),
+        "fecha": dia, "horario": f"Desde las {sol['hora']}", "duracion": f"{horas} horas",
+        "invitados": f"{crew} personas entre equipo y talento", "modalidad": f"Locación · {tipo}",
+        "intro": ("Gracias por pensar en ROSSO como set. Somos un speakeasy de 40 m² en Puebla 329, Roma Norte: "
+                  "techo de luces, barra completa, cabina de DJ y rincón de sillones, disponible en las horas en que "
+                  "el bar está cerrado. Aquí va la propuesta para tu fecha; cualquier detalle lo ajustamos por WhatsApp."),
+        "bloques": [
+            {"tipo": "tabla", "titulo": "La locación",
+             "nota": "Renta solo del lugar: acceso, luz de sala y energía. " + ("Ese día abrimos al público; la producción debe terminar antes de las 4:00 pm (domingo 2:00 pm)." if abierto else "Lunes: el espacio es tuyo el día completo."),
+             "filas": [[concepto, dinero(renta), True], ["IVA 16%", dinero(iva), False]],
+             "total": dinero(total) + " MXN", "etiqueta_total": "TOTAL"},
+            {"tipo": "vinetas", "titulo": "Se cotiza aparte, según lo que necesiten",
+             "items": (extras or ["Barra con bartender", "Audio y cabina de DJ", "Cocina de Pavorosso", "Personal de apoyo"])
+                      + ["Cualquier otro requerimiento de producción que nos cuentes por WhatsApp."]},
+            {"tipo": "vinetas", "titulo": "Condiciones",
+             "items": ["Apartado del 50% para bloquear la fecha; el resto el día del llamado.",
+                       "Carga y descarga por la calle; el acceso es por la cocina de Pavorosso.",
+                       "Aforo máximo de 50 personas entre equipo y talento.",
+                       "Precios en pesos mexicanos. Vigencia de 10 días naturales."]},
+        ],
+        "cierre": f"ROSSO · WhatsApp +52 {WHATSAPP} · hola@rossospeakeasy.com · @rosso.speakeasy",
+    }
+
+
 @app.post("/produccion")
 def produccion():
     d = request.get_json(silent=True) or request.form.to_dict() or {}
@@ -560,6 +604,16 @@ def produccion():
     else:
         referencia = max(3, horas) * 1800
     aviso = "" if not abierto else " ⚠️ ese día abrimos; la producción tendría que terminar antes de la apertura."
+    ruta_pdf = None
+    try:
+        cfg = armar_cotizacion_locacion(sol, fecha, horas, crew, nec, referencia, abierto)
+        ruta_pdf = os.path.join("/tmp" if os.name != "nt" else os.environ.get("TEMP", "."), cfg["archivo"])
+        pdf_cotizacion.generar(cfg, ruta_pdf)
+        if BUCKET:
+            _bucket().blob(PREFIJO + f"producciones/{folio}.pdf").upload_from_filename(ruta_pdf)
+    except Exception as e:
+        print("pdf locación fallo:", e)
+        ruta_pdf = None
     telegram(
         f"🎬 <b>Solicitud de locación</b> · folio {folio}\n"
         f"{nombre} · <a href=\"https://wa.me/{whatsapp.lstrip('+')}\">WhatsApp</a>" + (f" · {sol['email']}" if sol['email'] else "") + "\n"
@@ -568,6 +622,8 @@ def produccion():
         f"Tarifa de referencia solo del lugar: <b>{dinero(referencia)}</b> + IVA\n"
         + (f"Necesita (extra): {', '.join(NECESIDADES[n] for n in nec)}\n" if nec else "")
         + (f"«{sol['mensaje']}»" if sol['mensaje'] else "")
+        + ("\n\nLa cotización en PDF va adjunta, lista para reenviar." if ruta_pdf else ""),
+        ruta_pdf, os.path.basename(ruta_pdf) if ruta_pdf else None
     )
     return jsonify(ok=True, folio=folio)
 
@@ -651,9 +707,9 @@ def armar_cotizacion(sol, calc):
         ]
         modalidad = "Evento privado — exclusiva" if es else "Private event — full buyout"
     return {
-        "archivo": f"BORRADOR_{fecha.isoformat()}_{re.sub(r'[^A-Za-z0-9]+', '-', sol['nombre'])[:30]}.docx",
+        "archivo": f"ROSSO_{'Cotizacion' if es else 'Proposal'}_{fecha.isoformat()}_{re.sub(r'[^A-Za-z0-9]+', '-', sol['nombre'])[:30]}.docx",
         "idioma": sol["idioma"],
-        "kicker": "Cotización — borrador automático" if es else "Proposal — automatic draft",
+        "kicker": "Cotización de evento" if es else "Event proposal",
         "titulo": titulo,
         "subtitulo": f"{dia} · {pax} {'personas' if es else 'guests'} · {sol['hora']}",
         "cliente": sol["nombre"], "fecha": dia, "horario": sol["hora"],
@@ -702,14 +758,22 @@ def eventos():
     calc = tf.cotizar_grupo(fecha, personas) if modalidad == "grupo" else tf.cotizar_exclusiva(fecha, personas, horas)
     folio = fecha.strftime("%y%m%d") + "-" + secrets.token_hex(2).upper()
 
-    # borrador en membrete
+    # cotización en membrete: PDF para el cliente, docx editable de respaldo
     cfg = armar_cotizacion(sol, calc)
-    ruta_docx = os.path.join("/tmp" if os.name != "nt" else os.environ.get("TEMP", "."), cfg["archivo"])
+    cfg["vigencia"] = fecha
+    tmp = "/tmp" if os.name != "nt" else os.environ.get("TEMP", ".")
+    ruta_docx = os.path.join(tmp, cfg["archivo"])
+    ruta_pdf = os.path.join(tmp, cfg["archivo"].replace(".docx", ".pdf"))
     try:
         cotizador.generar(cfg, ruta_docx)
     except Exception as e:
         print("cotizador fallo:", e)
         ruta_docx = None
+    try:
+        pdf_cotizacion.generar(cfg, ruta_pdf)
+    except Exception as e:
+        print("pdf fallo:", e)
+        ruta_pdf = None
 
     # copia en el bucket
     registro = dict(sol, fecha=fecha.isoformat(), folio=folio, modalidad=modalidad, calculo=calc)
@@ -717,6 +781,8 @@ def eventos():
         guardar(f"eventos/{folio}.json", registro)
         if ruta_docx and BUCKET:
             _bucket().blob(PREFIJO + f"eventos/{folio}.docx").upload_from_filename(ruta_docx)
+        if ruta_pdf and BUCKET:
+            _bucket().blob(PREFIJO + f"eventos/{folio}.pdf").upload_from_filename(ruta_pdf)
     except Exception as e:
         print("bucket fallo:", e)
 
@@ -739,9 +805,9 @@ def eventos():
              f"pidió: {sol['tipo']} · idioma {sol['idioma']}"
              + (f"\nMotivo: {sol['motivo']}" if sol["motivo"] else "")
              + (f"\nMensaje: {sol['mensaje']}" if sol["mensaje"] else "")
-             + f"\n\n{resumen}\n\nEl borrador en membrete va adjunto. Revísalo antes de mandarlo; al cliente sólo se le dijo que le contestamos por WhatsApp en menos de 24 h.")
+             + f"\n\n{resumen}\n\nLa cotización en PDF va adjunta, lista para reenviar al cliente. Al cliente sólo se le dijo que le contestamos por WhatsApp en menos de 24 h.")
     try:
-        telegram(texto, ruta_docx, cfg["archivo"] if ruta_docx else None)
+        telegram(texto, ruta_pdf or ruta_docx, os.path.basename(ruta_pdf) if ruta_pdf else (cfg["archivo"] if ruta_docx else None))
     except Exception as e:
         print("telegram fallo:", e)
     return jsonify(ok=True, folio=folio)
