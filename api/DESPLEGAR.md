@@ -111,3 +111,14 @@ Redesplegar: `gcloud run deploy rosso-vigilante --source vigilante --region us-c
 `VISITAS_SHEET_ID` = hoja "Visitas ROSSO" (1bjMJKcMpXk2aG-qGx8wnYpbXWgK08hGX_6L8vzP4l24, SA writer). Sello ROSSO: /club/sello/ con CANJE_PIN; GET /sello/buscar (X-Pin), POST /sello/registrar. Perfiles: GET /djs, GET /dj/<slug>, página /dj/?n=. Playlist: site.json spotify_playlist.
 
 `FECHAS_LITERAL=1` (15-sep): las hojas Agenda y Vinilos ya están en locale es_MX (POST /hojas/arreglar lo puso y reescribió las fechas); con la variable puesta el parser NO adivina día/mes. Si alguien vuelve a poner la hoja en inglés, quitar la variable.
+
+## Borradores de correo automáticos (cotizaciones)
+
+Cuando el cliente deja correo, la API deja un borrador en el Gmail de Pablo (desde hola@) con el PDF adjunto.
+Necesita la contraseña de aplicación de Gmail (Cuenta Google > Seguridad > Contraseñas de aplicaciones; puede ser la misma "hola rosso" o una nueva "rosso api"). Pablo, en PowerShell:
+
+```powershell
+Read-Host "contraseña de aplicación (16 letras, sin espacios)" | Set-Content -NoNewline $env:TEMP\ga.txt; gcloud secrets create gmail-app-rosso --data-file=$env:TEMP\ga.txt --project motor-facturas; Remove-Item $env:TEMP\ga.txt
+gcloud secrets add-iam-policy-binding gmail-app-rosso --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project motor-facturas
+gcloud run services update rosso-web-api --region us-central1 --project motor-facturas --update-secrets=GMAIL_APP_PASSWORD=gmail-app-rosso:latest --update-env-vars=GMAIL_USER=pabloseldner87@gmail.com
+```

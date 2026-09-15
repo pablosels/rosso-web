@@ -29,6 +29,7 @@ import vinilos as vinilos_mod
 import sello as sello_mod
 import cotizador
 import pdf_cotizacion
+import correo as correo_mod
 import tarifario as tf
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -560,6 +561,21 @@ def armar_cotizacion_locacion(sol, fecha, horas, crew, nec, renta, abierto):
     }
 
 
+def _borrador_locacion(sol, fecha, folio, ruta_pdf):
+    if not correo_mod.configurado():
+        return f"\n\n✉️ El cliente dejó correo: {sol['email']} (los borradores automáticos se activan con GMAIL_APP_PASSWORD)."
+    if not ruta_pdf:
+        return ""
+    try:
+        ok = correo_mod.crear_borrador(sol["email"], f"Cotización de locación ROSSO · {tf.fecha_larga(fecha, 'es')}",
+                                       correo_mod.texto_locacion(dict(sol, fecha_larga=tf.fecha_larga(fecha, 'es')), folio),
+                                       ruta_pdf, os.path.basename(ruta_pdf))
+        return f"\n\n✉️ Borrador listo en tu Gmail (Borradores) para {sol['email']}, desde hola@." if ok else "\n\n✉️ No se pudo dejar el borrador en Gmail."
+    except Exception as e:
+        print("borrador gmail fallo:", e)
+        return "\n\n✉️ No se pudo dejar el borrador en Gmail."
+
+
 @app.post("/produccion")
 def produccion():
     d = request.get_json(silent=True) or request.form.to_dict() or {}
@@ -622,7 +638,8 @@ def produccion():
         f"Tarifa de referencia solo del lugar: <b>{dinero(referencia)}</b> + IVA\n"
         + (f"Necesita (extra): {', '.join(NECESIDADES[n] for n in nec)}\n" if nec else "")
         + (f"«{sol['mensaje']}»" if sol['mensaje'] else "")
-        + ("\n\nLa cotización en PDF va adjunta, lista para reenviar." if ruta_pdf else ""),
+        + ("\n\nLa cotización en PDF va adjunta, lista para reenviar." if ruta_pdf else "")
+        + (_borrador_locacion(sol, fecha, folio, ruta_pdf) if sol["email"] else ""),
         ruta_pdf, os.path.basename(ruta_pdf) if ruta_pdf else None
     )
     return jsonify(ok=True, folio=folio)
@@ -648,7 +665,8 @@ def armar_cotizacion(sol, calc):
              "Incluido" if es else "Included", False],
             [(f"Consumo mínimo del grupo — {pax} personas × {dinero(calc['por_persona'])}" if es
               else f"Group minimum spend — {pax} guests × {dinero(calc['por_persona'])}"),
-             dinero(calc["minimo"]), True],
+             dinero(calc["minimo"] / 1.16), True],
+            ["IVA 16%" if es else "VAT 16%", dinero(calc["minimo"] - calc["minimo"] / 1.16), False],
             ["Servicio 15% sobre consumos" if es else "15% service on consumption",
              dinero(calc["servicio"]), False],
         ]
@@ -668,6 +686,8 @@ def armar_cotizacion(sol, calc):
                   else "Final guest count 48 hours before."),
                  ("El día del evento sólo se liquida la diferencia entre el anticipo y el consumo real." if es
                   else "On the night you only settle the difference between the deposit and the actual bill."),
+                 ("Precios en pesos mexicanos con IVA desglosado; el servicio no causa IVA." if es
+                  else "Prices in Mexican pesos with VAT itemized; the service charge is not subject to VAT."),
              ]},
         ]
         modalidad = "Mesa reservada — ROSSO abierto al público" if es else "Reserved table — ROSSO open to the public"
@@ -675,13 +695,14 @@ def armar_cotizacion(sol, calc):
         titulo = f"{sol['motivo'] or 'Evento privado'} en ROSSO" if es else f"{sol['motivo'] or 'Private event'} at ROSSO"
         filas = [
             [(f"Renta exclusiva del espacio — {sol['horas']} horas" if es
-              else f"Exclusive venue rental — {sol['horas']} hours"), dinero(calc["renta"]), False],
+              else f"Exclusive venue rental — {sol['horas']} hours"), dinero(calc["renta"] / 1.16), False],
             [("Consumo mínimo garantizado en barra y cocina" if es
-              else "Guaranteed minimum spend on bar and kitchen"), dinero(calc["minimo"]), False],
+              else "Guaranteed minimum spend on bar and kitchen"), dinero(calc["minimo"] / 1.16), False],
         ]
         if calc["horas_extra"]:
             filas.append([(f"Hora extra × {calc['horas_extra']}" if es else f"Extra hour × {calc['horas_extra']}"),
-                          dinero(calc["horas_extra"] * calc["hora_extra"]), False])
+                          dinero(calc["horas_extra"] * calc["hora_extra"] / 1.16), False])
+        filas.append(["IVA 16%" if es else "VAT 16%", dinero(calc["subtotal"] - calc["subtotal"] / 1.16), False])
         filas.append([("Servicio 15% sobre el total del evento, íntegro para el equipo" if es
                        else "15% service charge on the event total, distributed in full to the service team"),
                       dinero(calc["servicio"]), False])
@@ -701,8 +722,8 @@ def armar_cotizacion(sol, calc):
                   else f"Additional hour: {dinero(calc['hora_extra'])} for the venue, plus consumption."),
                  ("No se permite el ingreso de bebidas alcohólicas ajenas a la casa." if es
                   else "Outside alcohol is not permitted."),
-                 ("Precios en pesos mexicanos, IVA incluido. Vigencia de 10 días naturales." if es
-                  else "Prices in Mexican pesos, VAT included. Valid for 10 calendar days."),
+                 ("Precios en pesos mexicanos con IVA desglosado; el servicio no causa IVA. Vigencia de 10 días naturales." if es
+                  else "Prices in Mexican pesos with VAT itemized; the service charge is not subject to VAT. Valid for 10 calendar days."),
              ]},
         ]
         modalidad = "Evento privado — exclusiva" if es else "Private event — full buyout"
@@ -806,6 +827,17 @@ def eventos():
              + (f"\nMotivo: {sol['motivo']}" if sol["motivo"] else "")
              + (f"\nMensaje: {sol['mensaje']}" if sol["mensaje"] else "")
              + f"\n\n{resumen}\n\nLa cotización en PDF va adjunta, lista para reenviar al cliente. Al cliente sólo se le dijo que le contestamos por WhatsApp en menos de 24 h.")
+    if sol["email"] and ruta_pdf and correo_mod.configurado():
+        try:
+            asunto = (f"Cotización ROSSO · {tf.fecha_larga(fecha, 'es')}" if sol["idioma"] == "es" else f"ROSSO proposal · {tf.fecha_larga(fecha, 'en')}")
+            ok = correo_mod.crear_borrador(sol["email"], asunto, correo_mod.texto_evento(dict(sol, fecha_larga=tf.fecha_larga(fecha, sol["idioma"])), calc, folio, sol["idioma"] == "es"),
+                                           ruta_pdf, os.path.basename(ruta_pdf))
+            texto += f"\n\n✉️ Borrador listo en tu Gmail (Borradores) para {sol['email']}, desde hola@. Ábrelo, revisa y Enviar." if ok else "\n\n✉️ No se pudo dejar el borrador en Gmail."
+        except Exception as e:
+            print("borrador gmail fallo:", e)
+            texto += "\n\n✉️ No se pudo dejar el borrador en Gmail."
+    elif sol["email"] and not correo_mod.configurado():
+        texto += f"\n\n✉️ El cliente dejó correo: {sol['email']} (los borradores automáticos se activan con GMAIL_APP_PASSWORD)."
     try:
         telegram(texto, ruta_pdf or ruta_docx, os.path.basename(ruta_pdf) if ruta_pdf else (cfg["archivo"] if ruta_docx else None))
     except Exception as e:
