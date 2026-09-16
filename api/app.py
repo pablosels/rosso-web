@@ -254,6 +254,28 @@ def hojas_arreglar():
     return jsonify(ok=True, resultado=out, cambios=cambios)
 
 
+@app.post("/correo/prueba")
+def correo_prueba():
+    """Diagnóstico: entra a Gmail por IMAP, ubica Borradores y deja un borrador de prueba. Nunca devuelve secretos."""
+    if not REFRESH_KEY or request.headers.get("X-Refresh-Key") != REFRESH_KEY:
+        return jsonify(error="no autorizado"), 401
+    import imaplib
+    info = {"configurado": correo_mod.configurado(), "usuario": correo_mod.USUARIO, "clave_len": len(correo_mod.CLAVE)}
+    if not correo_mod.configurado():
+        return jsonify(info)
+    try:
+        imap = imaplib.IMAP4_SSL("imap.gmail.com", 993)
+        info["login"] = imap.login(correo_mod.USUARIO, correo_mod.CLAVE)[0]
+        info["carpeta"] = correo_mod._carpeta_borradores(imap)
+        ok, datos = imap.append(f'"{info["carpeta"]}"', "\Draft", imaplib.Time2Internaldate(time.time()),
+                                correo_mod.armar(correo_mod.USUARIO, "Prueba de borrador ROSSO", "Si ves esto, la API ya deja borradores.").as_bytes())
+        info["append"] = [ok, str(datos)[:200]]
+        imap.logout()
+    except Exception as e:
+        info["error"] = f"{type(e).__name__}: {e}"[:300]
+    return jsonify(info)
+
+
 # ------------------------------------------------------------------ perfiles de DJs
 _djs_cache = {"t": 0, "datos": None}
 
