@@ -280,9 +280,9 @@ def pag_inicio():
   </div>
 </section>
 
-{mosaico(("espacio_corner", t("Sillón curvo rojo con mesas de cóctel", "Curved red sofa with cocktail tables"), t("El sillón", "The sofa")),
+{mosaico(("espacio_corner", t("Banca curva roja con mesas de cóctel", "Curved red bench with cocktail tables"), t("La banca", "The bench")),
           ("coctel_queridodiario", t("Querido Diario, cóctel de la casa, servido en la barra", "Querido Diario, a house cocktail, served at the bar"), "Querido Diario"),
-          ("voyeur", t("Invitados brindando en el sillón", "Guests toasting on the sofa"), t("Sábado, 1 am", "Saturday, 1 am")))}
+          ("voyeur", t("Invitados brindando en la banca", "Guests toasting on the bench"), t("Sábado, 1 am", "Saturday, 1 am")))}
 
 <section class="bloque-eventos">
   <div class="etiqueta">{t("Eventos privados", "Private events")}</div>
@@ -378,7 +378,7 @@ def pag_reservar():
   <h1>{t(f"Mesas hasta {SITE['max_widget']} personas, aquí mismo.", f"Tables for up to {SITE['max_widget']}, right here.")}</h1>
   <p class="nota">{t("Elige fecha, hora y personas. La confirmación llega al instante por OpenTable, sin costo.", "Pick a date, time and party size. Confirmation is instant through OpenTable, free of charge.")}</p>
 </section>
-{cine("espacio_01", t("Interior de ROSSO: sillones rojos, luz azul al fondo y techo de círculos", "Inside ROSSO: red sofas, blue light at the back and a ceiling of circles"), t("32 lugares · mesas hasta 4 personas", "32 seats · tables for up to 4"), "50% 60%")}
+{cine("espacio_01", t("Interior de ROSSO: bancas rojas alrededor de la barra y techo de círculos", "Inside ROSSO: red benches around the bar and a ceiling of circles"), t("32 lugares · mesas hasta 4 personas", "32 seats · tables for up to 4"), "50% 60%")}
 <section class="reserva">
   <div class="widget-caja">
     <form class="reserva-forma" id="forma-reserva" action="{SITE['opentable_url']}" method="get" target="_blank" rel="noopener">
@@ -572,7 +572,7 @@ def pag_club():
   <h1>{t("Los de la casa se enteran primero.", "Friends of the house hear it first.")}</h1>
   <p class="nota">{t("Déjanos tu WhatsApp y te avisamos de las noches especiales, los DJs invitados y lo nuevo de la carta. Si nos dices cuándo cumples años, la casa invita un cóctel esa semana.", "Leave us your WhatsApp and we will tell you about special nights, guest DJs and what is new on the menu. Tell us your birthday and the house buys you a cocktail that week.")}</p>
 </section>
-{cine("espacio_corner", t("Rincón de ROSSO con luz roja y sillones", "ROSSO's corner with red light and sofas"), t("El rincón, para quedarse", "The corner, to stay a while"), "50% 50%")}
+{cine("espacio_corner", t("Banca roja de ROSSO bajo luz roja", "ROSSO's red bench under red light"), t("La banca, para quedarse", "The bench, to stay a while"), "50% 50%")}
 <section class="club">
   <form class="forma" id="forma-club" novalidate>
     <div class="campo"><label for="k-nombre">{t("Nombre", "Name")}</label><input id="k-nombre" name="nombre" required maxlength="80" autocomplete="name"></div>
@@ -642,15 +642,15 @@ def pag_producciones():
 <section class="encabezado">
   <div class="etiqueta">{t("Locación", "Location hire")}</div>
   <h1>{t("ROSSO también se renta como set.", "ROSSO is also for hire as a set.")}</h1>
-  <p class="nota">{t("Fotografía, video, cine, contenido de marca y grabaciones. Un speakeasy de luz roja con techo de focos, sillones, barra y cabina de DJ, disponible en las horas en que el bar está cerrado.", "Photography, video, film, brand content and recordings. A red-lit speakeasy with a ceiling of lights, sofas, bar and DJ booth, available in the hours the bar is closed.")}</p>
+  <p class="nota">{t("Fotografía, video, cine, contenido de marca y grabaciones. Un speakeasy de luz roja con techo de círculos, bancas alrededor de la barra y la cabina de DJ de frente al entrar, disponible en las horas en que el bar está cerrado.", "Photography, video, film, brand content and recordings. A red-lit speakeasy with a ceiling of circles, benches around the bar and the DJ booth facing you as you walk in, available in the hours the bar is closed.")}</p>
 </section>
 {mosaico(("voyeur", t("Detalle del salón de ROSSO bajo luz roja", "Detail of ROSSO's room under red light"), t("El salón", "The room")),
-         ("espacio_corner", t("Rincón con sillones y luz roja", "Corner with sofas and red light"), t("El rincón", "The corner")),
+         ("espacio_corner", t("Banca roja con mesas de cóctel", "Red bench with cocktail tables"), t("La banca", "The bench")),
          ("shake_barra", t("Bartender agitando un cóctel en la barra", "Bartender shaking a cocktail at the bar"), t("La barra", "The bar")))}
 <section class="eventos">
   <div class="eventos-datos">
     <dl class="ficha">
-      <dt>{t("Espacio", "Space")}</dt><dd>{t("40 m² de salón con techo de luces, barra completa, cabina de DJ y rincón de sillones. Se entra por la cocina de Pavorosso.", "40 m² (430 sq ft) room with a ceiling of lights, full bar, DJ booth and a corner of sofas. Entrance through Pavorosso's kitchen.")}</dd>
+      <dt>{t("Espacio", "Space")}</dt><dd>{t("40 m² de salón: barra completa con bancas alrededor, cabina de DJ de frente a la entrada y techo de círculos de luz. Se entra por la cocina de Pavorosso.", "40 m² (430 sq ft) room: full bar with benches around it, DJ booth facing the entrance and a ceiling of light circles. Entrance through Pavorosso's kitchen.")}</dd>
       <dt>{t("Cuándo", "When")}</dt><dd>{t("Lunes todo el día. Martes a sábado hasta las 4:00 pm. Domingo hasta las 2:00 pm.", "Mondays all day. Tuesday to Saturday until 4:00 pm. Sundays until 2:00 pm.")}</dd>
       <dt>{t("Incluye", "Included")}</dt><dd>{t("Solo el lugar: acceso, luz de sala y energía. Bartender, barra, cocina, audio y personal se cotizan aparte.", "The venue only: access, room lighting and power. Bartender, bar, kitchen, sound and staff are quoted separately.")}</dd>
       <dt>{t("Aforo", "Capacity")}</dt><dd>{t(f"Hasta {SITE['aforo_total']} personas entre equipo y talento.", f"Up to {SITE['aforo_total']} people including crew and talent.")}</dd>
@@ -737,14 +737,14 @@ def pag_sello():
 
 # ---------------------------------------------------------------- quiz: ¿qué cóctel eres?
 def pag_quiz():
-    datos = {"preguntas": [{"q": p[L], "opciones": [{"t": o[L], "rasgos": o["rasgos"], "sin_alcohol": o.get("sin_alcohol", False)} for o in p["opciones"]]} for p in QUIZ["preguntas"]],
+    datos = {"preguntas": [{"q": p[L], "sentido": (p.get("sentido") or {}).get(L, ""), "opciones": [{"t": o[L], "rasgos": o["rasgos"], "sin_alcohol": o.get("sin_alcohol", False)} for o in p["opciones"]]} for p in QUIZ["preguntas"]],
              "cocteles": [{"slug": c["slug"], "nombre": c["nombre"], "rasgos": c["rasgos"], "sin_alcohol": c.get("sin_alcohol", False),
                            "ingredientes": c[L]["ingredientes"], "notas": c[L]["notas"], "porque": c[L]["porque"]} for c in QUIZ["cocteles"]]}
     cuerpo = f"""
 <section class="encabezado">
   <div class="etiqueta">{t("El quiz", "The quiz")}</div>
   <h1>{t("¿Qué cóctel eres?", "Which cocktail are you?")}</h1>
-  <p class="nota">{t("Cinco preguntas de gusto y te decimos cuál de los cócteles de la casa eres, y por qué.", "Five taste questions and we tell you which house cocktail you are, and why.")}</p>
+  <p class="nota">{t("ROSSO explora el placer a través de los sentidos. Cinco sentidos, cinco preguntas: te decimos cuál de los cócteles de la casa eres, y por qué.", "ROSSO explores pleasure through the senses. Five senses, five questions: we tell you which house cocktail you are, and why.")}</p>
 </section>
 <section class="quiz" id="quiz">
   <div class="quiz-progreso" aria-hidden="true"><span id="q-barra"></span></div>

@@ -470,7 +470,7 @@
   function pregunta() {
     var p = D.preguntas[i];
     barra.style.width = (i / D.preguntas.length * 100) + "%";
-    caja.innerHTML = '<div class="q-num">' + (i + 1) + " / " + D.preguntas.length + "</div><h2>" + esc(p.q) + '</h2><ul class="q-opciones">' + p.opciones.map(function (o, k) { return '<li><button type="button" data-k="' + k + '">' + esc(o.t) + "</button></li>"; }).join("") + "</ul>";
+    caja.innerHTML = '<div class="q-num">' + (i + 1) + " / " + D.preguntas.length + (p.sentido ? " · " + esc(p.sentido) : "") + "</div><h2>" + esc(p.q) + '</h2><ul class="q-opciones">' + p.opciones.map(function (o, k) { return '<li><button type="button" data-k="' + k + '">' + esc(o.t) + "</button></li>"; }).join("") + "</ul>";
     var b = caja.querySelector("button"); if (b && i > 0) b.focus();
   }
   caja.addEventListener("click", function (ev) {
@@ -485,7 +485,8 @@
     var cand = D.cocteles.filter(function (c) { return sinAlcohol ? c.sin_alcohol : !c.sin_alcohol; });
     var top = null, max = -1;
     cand.forEach(function (c) {
-      var s = 0; c.rasgos.forEach(function (r, idx) { s += (puntos[r] || 0) * (idx < 3 ? 2 : 1); });   // los 3 primeros rasgos pesan doble
+      var BASES = { agave: 1, gin: 1, ron: 1, whiskey: 1, vermut: 1 };
+      var s = 0; c.rasgos.forEach(function (r, idx) { s += (puntos[r] || 0) * (BASES[r] ? 6 : idx < 3 ? 2 : 1); });   // la base elegida manda; los 3 primeros rasgos pesan doble
       if (s > max) { max = s; top = c; }
     });
     return top;

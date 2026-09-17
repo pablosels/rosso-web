@@ -563,7 +563,7 @@ def armar_cotizacion_locacion(sol, fecha, horas, crew, nec, renta, abierto):
         "fecha": dia, "horario": f"Desde las {sol['hora']}", "duracion": f"{horas} horas",
         "invitados": f"{crew} personas entre equipo y talento", "modalidad": f"Locación · {tipo}",
         "intro": ("Gracias por pensar en ROSSO como set. Somos un speakeasy de 40 m² en Puebla 329, Roma Norte: "
-                  "techo de luces, barra completa, cabina de DJ y rincón de sillones, disponible en las horas en que "
+                  "barra completa con bancas alrededor, cabina de DJ de frente a la entrada y techo de círculos de luz, disponible en las horas en que "
                   "el bar está cerrado. Aquí va la propuesta para tu fecha; cualquier detalle lo ajustamos por WhatsApp."),
         "bloques": [
             {"tipo": "tabla", "titulo": "La locación",
