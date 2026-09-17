@@ -1,0 +1,133 @@
+{
+  "_nota": "Quiz '¿Qué cóctel eres?'. Cada respuesta suma puntos a rasgos; cada cóctel tiene sus rasgos. Gana el de más puntos. Si en la última pregunta eligen sin alcohol, solo compiten los sin alcohol.",
+  "preguntas": [
+    {
+      "es": "¿Cómo empieza tu noche?",
+      "en": "How does your night start?",
+      "opciones": [
+        {"es": "Con burbujas y risas", "en": "With bubbles and laughter", "rasgos": ["burbujeante", "ligero", "floral"]},
+        {"es": "Con algo fuerte y sin rodeos", "en": "With something strong, no detours", "rasgos": ["intenso", "profundo", "especiado"]},
+        {"es": "Con un trago largo y fresco", "en": "With a long, fresh drink", "rasgos": ["refrescante", "fresco", "citrico"]},
+        {"es": "Con algo que huela increíble", "en": "With something that smells incredible", "rasgos": ["aromatico", "herbal", "aterciopelado"]}
+      ]
+    },
+    {
+      "es": "¿Qué sabor manda?",
+      "en": "Which flavor leads?",
+      "opciones": [
+        {"es": "Dulce y frutal", "en": "Sweet and fruity", "rasgos": ["dulce", "frutal", "tropical"]},
+        {"es": "Ácido y cítrico", "en": "Sour and citrusy", "rasgos": ["citrico", "acido", "vibrante"]},
+        {"es": "Amargo y tostado", "en": "Bitter and toasty", "rasgos": ["amargo", "tostado", "profundo"]},
+        {"es": "Especiado, con un poco de humo", "en": "Spiced, with a bit of smoke", "rasgos": ["especiado", "picante", "intenso"]}
+      ]
+    },
+    {
+      "es": "¿Y la textura?",
+      "en": "And the texture?",
+      "opciones": [
+        {"es": "Sedosa, casi cremosa", "en": "Silky, almost creamy", "rasgos": ["sedoso", "aterciopelado", "untuoso"]},
+        {"es": "Chispeante", "en": "Sparkling", "rasgos": ["burbujeante", "ligero", "fresco"]},
+        {"es": "Seca y limpia", "en": "Dry and clean", "rasgos": ["seco", "vibrante", "herbal"]},
+        {"es": "Con cuerpo, que se sienta", "en": "Full-bodied, something you feel", "rasgos": ["untuoso", "intenso", "profundo"]}
+      ]
+    },
+    {
+      "es": "¿Dónde te sientas en ROSSO?",
+      "en": "Where do you sit at ROSSO?",
+      "opciones": [
+        {"es": "En la barra, viendo al bartender", "en": "At the bar, watching the bartender", "rasgos": ["aromatico", "seco", "especiado"]},
+        {"es": "En el rincón de sillones", "en": "In the corner sofas", "rasgos": ["aterciopelado", "dulce", "profundo"]},
+        {"es": "Frente a la consola, bailando", "en": "In front of the booth, dancing", "rasgos": ["refrescante", "tropical", "vibrante"]},
+        {"es": "Donde caiga, yo traigo la conversación", "en": "Anywhere, I bring the conversation", "rasgos": ["floral", "ligero", "frutal"]}
+      ]
+    },
+    {
+      "es": "¿Con qué base?",
+      "en": "What is the base?",
+      "opciones": [
+        {"es": "Agave: tequila o mezcal", "en": "Agave: tequila or mezcal", "rasgos": ["agave"]},
+        {"es": "Ginebra", "en": "Gin", "rasgos": ["gin"]},
+        {"es": "Ron o whiskey", "en": "Rum or whiskey", "rasgos": ["ron", "whiskey"]},
+        {"es": "Vermut o algo bajito", "en": "Vermouth or something light", "rasgos": ["vermut", "ligero"]},
+        {"es": "Hoy sin alcohol", "en": "No alcohol tonight", "rasgos": [], "sin_alcohol": true}
+      ]
+    }
+  ],
+  "cocteles": [
+    {"slug": "picarilla", "nombre": "Picarilla", "rasgos": ["citrico", "picante", "vibrante", "agave", "acido", "intenso"],
+     "es": {"ingredientes": "Tequila, miel de abeja, ciruela, chile de árbol y limón verde.", "notas": "Cítrico, picante, vibrante.",
+            "porque": "Te gusta que las cosas piquen un poco. La Picarilla es directa y alegre: entra ácida, se pone dulce con la miel y la ciruela, y se despide con chile de árbol. Es el trago de quien llega y sube el volumen de la mesa."},
+     "en": {"ingredientes": "Tequila, honey, plum, chile de árbol and lime.", "notas": "Citrusy, spicy, vibrant.",
+            "porque": "You like things with a little bite. Picarilla is direct and cheerful: it opens sour, turns sweet with honey and plum, and says goodbye with chile de árbol. The drink of the person who arrives and turns the table up."}},
+    {"slug": "pellizco", "nombre": "Pellizco", "rasgos": ["frutal", "citrico", "sedoso", "agave", "especiado", "aromatico"],
+     "es": {"ingredientes": "Mezcal, bitter de nuez, cordial de pera, limón amarillo y clara de huevo.", "notas": "Afrutado, cítrico, sedoso.",
+            "porque": "Humo con suavidad. Quieres carácter, pero sin gritar: el mezcal pone la firma y la pera y la clara lo envuelven en algo sedoso. Es un trago de conversación larga, de los que se piden dos veces sin darse cuenta."},
+     "en": {"ingredientes": "Mezcal, walnut bitters, pear cordial, lemon and egg white.", "notas": "Fruity, citrusy, silky.",
+            "porque": "Smoke, softly. You want character without shouting: mezcal signs it, pear and egg white wrap it in silk. A long-conversation drink, the kind you order twice without noticing."}},
+    {"slug": "sabor-a-mi", "nombre": "Sabor a Mi", "rasgos": ["tropical", "acido", "refrescante", "ron", "fresco", "frutal"],
+     "es": {"ingredientes": "Ron blanco infusionado con aceite de coco, maracuyá, agua de coco y vinagre de piña.", "notas": "Tropical, ácido, refrescante.",
+            "porque": "Tú vienes a bailar. Sabor a Mi es playa de noche: coco, maracuyá y un vinagre de piña que lo mantiene fresco y ácido para que no empalague. Largo, frío y con ritmo, como tu noche."},
+     "en": {"ingredientes": "White rum infused with coconut oil, passion fruit, coconut water and pineapple vinegar.", "notas": "Tropical, tart, refreshing.",
+            "porque": "You came to dance. Sabor a Mi is a beach at night: coconut, passion fruit and a pineapple vinegar that keeps it fresh and tart. Long, cold and rhythmic, like your night."}},
+    {"slug": "camasotz", "nombre": "Camasotz", "rasgos": ["frutal", "seco", "vibrante", "agave", "aromatico", "citrico"],
+     "es": {"ingredientes": "Tequila blanco, jerez fino, guayaba, jamaica y nuez moscada.", "notas": "Frutal, seco, vibrante.",
+            "porque": "Frutal pero seco: no te gusta lo obvio. Camasotz junta tequila con jerez fino, guayaba y jamaica, y termina con nuez moscada. Es el trago de quien pide algo que no ha probado y luego lo recomienda a toda la mesa."},
+     "en": {"ingredientes": "Blanco tequila, fino sherry, guava, hibiscus and nutmeg.", "notas": "Fruity, dry, vibrant.",
+            "porque": "Fruity but dry: you don't like the obvious. Camasotz pairs tequila with fino sherry, guava and hibiscus, and finishes with nutmeg. The drink of the person who orders something new and then recommends it to the whole table."}},
+    {"slug": "rosso-tonic", "nombre": "Rosso Tonic", "rasgos": ["fresco", "herbal", "frutal", "gin", "refrescante", "ligero"],
+     "es": {"ingredientes": "Ginebra de fresa, vermut rosso, limón y agua tónica.", "notas": "Fresco, herbal, frutal.",
+            "porque": "Fresco y sin complicaciones, pero con un giro: la ginebra de fresa y el vermut rosso lo hacen nuestro. Es el trago de la casa para quien sabe lo que quiere y lo quiere largo, frío y con burbuja."},
+     "en": {"ingredientes": "Strawberry gin, sweet vermouth, lime and tonic water.", "notas": "Fresh, herbal, fruity.",
+            "porque": "Fresh and uncomplicated, with a twist: strawberry gin and sweet vermouth make it ours. The house drink for someone who knows what they want and wants it long, cold and fizzy."}},
+    {"slug": "l-origine-du-monde", "nombre": "L'Origine du Monde", "rasgos": ["aterciopelado", "aromatico", "profundo", "gin", "sedoso", "intenso"],
+     "es": {"ingredientes": "Ginebra infusionada con manteca de cacao, licor de coco, vermut blanco y bitter de chocolate.", "notas": "Aterciopelado, aromático, profundo.",
+            "porque": "Lo tuyo es la textura y el aroma. Un martini que huele a cacao y se siente como terciopelo: ginebra infusionada con manteca de cacao, coco y un bitter de chocolate. Para el rincón de sillones y la plática que se alarga."},
+     "en": {"ingredientes": "Gin infused with cocoa butter, coconut liqueur, blanc vermouth and chocolate bitters.", "notas": "Velvety, aromatic, deep.",
+            "porque": "Texture and aroma are your thing. A martini that smells of cocoa and feels like velvet: gin infused with cocoa butter, coconut and chocolate bitters. For the corner sofas and the talk that runs long."}},
+    {"slug": "rococócrème", "nombre": "Rococócrème", "rasgos": ["ligero", "floral", "burbujeante", "vermut", "dulce", "fresco"],
+     "es": {"ingredientes": "Cirilo, durazno y bitter de lavanda.", "notas": "Ligero, floral, burbujeante.",
+            "porque": "Ligero, floral y con burbuja: tú eres la primera ronda de la noche, la que pone de buenas a todos. Durazno y lavanda sobre Cirilo, chispeante y delicado. Se toma rápido y se pide otro."},
+     "en": {"ingredientes": "Cirilo, peach and lavender bitters.", "notas": "Light, floral, sparkling.",
+            "porque": "Light, floral and fizzy: you are the first round of the night, the one that puts everyone in a good mood. Peach and lavender over Cirilo, sparkling and delicate. Goes down fast, gets ordered again."}},
+    {"slug": "paola", "nombre": "Paola", "rasgos": ["floral", "dulce", "ligero", "vermut", "aromatico", "frutal"],
+     "es": {"ingredientes": "Vermut blanco, vermut seco, compota de fresa y rosas.", "notas": "Floral, dulce, delicado.",
+            "porque": "Delicado no es lo mismo que tímido. Paola es todo vermut, fresa y rosas: bajito en alcohol, alto en elegancia. Para quien quiere estar toda la noche y acordarse de todo."},
+     "en": {"ingredientes": "Blanc vermouth, dry vermouth, strawberry compote and roses.", "notas": "Floral, sweet, delicate.",
+            "porque": "Delicate is not the same as shy. Paola is all vermouth, strawberry and roses: low on alcohol, high on elegance. For someone who wants to stay all night and remember all of it."}},
+    {"slug": "voyeur", "nombre": "Voyeur", "rasgos": ["herbal", "tropical", "untuoso", "gin", "sedoso", "frutal"],
+     "es": {"ingredientes": "Ginebra, mango, limón verde y tomillo. Contiene lactosa.", "notas": "Herbal, tropical, untuoso.",
+            "porque": "Observas antes de entrar. Voyeur es mango y tomillo sobre ginebra, untuoso y herbal a la vez: parece tropical y termina siendo un jardín. Para quien disfruta el detalle que los demás no ven."},
+     "en": {"ingredientes": "Gin, mango, lime and thyme. Contains dairy.", "notas": "Herbal, tropical, unctuous.",
+            "porque": "You watch before you step in. Voyeur is mango and thyme over gin, unctuous and herbal at once: it looks tropical and ends up a garden. For someone who enjoys the detail others miss."}},
+    {"slug": "querido-diario", "nombre": "Querido Diario", "rasgos": ["intenso", "especiado", "profundo", "whiskey", "amargo", "seco"],
+     "es": {"ingredientes": "Whiskey, vermut rosso, vinagre de higo y angostura.", "notas": "Intenso, especiado, profundo.",
+            "porque": "Sin rodeos. Whiskey, vermut rosso y un vinagre de higo que le da profundidad: es un trago para sentarse en la barra y pedirlo con nombre y apellido. Intenso, especiado, de los que se toman despacio."},
+     "en": {"ingredientes": "Whiskey, sweet vermouth, fig vinegar and Angostura bitters.", "notas": "Intense, spiced, deep.",
+            "porque": "No detours. Whiskey, sweet vermouth and a fig vinegar that gives it depth: a drink to sit at the bar and order by its full name. Intense, spiced, meant to be taken slowly."}},
+    {"slug": "spf-0", "nombre": "SPF 0", "rasgos": ["amargo", "tostado", "sedoso", "ron", "profundo", "dulce"],
+     "es": {"ingredientes": "Licor de coco y cold brew.", "notas": "Amargo, tostado, sedoso.",
+            "porque": "Café de noche, sin culpa. SPF 0 es cold brew con licor de coco: amargo, tostado y sedoso. Para quien cierra la noche tarde y quiere seguir despierto con estilo."},
+     "en": {"ingredientes": "Coconut liqueur and cold brew.", "notas": "Bitter, toasty, silky.",
+            "porque": "Night coffee, guilt-free. SPF 0 is cold brew with coconut liqueur: bitter, toasty and silky. For someone who closes the night late and wants to stay awake in style."}},
+    {"slug": "under-wear", "nombre": "Under Wear", "sin_alcohol": true, "rasgos": ["tropical", "acido", "refrescante", "fresco", "frutal", "vibrante"],
+     "es": {"ingredientes": "Maracuyá, agua de coco y vinagre de piña.", "notas": "Tropical, ácido, refrescante.",
+            "porque": "Hoy sin alcohol, pero con toda la fiesta. Under Wear es maracuyá, coco y vinagre de piña: tropical, ácido y frío. El mismo ritmo, sin la resaca."},
+     "en": {"ingredientes": "Passion fruit, coconut water and pineapple vinegar.", "notas": "Tropical, tart, refreshing.",
+            "porque": "No alcohol tonight, but all the party. Under Wear is passion fruit, coconut and pineapple vinegar: tropical, tart and cold. Same rhythm, no hangover."}},
+    {"slug": "copa-de-edipo", "nombre": "Copa de Edipo", "sin_alcohol": true, "rasgos": ["frutal", "citrico", "sedoso", "aterciopelado", "aromatico", "dulce"],
+     "es": {"ingredientes": "Nuez, cordial de pera, limón amarillo y clara de huevo.", "notas": "Afrutado, cítrico, sedoso.",
+            "porque": "Sedoso y con carácter, sin una gota de alcohol. Nuez, pera y clara batida: parece un sour y se siente como uno. Para quien no toma hoy pero no piensa conformarse."},
+     "en": {"ingredientes": "Walnut, pear cordial, lemon and egg white.", "notas": "Fruity, citrusy, silky.",
+            "porque": "Silky and full of character, without a drop of alcohol. Walnut, pear and shaken egg white: it looks like a sour and feels like one. For someone not drinking tonight but not settling either."}},
+    {"slug": "el-ojo", "nombre": "El Ojo", "sin_alcohol": true, "rasgos": ["herbal", "tropical", "untuoso", "intenso", "profundo", "seco"],
+     "es": {"ingredientes": "Mango, limón verde y tomillo. Contiene lactosa.", "notas": "Herbal, tropical, untuoso.",
+            "porque": "Mango y tomillo, untuoso y herbal: El Ojo tiene cuerpo y misterio sin necesitar alcohol. Para quien quiere algo que se sienta, no solo que refresque."},
+     "en": {"ingredientes": "Mango, lime and thyme. Contains dairy.", "notas": "Herbal, tropical, unctuous.",
+            "porque": "Mango and thyme, unctuous and herbal: El Ojo has body and mystery without alcohol. For someone who wants something you feel, not just something that refreshes."}},
+    {"slug": "a-coup-de-creme", "nombre": "A Coup de Crème", "sin_alcohol": true, "rasgos": ["ligero", "floral", "burbujeante", "dulce", "fresco", "especiado"],
+     "es": {"ingredientes": "Té espumoso, durazno y bitter de lavanda.", "notas": "Ligero, floral, burbujeante.",
+            "porque": "Burbuja, durazno y lavanda: la primera ronda de la noche, versión sin alcohol. Ligero y floral, para brindar igual que todos."},
+     "en": {"ingredientes": "Sparkling tea, peach and lavender bitters.", "notas": "Light, floral, sparkling.",
+            "porque": "Bubbles, peach and lavender: the first round of the night, no-alcohol edition. Light and floral, so you can toast like everyone else."}}
+  ]
+}

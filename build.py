@@ -26,6 +26,7 @@ SITE = json.loads((CONT / "site.json").read_text(encoding="utf-8"))
 if os.environ.get("BASE") is not None:
     SITE["base"] = os.environ["BASE"].rstrip("/")
 NOCHES = json.loads((CONT / "noches.json").read_text(encoding="utf-8"))
+QUIZ = json.loads((CONT / "quiz.json").read_text(encoding="utf-8"))
 CARTA = json.loads((RAIZ / "carta_snapshot.json").read_text(encoding="utf-8"))
 A = SITE["base"]          # raíz de assets (no cambia con el idioma)
 B = SITE["base"]          # prefijo de las ligas internas: "" en español, "/en" en inglés
@@ -275,6 +276,7 @@ def pag_inicio():
     <div class="etiqueta">{t("De la casa", "From the house")}</div>
     <ul class="items items-claros">{render_items(top)}</ul>
     <a class="enlace" href="{B}/carta/">{t("Carta completa", "Full menu")}</a>
+    <a class="enlace" href="{B}/quiz/">{t("¿Qué cóctel eres?", "Which cocktail are you?")}</a>
   </div>
 </section>
 
@@ -299,6 +301,7 @@ def pag_carta():
   <div class="etiqueta">{t("La carta", "The menu")}</div>
   <h1>{t("Cócteles de la casa, clásicos y algo para picar.", "House cocktails, classics and something to snack on.")}</h1>
   <p class="nota" id="carta-nota">{t("Precios en pesos, IVA incluido. Actualizada desde nuestro punto de venta el", "Prices in Mexican pesos, tax included. Updated from our point of sale on")} {e(fecha_carta(CARTA))}.</p>
+  <p class="nota"><a class="enlace" href="{B}/quiz/">{t("¿No sabes qué pedir? Descubre qué cóctel eres", "Not sure what to order? Find out which cocktail you are")}</a></p>
 </section>
 {dupla(("barra_picarilla", t("Picarilla, cóctel de la casa, sobre la barra bajo el techo de luces", "Picarilla, a house cocktail, on the bar under the ceiling of lights"), t("Picarilla · cóctel de la casa", "Picarilla · house cocktail")),
         ("coctel_loriginedumonde", t("L'Origine du Monde, martini de la casa", "L'Origine du Monde, the house martini"), "L'Origine du Monde"), "50% 62%")}
@@ -732,6 +735,42 @@ def pag_sello():
     return pagina("Sello ROSSO · barra", cuerpo, "/club/sello/", "Uso interno.", clase="pag-sello", extra_head='<meta name="robots" content="noindex,nofollow">')
 
 
+# ---------------------------------------------------------------- quiz: ¿qué cóctel eres?
+def pag_quiz():
+    datos = {"preguntas": [{"q": p[L], "opciones": [{"t": o[L], "rasgos": o["rasgos"], "sin_alcohol": o.get("sin_alcohol", False)} for o in p["opciones"]]} for p in QUIZ["preguntas"]],
+             "cocteles": [{"slug": c["slug"], "nombre": c["nombre"], "rasgos": c["rasgos"], "sin_alcohol": c.get("sin_alcohol", False),
+                           "ingredientes": c[L]["ingredientes"], "notas": c[L]["notas"], "porque": c[L]["porque"]} for c in QUIZ["cocteles"]]}
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">{t("El quiz", "The quiz")}</div>
+  <h1>{t("¿Qué cóctel eres?", "Which cocktail are you?")}</h1>
+  <p class="nota">{t("Cinco preguntas de gusto y te decimos cuál de los cócteles de la casa eres, y por qué.", "Five taste questions and we tell you which house cocktail you are, and why.")}</p>
+</section>
+<section class="quiz" id="quiz">
+  <div class="quiz-progreso" aria-hidden="true"><span id="q-barra"></span></div>
+  <div id="q-caja" class="quiz-caja">
+    <p class="nota">{t("Cargando…", "Loading…")}</p>
+  </div>
+  <div id="q-resultado" class="quiz-resultado" hidden>
+    <div class="etiqueta">{t("Tú eres", "You are")}</div>
+    <h2 id="q-nombre"></h2>
+    <p class="q-notas" id="q-notas"></p>
+    <p class="q-ingredientes" id="q-ingredientes"></p>
+    <p class="q-porque" id="q-porque"></p>
+    <div class="hero-cta">
+      <a class="btn" href="{B}/reservar/">{t("Reservar mesa", "Book a table")}</a>
+      <button class="btn btn-linea" type="button" id="q-compartir">{t("Compartir", "Share")}</button>
+      <a class="btn btn-linea" href="{B}/carta/">{t("Ver la carta", "See the menu")}</a>
+    </div>
+    <p class="nota mini"><a class="enlace" href="{B}/quiz/">{t("Volver a empezar", "Start over")}</a></p>
+  </div>
+</section>
+<script id="q-datos" type="application/json">{json.dumps(datos, ensure_ascii=False)}</script>
+"""
+    return pagina(t("¿Qué cóctel eres? · ROSSO", "Which cocktail are you? · ROSSO"), cuerpo, "/quiz/",
+                  t("Cinco preguntas y te decimos cuál cóctel de la casa de ROSSO eres.", "Five questions and we tell you which ROSSO house cocktail you are."), clase="pag-quiz")
+
+
 def pag_404():
     cuerpo = f"""
 <section class="encabezado">
@@ -768,7 +807,8 @@ def main():
                    "regalo/index.html": pag_regalo(), "regalo/gracias/index.html": pag_regalo_gracias(),
                    "regalo/tarjeta/index.html": pag_regalo_tarjeta(), "regalo/canje/index.html": pag_regalo_canje(),
                    "club/index.html": pag_club(), "privacidad/index.html": pag_privacidad(),
-                   "producciones/index.html": pag_producciones(), "dj/index.html": pag_dj(), "club/sello/index.html": pag_sello()}
+                   "producciones/index.html": pag_producciones(), "dj/index.html": pag_dj(), "club/sello/index.html": pag_sello(),
+               "quiz/index.html": pag_quiz()}
         if idioma == "en":
             paginas.pop("regalo/canje/index.html")     # la barra trabaja en español
             paginas.pop("club/sello/index.html")
@@ -797,7 +837,7 @@ def main():
     (DOCS / "carta.json").write_text(json.dumps(CARTA, ensure_ascii=False), encoding="utf-8")
     (DOCS / ".nojekyll").write_text("")
     (DOCS / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {URL}/sitemap.xml\n")
-    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/", "/producciones/", "/club/", "/privacidad/"] + (["/regalo/"] if SITE.get("regalo_activo") else [])
+    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/", "/producciones/", "/club/", "/privacidad/", "/quiz/"] + (["/regalo/"] if SITE.get("regalo_activo") else [])
     urls = urls + ["/en" + u for u in urls]
     (DOCS / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

@@ -19,6 +19,7 @@
     var g = JSON.parse(localStorage.getItem("rosso_canal") || "null");
     if (g && g.c && Date.now() - g.t < 30 * 864e5) CANAL = g.c;
   } catch (e) { /* sin storage: canal directo */ }
+  window.ROSSO_medir = medir;
   function medir(tipo) {
     if (!API) return;
     try {
@@ -457,4 +458,64 @@
         b.textContent = r.j.premio ? "¡Premio!" : "Registrada";
       }).catch(function () { aviso("Sin conexión con la API.", "error"); b.disabled = false; });
   });
+})();
+
+/* quiz: ¿qué cóctel eres? */
+(function () {
+  var nodo = document.getElementById("q-datos"), caja = document.getElementById("q-caja");
+  if (!nodo || !caja) return;
+  var EN = window.ROSSO_EN, tt = window.ROSSO_tt, D = JSON.parse(nodo.textContent);
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  var puntos = {}, i = 0, sinAlcohol = false, barra = document.getElementById("q-barra");
+  function pregunta() {
+    var p = D.preguntas[i];
+    barra.style.width = (i / D.preguntas.length * 100) + "%";
+    caja.innerHTML = '<div class="q-num">' + (i + 1) + " / " + D.preguntas.length + "</div><h2>" + esc(p.q) + '</h2><ul class="q-opciones">' + p.opciones.map(function (o, k) { return '<li><button type="button" data-k="' + k + '">' + esc(o.t) + "</button></li>"; }).join("") + "</ul>";
+    var b = caja.querySelector("button"); if (b && i > 0) b.focus();
+  }
+  caja.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button[data-k]"); if (!b) return;
+    var o = D.preguntas[i].opciones[+b.dataset.k];
+    o.rasgos.forEach(function (r) { puntos[r] = (puntos[r] || 0) + 1; });
+    if (o.sin_alcohol) sinAlcohol = true;
+    i++;
+    if (i < D.preguntas.length) pregunta(); else resultado(mejor());
+  });
+  function mejor() {
+    var cand = D.cocteles.filter(function (c) { return sinAlcohol ? c.sin_alcohol : !c.sin_alcohol; });
+    var top = null, max = -1;
+    cand.forEach(function (c) {
+      var s = 0; c.rasgos.forEach(function (r, idx) { s += (puntos[r] || 0) * (idx < 3 ? 2 : 1); });   // los 3 primeros rasgos pesan doble
+      if (s > max) { max = s; top = c; }
+    });
+    return top;
+  }
+  function resultado(c) {
+    barra.style.width = "100%";
+    caja.hidden = true;
+    document.getElementById("q-nombre").textContent = c.nombre;
+    document.getElementById("q-notas").textContent = c.notas;
+    document.getElementById("q-ingredientes").textContent = c.ingredientes;
+    document.getElementById("q-porque").textContent = c.porque;
+    var res = document.getElementById("q-resultado"); res.hidden = false;
+    document.title = tt("Soy ", "I am ") + c.nombre + " · ROSSO";
+    try { history.replaceState(null, "", location.pathname + "?r=" + c.slug); } catch (e) { }
+    if (window.ROSSO_medir) window.ROSSO_medir("quiz");
+    var liga = location.origin + location.pathname + "?r=" + c.slug;
+    var texto = tt("Hice el quiz de ROSSO y soy " + c.nombre + ". ¿Y tú?", "I took the ROSSO quiz and I am " + c.nombre + ". What about you?");
+    document.getElementById("q-compartir").onclick = function () {
+      var b = this;
+      if (navigator.share) { navigator.share({ title: "ROSSO", text: texto, url: liga }).catch(function () { }); return; }
+      (navigator.clipboard ? navigator.clipboard.writeText(texto + " " + liga) : Promise.reject()).then(function () { b.textContent = tt("Liga copiada", "Link copied"); }, function () { prompt(tt("Copia la liga:", "Copy the link:"), liga); });
+    };
+    res.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  var r = new URLSearchParams(location.search).get("r");
+  var previo = r && D.cocteles.filter(function (c) { return c.slug === r; })[0];
+  if (previo) {
+    resultado(previo);
+    var vuelve = document.createElement("p"); vuelve.className = "nota";
+    vuelve.innerHTML = '<a class="enlace" href="' + location.pathname + '">' + tt("Haz el quiz tú también", "Take the quiz yourself") + "</a>";
+    document.getElementById("q-resultado").appendChild(vuelve);
+  } else pregunta();
 })();
