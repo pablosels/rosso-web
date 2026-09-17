@@ -482,11 +482,16 @@
     if (i < D.preguntas.length) pregunta(); else resultado(mejor());
   });
   function mejor() {
-    var cand = D.cocteles.filter(function (c) { return sinAlcohol ? c.sin_alcohol : !c.sin_alcohol; });
+    var BASES = { agave: 1, gin: 1, ron: 1, whiskey: 1, vermut: 1 };
+    var elegidas = Object.keys(puntos).filter(function (r) { return BASES[r]; });
+    var cand = D.cocteles.filter(function (c) {
+      if (sinAlcohol) return c.sin_alcohol;
+      if (c.sin_alcohol) return false;
+      return !elegidas.length || c.rasgos.some(function (r) { return elegidas.indexOf(r) >= 0; });   // la base elegida filtra
+    });
     var top = null, max = -1;
     cand.forEach(function (c) {
-      var BASES = { agave: 1, gin: 1, ron: 1, whiskey: 1, vermut: 1 };
-      var s = 0; c.rasgos.forEach(function (r, idx) { s += (puntos[r] || 0) * (BASES[r] ? 6 : idx < 3 ? 2 : 1); });   // la base elegida manda; los 3 primeros rasgos pesan doble
+      var s = 0; c.rasgos.forEach(function (r, idx) { if (!BASES[r]) s += (puntos[r] || 0) * (idx < 3 ? 2 : 1); });   // los 3 primeros rasgos pesan doble
       if (s > max) { max = s; top = c; }
     });
     return top;
