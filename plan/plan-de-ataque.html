@@ -1,0 +1,213 @@
+<title>ROSSO · Plan de ataque</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;900&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+  /* Identidad ROSSO: una sola piel, la de la marca (vino, carmín, gris). Deliberadamente sin tema claro. */
+  :root{--vino:#28000F;--vino-2:#35061A;--carmin:#B40519;--carmin-claro:#E0364A;--gris:#E5E8E8;--suave:rgba(229,232,232,.68);--linea:rgba(229,232,232,.16);
+        --sans:"Geist","Helvetica Neue",Helvetica,Arial,sans-serif;--mono:"Geist Mono",ui-monospace,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{background:var(--vino);color:var(--gris);font-family:var(--sans);font-size:16px;line-height:1.55;margin:0}
+  .hoja{max-width:920px;margin:0 auto;padding-inline:20px;padding-block:48px 80px}
+  .k{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--carmin-claro);margin:0 0 .8rem}
+  h1{font-size:clamp(34px,6vw,60px);line-height:1.02;font-weight:900;letter-spacing:-.02em;text-transform:uppercase;margin:0 0 1rem;text-wrap:balance}
+  h2{font-size:clamp(22px,3.4vw,32px);font-weight:900;text-transform:uppercase;letter-spacing:-.01em;margin:0 0 .4rem;text-wrap:balance}
+  h3{font-family:var(--mono);font-size:12px;letter-spacing:.26em;text-transform:uppercase;color:var(--carmin-claro);margin:1.6rem 0 .5rem;font-weight:500}
+  p{margin:0 0 .9rem;max-width:68ch}
+  .lead{font-size:19px;color:var(--suave);max-width:60ch}
+  section{border-top:1px solid var(--linea);padding-top:2.2rem;margin-top:2.6rem}
+  .num{font-family:var(--mono);color:var(--carmin-claro);font-size:13px;letter-spacing:.2em}
+  .estado{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;padding:3px 9px;border:1px solid var(--linea);margin-left:.6rem;vertical-align:middle;color:var(--suave)}
+  .estado.hecho{border-color:#4fbf7a;color:#7fe0a3}
+  .estado.tuyo{border-color:var(--carmin-claro);color:var(--carmin-claro)}
+  ul{margin:0 0 1rem;padding-left:1.1rem;max-width:70ch}
+  li{margin:.35rem 0}
+  li::marker{color:var(--carmin-claro)}
+  .tabla{overflow-x:auto;margin:.6rem 0 1.2rem}
+  table{border-collapse:collapse;width:100%;min-width:520px;font-variant-numeric:tabular-nums}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--linea);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--suave);font-weight:500}
+  td.n{text-align:right}
+  .cita{background:var(--vino-2);border-left:2px solid var(--carmin);padding:14px 18px;margin:.6rem 0 1.2rem;max-width:70ch;font-size:15px}
+  .cita b{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--carmin-claro);margin-bottom:.4rem;font-weight:500}
+  code{font-family:var(--mono);font-size:.92em;background:var(--vino-2);padding:1px 6px}
+  a{color:var(--gris)}
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:.8rem 0 1.2rem}
+  .caja{border:1px solid var(--linea);padding:16px}
+  .caja strong{display:block;margin-bottom:.3rem}
+  .caja span{color:var(--suave);font-size:14.5px}
+  .pie{color:var(--suave);font-size:13px;margin-top:3rem}
+</style>
+
+<div class="hoja">
+  <p class="k">ROSSO · 17 de septiembre de 2026</p>
+  <h1>Plan de ataque: más gente en la página, más gente en la barra.</h1>
+  <p class="lead">Ocho semanas, cinco frentes. El sitio ya convierte; lo que falta es tráfico y que no dependa de un solo canal.</p>
+
+  <section>
+    <p class="k">Punto de partida · últimos 14 días</p>
+    <div class="tabla"><table>
+      <tr><th>Canal</th><th class="n">Visitas</th><th class="n">Buscaron mesa</th><th class="n">Conversión</th></tr>
+      <tr><td>Instagram</td><td class="n">265</td><td class="n">101</td><td class="n">38%</td></tr>
+      <tr><td>Directo</td><td class="n">199</td><td class="n">26</td><td class="n">13%</td></tr>
+      <tr><td>Google, QR, prensa, Pavorosso</td><td class="n">0</td><td class="n">0</td><td class="n">—</td></tr>
+    </table></div>
+    <p>Instagram trae a la gente correcta: 38 de cada 100 buscan mesa. Pero es el único canal. Google, que es donde busca quien quiere salir hoy, vale cero. El perfil de Google ya tiene 61 opiniones, así que la base existe; no estaba conectada al sitio.</p>
+    <h3>Meta a 8 semanas</h3>
+    <ul>
+      <li>De unas 230 a <b>500 visitas por semana</b>.</li>
+      <li>Google con al menos <b>25% del tráfico</b>.</li>
+      <li><b>150 personas en el Club</b> y el Sello operando en barra.</li>
+      <li>De 61 a <b>120 opiniones</b> en Google.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="num">FRENTE 1</p>
+    <h2>Google <span class="estado hecho">en marcha</span></h2>
+    <h3>Ya quedó hoy</h3>
+    <ul>
+      <li>Perfil verificado. Agregué sitio web (con liga medible <code>rossospeakeasy.com/google</code>), liga del menú e Instagram. El horario ya estaba bien, con martes abierto. Google tarda unos minutos en aprobar los cambios.</li>
+      <li>Tres páginas nuevas pensadas para búsqueda, en español e inglés, con preguntas frecuentes que Google puede mostrar directo en resultados: <code>/speakeasy-roma-norte/</code>, <code>/bar-con-dj-cdmx/</code> y <code>/bar-de-vinilos-cdmx/</code>.</li>
+      <li>Liga directa para dejar opinión: <code>rossospeakeasy.com/resena</code>, con su tarjeta imprimible.</li>
+    </ul>
+    <h3>Falta de tu lado <span class="estado tuyo">tú</span></h3>
+    <ul>
+      <li><b>Teléfono.</b> El perfil no tiene número. Si el 56 6435 7899 se contesta como llamada, lo agrego; si solo es WhatsApp, lo dejamos así.</li>
+      <li><b>Fotos.</b> Subir al perfil las 10 fotos buenas del sitio. Las fotos son lo segundo que más pesa en Maps después de las opiniones.</li>
+      <li><b>Responder las 61 opiniones.</b> Google premia los perfiles que contestan. Si quieres, te preparo las respuestas y tú las pegas.</li>
+      <li><b>Tarjeta de reseña con la cuenta.</b> Todas las noches. De 61 a 120 opiniones cambia tu lugar en "bar Roma Norte".</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="num">FRENTE 2</p>
+    <h2>Los DJs como canal</h2>
+    <p>Cuatro selectores por semana, cada uno con su público. Hoy anuncian que tocan, pero la gente no tiene a dónde ir. Ahora sí.</p>
+    <h3>La mecánica</h3>
+    <ul>
+      <li>Cada DJ tiene su página: <code>rossospeakeasy.com/dj/?n=nombre</code>. Desde el teléfono, el botón <b>"Imagen para tu historia"</b> le genera una imagen vertical con la marca, su nombre, género, fecha y hora, y abre directo el menú para compartirla en Instagram.</li>
+      <li>La liga que suben trae marca de origen, así que en tu resumen del lunes verás cuántas visitas y reservas trajo el canal "dj".</li>
+      <li>El recordatorio del lunes por Telegram ya te trae, debajo de la agenda, <b>el mensaje listo para reenviarle a cada DJ</b> con su liga.</li>
+    </ul>
+    <h3>El trato con ellos</h3>
+    <div class="cita"><b>Mensaje para Doris, para que lo mande al confirmar cada fecha</b>
+    "Te confirmo tu fecha en ROSSO. Parte del acuerdo es que el día que tocas subas a tu historia la imagen que sale de tu página (te mando la liga el lunes) con la liga de reserva. Nosotros te etiquetamos en la historia de la casa. Si esa noche llegan más de 10 personas por tu liga, la casa te invita la cena en Pavorosso."</div>
+    <ul>
+      <li><b>Lunes:</b> Doris reenvía los mensajes del Telegram a cada DJ.</li>
+      <li><b>Día del set, 2 pm:</b> el DJ sube su historia; ROSSO la comparte.</li>
+      <li><b>Lunes siguiente:</b> el resumen dice cuánto trajo cada canal. El DJ que más trae, repite fecha.</li>
+    </ul>
+    <p>El incentivo de la cena es una propuesta; ajusta el premio a lo que te acomode.</p>
+  </section>
+
+  <section>
+    <p class="num">FRENTE 3</p>
+    <h2>Que el local alimente al sitio</h2>
+    <div class="rejilla">
+      <div class="caja"><strong>Tarjeta de mesa</strong><span>QR a la carta con precios de hoy e invitación al Club. Tamaño A6, va en acrílico o como tent card.</span></div>
+      <div class="caja"><strong>Tarjeta de reseña</strong><span>Se entrega con la cuenta. QR directo a dejar opinión en Google.</span></div>
+      <div class="caja"><strong>Tarjeta Pavorosso</strong><span>"Hay un bar escondido atrás de esta cocina." Para la cuenta o la mesa de Pavorosso, con liga medible.</span></div>
+      <div class="caja"><strong>Guía del Sello</strong><span>Una hoja para pegar en barra: cómo registrar visitas, qué decirle al cliente y qué hacer cuando toca premio.</span></div>
+    </div>
+    <p>Los cuatro PDF están en la carpeta <code>rosso-web/imprimibles</code>, listos para imprenta. Son vino con QR en gris, en la identidad de la marca.</p>
+    <h3>Arranque del Sello <span class="estado tuyo">tú</span></h3>
+    <ul>
+      <li>Imprimir la guía y repasarla 10 minutos con barra antes del primer servicio.</li>
+      <li>Darles el PIN de barra, el mismo de las tarjetas de regalo.</li>
+      <li>Primera semana: meta de 20 altas al Club. El gancho es el cóctel de la quinta visita.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="num">FRENTE 4</p>
+    <h2>Prensa y listas con KAPR</h2>
+    <p>Dos objetivos distintos: que la gente lea de ROSSO, y que esos sitios enlacen a <code>rossospeakeasy.com</code>, porque cada liga de un medio sube tu posición en Google.</p>
+    <h3>Los ángulos que sí son noticia</h3>
+    <ul>
+      <li><b>"El bar al que se entra por una cocina."</b> El recorrido es la historia: Pavorosso, la cocina, la cortina roja. Es el ángulo para listas de speakeasies y para medios en inglés.</li>
+      <li><b>Domingos de vinilo completo.</b> Nadie más en la Roma pone un disco entero sin saltar canciones. Ángulo para medios de música y cultura.</li>
+      <li><b>Coctelería con nombre de obra:</b> L'Origine du Monde, Voyeur, Shunga, Querido Diario. Ángulo para medios de gastronomía y diseño.</li>
+      <li><b>"¿Qué cóctel eres?"</b> Pieza ligera para redes de medios de estilo de vida; se comparte sola.</li>
+    </ul>
+    <h3>A dónde apuntar</h3>
+    <div class="tabla"><table>
+      <tr><th>Tipo</th><th>Ejemplos</th><th>Qué pedir</th></tr>
+      <tr><td>Listas locales</td><td>Time Out México, Chilango, Local.mx, Dónde Ir, Food and Travel</td><td>Entrar a "mejores speakeasies" y "bares de la Roma", con liga al sitio</td></tr>
+      <tr><td>Medios en inglés</td><td>Eater, Condé Nast Traveler, Culture Trip, The Infatuation, guías de Roma Norte</td><td>Mención en guías de bares de CDMX; usar la página en inglés</td></tr>
+      <tr><td>Música y cultura</td><td>Medios de vinilo y escena DJ, newsletters culturales</td><td>Nota de los domingos de vinilo y la agenda de selectores</td></tr>
+      <tr><td>Creadores</td><td>Cuentas de bares y coctelería de CDMX, de 10 a 80 mil seguidores</td><td>Invitación a una noche con DJ; que hagan el quiz en cámara</td></tr>
+    </table></div>
+    <h3>Lo que KAPR necesita de nosotros</h3>
+    <ul>
+      <li>Texto corto y largo del concepto, en español e inglés. Ya existen en el sitio.</li>
+      <li>Las 10 fotos en alta y los logos en vector. Ya los tengo; se los paso en una carpeta cuando me digas.</li>
+      <li>Una regla: <b>toda mención debe enlazar a <code>rossospeakeasy.com/prensa</code></b>, que es la liga medible. Así sabremos qué nota trajo gente.</li>
+    </ul>
+    <div class="cita"><b>Mensaje para KAPR</b>
+    "Queremos enfocar los próximos dos meses de ROSSO en tres cosas: entrar a las listas de speakeasies y bares de la Roma de Time Out, Chilango y Local, conseguir una guía en inglés, y mover la historia de los domingos de vinilo completo. Les mando carpeta con fotos, logos y textos en ambos idiomas. Toda mención debe llevar liga a rossospeakeasy.com/prensa para medir qué funciona. ¿Me proponen calendario y medios esta semana?"</div>
+  </section>
+
+  <section>
+    <p class="num">FRENTE 5</p>
+    <h2>Anuncios en Instagram</h2>
+    <p>Poco dinero, bien medido. Se enciende en la semana 3, cuando Google y los DJs ya estén andando, para no pagar por lo que puede llegar gratis.</p>
+    <h3>Presupuesto y estructura</h3>
+    <div class="tabla"><table>
+      <tr><th>Campaña</th><th>A quién</th><th>Lleva a</th><th class="n">Al mes</th></tr>
+      <tr><td><b>Quiz</b>, descubrimiento</td><td>25 a 40 años, Roma, Condesa, Juárez, Escandón, Del Valle. Intereses: coctelería, bares, música electrónica, vinilos</td><td><code>/ads</code>, que abre el quiz</td><td class="n">$2,000</td></tr>
+      <tr><td><b>Noche fuerte</b>, jueves a sábado</td><td>Mismo público, radio de 5 km, solo de 5 a 9 pm del día del evento</td><td>Perfil del DJ de esa noche</td><td class="n">$1,500</td></tr>
+      <tr><td><b>Visitantes</b>, en inglés</td><td>Turistas en CDMX: idioma inglés, ubicación reciente Roma y Condesa</td><td><code>/en/speakeasy-roma-norte</code></td><td class="n">$1,000</td></tr>
+      <tr><td><b>Retorno</b></td><td>Quien ya visitó el sitio o interactuó con el Instagram y no ha reservado</td><td><code>/reservar</code></td><td class="n">$500</td></tr>
+    </table></div>
+    <p>Total: <b>$5,000 al mes</b>. Empezar con $3,000 las primeras dos semanas, solo Quiz y Noche fuerte.</p>
+    <h3>Las piezas</h3>
+    <ul>
+      <li><b>Quiz:</b> video vertical de 8 segundos. La cortina roja se abre, texto "Cinco sentidos, cinco preguntas. ¿Qué cóctel eres?". Se graba con teléfono.</li>
+      <li><b>Noche fuerte:</b> la misma imagen de historia que genera la página del DJ. Cero producción.</li>
+      <li><b>Visitantes:</b> foto de la cortina con "A speakeasy behind a kitchen. Roma Norte."</li>
+    </ul>
+    <h3>Regla de corte</h3>
+    <p>Cada campaña se mide a las dos semanas en tu resumen del lunes, canal "ads". Si una visita cuesta más de $6 o de cada 100 visitas menos de 10 buscan mesa, se apaga esa campaña y el dinero pasa a la que sí funciona.</p>
+    <h3>Falta de tu lado <span class="estado tuyo">tú</span></h3>
+    <ul>
+      <li>Darme acceso de anunciante a la cuenta publicitaria de Meta de ROSSO, o crear las campañas tú con esta tabla. Yo no puedo meter tarjetas ni pagar.</li>
+      <li>Grabar el video de la cortina.</li>
+    </ul>
+  </section>
+
+  <section>
+    <p class="k">Calendario</p>
+    <h2>Ocho semanas</h2>
+    <div class="tabla"><table>
+      <tr><th>Semana</th><th>Qué pasa</th><th>Quién</th></tr>
+      <tr><td>1 · 21 sep</td><td>Imprimir tarjetas. Capacitar barra en el Sello. Subir fotos a Google. Mensaje a KAPR. Doris manda el trato a los DJs.</td><td>Pablo, Doris</td></tr>
+      <tr><td>2 · 28 sep</td><td>Primera semana de DJs subiendo su historia. Responder opiniones de Google. Historia fija del quiz en Instagram.</td><td>Doris, Pablo</td></tr>
+      <tr><td>3 · 5 oct</td><td>Encender anuncios: Quiz y Noche fuerte. Primera revisión de tráfico de Google.</td><td>Pablo, Claude</td></tr>
+      <tr><td>4 · 12 oct</td><td>Corte de anuncios a dos semanas. KAPR entrega calendario de medios.</td><td>Claude, KAPR</td></tr>
+      <tr><td>5 · 19 oct</td><td>Encender campaña en inglés y retorno. Primer mensaje al Club con la agenda de la semana.</td><td>Pablo</td></tr>
+      <tr><td>6 · 26 oct</td><td>Noche especial de Halloween como prueba: todos los canales empujando una sola fecha.</td><td>Todos</td></tr>
+      <tr><td>7 · 2 nov</td><td>Revisión de posiciones en Google de las tres páginas. Ajustar textos según las búsquedas reales.</td><td>Claude</td></tr>
+      <tr><td>8 · 9 nov</td><td>Corte final contra metas. Decidir presupuesto de temporada de posadas.</td><td>Pablo, Claude</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <p class="k">Medición</p>
+    <h2>Un solo tablero: el resumen del lunes</h2>
+    <p>Todo lo de este plan entra por una liga con marca de origen, así que cada lunes a las 9:30 tu Telegram dice cuántas visitas, búsquedas de mesa y WhatsApp trajo cada canal.</p>
+    <div class="tabla"><table>
+      <tr><th>Canal</th><th>Liga</th><th>Dónde se usa</th></tr>
+      <tr><td>ig</td><td><code>/ig</code></td><td>Bio de Instagram</td></tr>
+      <tr><td>google</td><td><code>/google</code></td><td>Perfil de Google</td></tr>
+      <tr><td>qr</td><td><code>/qr</code></td><td>Tarjeta de mesa</td></tr>
+      <tr><td>pavo</td><td><code>/pavo</code></td><td>Tarjeta en Pavorosso</td></tr>
+      <tr><td>dj</td><td><code>/dj/?n=…&amp;de=dj</code></td><td>Historias de los DJs</td></tr>
+      <tr><td>prensa</td><td><code>/prensa</code></td><td>Notas y listas vía KAPR</td></tr>
+      <tr><td>ads</td><td><code>/ads</code></td><td>Anuncios de Instagram</td></tr>
+      <tr><td>wa</td><td><code>/wa</code></td><td>Estados y difusión de WhatsApp</td></tr>
+    </table></div>
+    <p>Las búsquedas con las que te encuentran en Google se ven en Search Console, que ya está verificado.</p>
+  </section>
+
+  <p class="pie">ROSSO · Puebla 329, Roma Norte · rossospeakeasy.com</p>
+</div>
