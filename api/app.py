@@ -27,6 +27,7 @@ import clientes as clientes_mod
 import descripciones as descripciones_mod
 import vinilos as vinilos_mod
 import sello as sello_mod
+import marcador as marcador_mod
 import cotizador
 import pdf_cotizacion
 import correo as correo_mod
@@ -283,6 +284,22 @@ def correo_prueba():
     except Exception as e:
         info["error"] = f"{type(e).__name__}: {e}"[:300]
     return jsonify(info)
+
+
+# ------------------------------------------------------------------ marcador de DJs (venta real por noche)
+@app.post("/marcador")
+def marcador_djs():
+    """Cloud Scheduler, lunes: venta de cada noche con DJ contra lo normal de ese día. ?silencio=1 no manda Telegram."""
+    if not REFRESH_KEY or request.headers.get("X-Refresh-Key") != REFRESH_KEY:
+        return jsonify(error="no autorizado"), 401
+    if not (WS_SUB and WS_PWD):
+        return jsonify(error="sin credenciales de Wansoft"), 500
+    dias = max(3, min(45, int(request.args.get("dias", 8))))
+    filas = marcador_mod.marcador(WS_SUB, WS_PWD, leer, guardar, dias=dias)
+    texto = marcador_mod.texto(filas)
+    if not request.args.get("silencio"):
+        telegram(texto)
+    return jsonify(ok=True, noches=filas, texto=texto)
 
 
 # ------------------------------------------------------------------ perfiles de DJs
