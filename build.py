@@ -103,6 +103,14 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
              "opens": "18:00", "closes": "02:00"},
             {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "16:00", "closes": "23:00"}],
     }, ensure_ascii=False)
+    pixel = ""
+    if SITE.get("meta_pixel"):
+        pid = "".join(ch for ch in str(SITE["meta_pixel"]) if ch.isdigit())
+        pixel = ("<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};"
+                 "if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;"
+                 "s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');"
+                 f"fbq('init','{pid}');fbq('track','PageView');</script>"
+                 f'<noscript><img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id={pid}&ev=PageView&noscript=1"></noscript>')
     return f"""<!doctype html>
 <html lang="{L}">
 <head>
@@ -130,6 +138,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
 <link rel="stylesheet" href="{A}/assets/style.css?v={V_CSS}">
 <script type="application/ld+json">{jsonld}</script>
 {extra_head}
+{pixel}
 </head>
 <body class="{clase}" data-api="{e(SITE['api'])}" data-base="{B}">
 <a class="salto" href="#contenido">{t("Ir al contenido", "Skip to content")}</a>
@@ -603,7 +612,7 @@ def pag_privacidad():
 <section class="legal">
   <p><strong>Who is responsible.</strong> {e(SITE.get('razon_social', SITE['nombre_largo']))}, Puebla 329, Roma Norte, 06700, Mexico City, under Mexico's Federal Law on the Protection of Personal Data Held by Private Parties.</p>
   <p><strong>What we collect.</strong> Name, WhatsApp number and, if you give them, email and birthday (day and month). When you book or request a quote, also the date, time and party size.</p>
-  <p><strong>What for.</strong> To tell you about special nights, guest DJs and menu news; to buy you a birthday cocktail; to handle your booking or quote; and to measure where our visits come from, without identifying you.</p>
+  <p><strong>What for.</strong> To tell you about special nights, guest DJs and menu news; to buy you a birthday cocktail; to handle your booking or quote; and to measure where our visits come from, without identifying you. The site uses the Meta pixel to measure the results of our Instagram and Facebook ads; you can limit it in your Meta account's ad settings.</p>
   <p><strong>How often.</strong> No more than two messages a month. Opt out any time by replying "baja" on WhatsApp or writing to hola@rossospeakeasy.com.</p>
   <p><strong>Who we share it with.</strong> No one. Data is stored on Google services; gift card payments are processed by Stripe and reservations for up to 4 guests go through OpenTable, each under their own terms.</p>
   <p><strong>Your rights.</strong> You can access, correct, delete or object to the use of your data, or withdraw consent, by writing to <a href="mailto:hola@rossospeakeasy.com">hola@rossospeakeasy.com</a>. We answer within 20 business days. The Spanish version at <a href="{A}/privacidad/">rossospeakeasy.com/privacidad</a> is the binding one.</p>
@@ -620,7 +629,7 @@ def pag_privacidad():
 <section class="legal">
   <p><strong>Responsable.</strong> {e(SITE.get('razon_social', SITE['nombre_largo']))}, con domicilio en Puebla 329, Roma Norte, 06700, Ciudad de México, es responsable del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.</p>
   <p><strong>Datos que recabamos.</strong> Nombre, número de WhatsApp y, si nos los das, correo electrónico y fecha de cumpleaños (día y mes). Al reservar o cotizar un evento, también la fecha, hora y número de personas.</p>
-  <p><strong>Para qué.</strong> Para avisarte de noches especiales, DJs invitados y novedades de la carta; para invitarte un cóctel en tu cumpleaños; para atender tu reservación o cotización; y para medir de dónde llegan nuestras visitas, sin identificarte. No usamos tus datos para ningún otro fin.</p>
+  <p><strong>Para qué.</strong> Para avisarte de noches especiales, DJs invitados y novedades de la carta; para invitarte un cóctel en tu cumpleaños; para atender tu reservación o cotización; y para medir de dónde llegan nuestras visitas, sin identificarte. El sitio usa el píxel de Meta para medir el resultado de nuestros anuncios en Instagram y Facebook; puedes limitarlo desde la configuración de anuncios de tu cuenta de Meta. No usamos tus datos para ningún otro fin.</p>
   <p><strong>Cuántos mensajes.</strong> No más de dos al mes. Puedes darte de baja en cualquier momento contestando "baja" al WhatsApp o escribiendo a hola@rossospeakeasy.com.</p>
   <p><strong>Con quién se comparten.</strong> Con nadie. Los datos se guardan en servicios de Google (hojas de cálculo y nube) y, si compras una tarjeta de regalo, el pago lo procesa Stripe con sus propios términos. Las reservaciones de hasta 4 personas se hacen a través de OpenTable, sujeto a su aviso de privacidad.</p>
   <p><strong>Tus derechos (ARCO).</strong> Puedes acceder, rectificar, cancelar u oponerte al uso de tus datos, o revocar tu consentimiento, escribiendo a <a href="mailto:hola@rossospeakeasy.com">hola@rossospeakeasy.com</a> con tu nombre y el dato que quieres consultar o borrar. Respondemos en un máximo de 20 días hábiles.</p>

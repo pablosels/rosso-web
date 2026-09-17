@@ -40,7 +40,7 @@
     3000
   ],
   "razon_social": "Rosso Speakeasy",
-  "privacidad_fecha": "05/09/2026",
+  "privacidad_fecha": "17/09/2026",
   "descripcion_en": "A bar that explores pleasure through the senses. An intimate, immersive experience hidden behind the kitchen of Pavorosso, in Roma Norte. Cocktails, music and rhythm, Tuesday to Sunday.",
   "horario_en": [
     [
@@ -58,5 +58,6 @@
   ],
   "cocina_cierra_en": "11:00 pm",
   "spotify_playlist": "",
-  "sello_premio_cada": 5
+  "sello_premio_cada": 5,
+  "meta_pixel": ""
 }

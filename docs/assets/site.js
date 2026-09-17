@@ -20,7 +20,10 @@
     if (g && g.c && Date.now() - g.t < 30 * 864e5) CANAL = g.c;
   } catch (e) { /* sin storage: canal directo */ }
   window.ROSSO_medir = medir;
+  var PIXEL = { reservar: "Schedule", whatsapp: "Contact", evento: "Lead", produccion_envio: "Lead", club_alta: "CompleteRegistration", quiz: "ViewContent" };
   function medir(tipo) {
+    try { if (window.fbq && PIXEL[tipo]) window.fbq("track", PIXEL[tipo], { content_name: tipo }); } catch (e) { /* sin píxel */ }
+    if (tipo === "produccion_envio" || tipo === "club_alta") return;   // solo para el píxel; la métrica propia ya se cuenta aparte
     if (!API) return;
     try {
       var datos = JSON.stringify({ tipo: tipo, canal: CANAL, pagina: location.pathname, movil: /Mobi|Android/i.test(navigator.userAgent), ref: document.referrer });
@@ -290,6 +293,7 @@
     fetch(API + "/clientes", { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d) })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
+        if (res.ok && res.j.ok && window.ROSSO_medir) window.ROSSO_medir("club_alta");
         if (res.ok && res.j.ok) { forma.reset(); msg.textContent = res.j.nuevo ? tt("Listo, ya estás dentro. Nos vemos en la barra.", "Done, you are in. See you at the bar.") : tt("Ya estabas en la lista. Nos vemos en la barra.", "You were already on the list. See you at the bar."); msg.classList.add("ok"); }
         else { msg.textContent = (res.j && res.j.error) || tt("No se pudo guardar. Inténtalo otra vez.", "Could not save. Try again."); msg.classList.add("error"); }
       })
@@ -315,6 +319,7 @@
     fetch(API + "/produccion", { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(d) })
       .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
       .then(function (res) {
+        if (res.ok && res.j.ok && window.ROSSO_medir) window.ROSSO_medir("produccion_envio");
         if (res.ok && res.j.ok) { forma.reset(); msg.textContent = tt("Listo. Te escribimos por WhatsApp en menos de 24 horas (folio " + res.j.folio + ").", "Done. We will message you on WhatsApp within 24 hours (ref. " + res.j.folio + ")."); msg.classList.add("ok"); }
         else { msg.textContent = (res.j && res.j.error) || tt("No se pudo enviar. Inténtalo otra vez.", "Could not send. Try again."); msg.classList.add("error"); }
       })
