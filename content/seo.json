@@ -1,0 +1,131 @@
+{
+  "_nota": "Páginas de aterrizaje para búsqueda. Cada una: slug, título, descripción, h1, párrafos, foto y preguntas frecuentes (salen también como FAQPage para Google).",
+  "paginas": [
+    {
+      "slug": "speakeasy-roma-norte",
+      "foto": ["cortinaentrada", "50% 50%"],
+      "es": {
+        "titulo": "Speakeasy en Roma Norte · ROSSO",
+        "descripcion": "ROSSO es un speakeasy en Roma Norte, CDMX, escondido detrás de la cocina de Pavorosso en Puebla 329. Cócteles de autor, DJ de miércoles a sábado y vinilos los domingos.",
+        "etiqueta": "Speakeasy · Roma Norte",
+        "h1": "Un speakeasy en Roma Norte, detrás de una cocina.",
+        "pie": "La cortina roja, después de la cocina",
+        "parrafos": [
+          "ROSSO está en Puebla 329, Roma Norte, pero desde la calle no se ve. Se entra por Pavorosso: cruzas la cocina, abres una cortina roja y del otro lado hay un bar de 40 metros cuadrados, con bancas alrededor de la barra, un techo de círculos de luz y la cabina del DJ de frente.",
+          "Es un bar que explora el placer a través de los sentidos. El rojo lo cubre todo, la música está curada noche por noche y la carta es de coctelería de autor: Picarilla con tequila y chile de árbol, L'Origine du Monde con ginebra infusionada en manteca de cacao, Camasotz con jerez y guayaba, y una sección completa sin alcohol.",
+          "Abrimos de martes a sábado de 6 pm a 2 am y los domingos de 4 a 11 pm. De miércoles a sábado hay sesión de DJ a partir de las 9 pm; los domingos suena un vinilo completo, de principio a fin.",
+          "Somos pocos lugares, así que conviene reservar. Mesas de hasta 4 personas se reservan aquí mismo, sin costo; los grupos más grandes y los eventos privados se arman por WhatsApp."
+        ],
+        "faq": [
+          ["¿Dónde está ROSSO?", "En Puebla 329, Roma Norte, Ciudad de México. La entrada es por el restaurante Pavorosso: se cruza la cocina y se abre la cortina roja."],
+          ["¿Necesito reservación?", "Es recomendable: el bar tiene 32 lugares. Las mesas de hasta 4 personas se reservan en rossospeakeasy.com/reservar; los grupos de 5 o más, por WhatsApp al +52 56 6435 7899."],
+          ["¿Cuál es el horario?", "Martes a sábado de 6:00 pm a 2:00 am y domingo de 4:00 pm a 11:00 pm. Lunes cerrado."],
+          ["¿Cuánto cuesta un cóctel?", "Los cócteles de la casa van de $220 a $300 pesos y los clásicos de $210 a $300. La carta completa con precios actualizados está en rossospeakeasy.com/carta."],
+          ["¿Hay opciones sin alcohol?", "Sí, cuatro cócteles sin alcohol de la casa: Under Wear, Copa de Edipo, El Ojo y A Coup de Crème."]
+        ]
+      },
+      "en": {
+        "titulo": "Speakeasy in Roma Norte, Mexico City · ROSSO",
+        "descripcion": "ROSSO is a speakeasy in Roma Norte, Mexico City, hidden behind the kitchen of Pavorosso at Puebla 329. Signature cocktails, DJs Wednesday to Saturday and full-vinyl Sundays.",
+        "etiqueta": "Speakeasy · Roma Norte",
+        "h1": "A speakeasy in Roma Norte, behind a kitchen.",
+        "pie": "The red curtain, past the kitchen",
+        "parrafos": [
+          "ROSSO is at Puebla 329 in Roma Norte, but you can't see it from the street. You enter through Pavorosso: cross the kitchen, pull back a red curtain, and on the other side is a 430 sq ft bar with benches around the counter, a ceiling of light circles and the DJ booth facing you.",
+          "It is a bar that explores pleasure through the senses. Red covers everything, the music is curated night by night and the menu is signature cocktails: Picarilla with tequila and chile de árbol, L'Origine du Monde with cocoa-butter gin, Camasotz with sherry and guava, and a full non-alcoholic section.",
+          "We open Tuesday to Saturday from 6 pm to 2 am and Sundays from 4 to 11 pm. Wednesday to Saturday there is a DJ session from 9 pm; on Sundays one full record plays start to finish.",
+          "Seats are few, so booking helps. Tables for up to 4 are booked right here, free of charge; larger groups and private events are arranged on WhatsApp."
+        ],
+        "faq": [
+          ["Where is ROSSO?", "At Puebla 329, Roma Norte, Mexico City. The entrance is through the restaurant Pavorosso: cross the kitchen and pull back the red curtain."],
+          ["Do I need a reservation?", "Recommended: the bar seats 32. Tables for up to 4 are booked at rossospeakeasy.com/en/reservar; groups of 5 or more, on WhatsApp at +52 56 6435 7899."],
+          ["What are the opening hours?", "Tuesday to Saturday 6:00 pm to 2:00 am and Sunday 4:00 pm to 11:00 pm. Closed on Mondays."],
+          ["How much is a cocktail?", "House cocktails run from $220 to $300 MXN and classics from $210 to $300. The full menu with current prices is at rossospeakeasy.com/en/carta."],
+          ["Are there non-alcoholic options?", "Yes, four house non-alcoholic cocktails: Under Wear, Copa de Edipo, El Ojo and A Coup de Crème."]
+        ]
+      }
+    },
+    {
+      "slug": "bar-con-dj-cdmx",
+      "foto": ["espacio_vistaconsola", "50% 72%"],
+      "es": {
+        "titulo": "Bar con DJ en CDMX · ROSSO, Roma Norte",
+        "descripcion": "Bar con DJ en Roma Norte, CDMX: sesiones de miércoles a sábado de 9 pm a 1 am con selectores de disco, funk, soul, house e italo. Programación de la semana y reservas.",
+        "etiqueta": "Bar con DJ · CDMX",
+        "h1": "Un bar con DJ donde la cabina es lo primero que ves.",
+        "pie": "La cabina, de frente a la entrada",
+        "parrafos": [
+          "En ROSSO la cabina del DJ está de frente a la entrada: es lo primero que ves al abrir la cortina. De miércoles a sábado, de 9 pm a 1 am, toca un selector distinto cada noche: disco, funk, soul, house, italo, música del mundo.",
+          "Es un bar chico, de 32 lugares, con bancas alrededor de la barra. Aquí la música se escucha bien y se platica sin gritar hasta que la noche sube; entonces se baila donde estés.",
+          "La programación se publica cada semana en la página de Noches, con el género de cada selector y su Instagram. Cada DJ tiene su perfil con las fechas en que ha tocado y cuándo vuelve.",
+          "Las noches con DJ se reservan igual que cualquier otra: mesas de hasta 4 personas aquí mismo, grupos por WhatsApp."
+        ],
+        "faq": [
+          ["¿Qué días hay DJ en ROSSO?", "De miércoles a sábado, de 9:00 pm a 1:00 am. Los domingos suena un vinilo completo de 4:00 a 11:00 pm."],
+          ["¿Qué música ponen?", "Depende del selector: disco, funk, soul, house, italo, synth pop y música del mundo. La programación de la semana está en rossospeakeasy.com/noches."],
+          ["¿Hay cover?", "No hay cover. Se recomienda reservar porque el bar tiene 32 lugares."],
+          ["¿Se puede bailar?", "Sí. El bar es chico y se baila donde estés, entre la barra y la cabina."]
+        ]
+      },
+      "en": {
+        "titulo": "Bar with DJ in Mexico City · ROSSO, Roma Norte",
+        "descripcion": "A bar with DJs in Roma Norte, Mexico City: sessions Wednesday to Saturday, 9 pm to 1 am, with selectors playing disco, funk, soul, house and italo. Weekly lineup and bookings.",
+        "etiqueta": "Bar with DJ · Mexico City",
+        "h1": "A bar with a DJ where the booth is the first thing you see.",
+        "pie": "The booth, facing the entrance",
+        "parrafos": [
+          "At ROSSO the DJ booth faces the entrance: it is the first thing you see when you pull back the curtain. Wednesday to Saturday, 9 pm to 1 am, a different selector plays each night: disco, funk, soul, house, italo, global sounds.",
+          "It is a small bar, 32 seats, with benches around the counter. The music sounds right and you can talk without shouting until the night picks up; then you dance wherever you are.",
+          "The lineup is posted every week on the Nights page, with each selector's genre and Instagram. Every DJ has a profile with the dates they have played and when they are back.",
+          "DJ nights are booked like any other: tables for up to 4 right here, groups on WhatsApp."
+        ],
+        "faq": [
+          ["Which nights have a DJ at ROSSO?", "Wednesday to Saturday, 9:00 pm to 1:00 am. On Sundays a full vinyl record plays from 4:00 to 11:00 pm."],
+          ["What music do they play?", "It depends on the selector: disco, funk, soul, house, italo, synth pop and global sounds. The weekly lineup is at rossospeakeasy.com/en/noches."],
+          ["Is there a cover charge?", "No cover. Booking is recommended because the bar seats 32."],
+          ["Can you dance?", "Yes. The bar is small and you dance wherever you are, between the counter and the booth."]
+        ]
+      }
+    },
+    {
+      "slug": "bar-de-vinilos-cdmx",
+      "foto": ["espacio_01", "50% 60%"],
+      "es": {
+        "titulo": "Bar de vinilos en CDMX · Domingos en ROSSO",
+        "descripcion": "Domingos de vinilos completos en ROSSO, Roma Norte: cada domingo de 4 a 11 pm suena un disco entero, de principio a fin. Disco de la semana, carta de domingo y reservas.",
+        "etiqueta": "Bar de vinilos · CDMX",
+        "h1": "Los domingos suena un disco completo, de principio a fin.",
+        "pie": "Domingos de 4 a 11 pm",
+        "parrafos": [
+          "Los domingos en ROSSO no hay playlist. Se elige un disco y se pone completo, lado A y lado B, sin saltar canciones. De 4 a 11 pm, con la luz roja y la barra abierta.",
+          "El disco de la semana se anuncia en la página de Noches, con su portada, y se queda en el archivo de domingos anteriores. Han sonado Santana, The Rolling Stones, The Cure, M83.",
+          "La carta de domingo suma micheladas y clamatos de la casa a los cócteles de siempre. Es el día para llegar temprano, sentarse en la banca y quedarse.",
+          "Si quieres proponer un disco, escríbenos por Instagram a @rosso.speakeasy."
+        ],
+        "faq": [
+          ["¿Qué son los domingos de vinilos en ROSSO?", "Cada domingo de 4:00 a 11:00 pm se escucha un disco de vinilo completo, de principio a fin, sin saltar canciones."],
+          ["¿Dónde veo qué disco toca?", "En rossospeakeasy.com/noches se anuncia el vinilo del domingo con su portada, y abajo están los discos de domingos anteriores."],
+          ["¿Necesito reservar el domingo?", "Es recomendable. Mesas de hasta 4 personas en rossospeakeasy.com/reservar; grupos por WhatsApp."]
+        ]
+      },
+      "en": {
+        "titulo": "Vinyl bar in Mexico City · Sundays at ROSSO",
+        "descripcion": "Full-vinyl Sundays at ROSSO, Roma Norte: every Sunday from 4 to 11 pm one whole record plays start to finish. Record of the week, Sunday menu and bookings.",
+        "etiqueta": "Vinyl bar · Mexico City",
+        "h1": "On Sundays one full record plays, start to finish.",
+        "pie": "Sundays, 4 to 11 pm",
+        "parrafos": [
+          "On Sundays at ROSSO there is no playlist. One record is chosen and played whole, side A and side B, no skipping. From 4 to 11 pm, under red light, with the bar open.",
+          "The record of the week is announced on the Nights page, with its cover, and stays in the archive of past Sundays. Santana, The Rolling Stones, The Cure and M83 have played.",
+          "The Sunday menu adds house micheladas and clamatos to the usual cocktails. It is the day to arrive early, take a bench and stay.",
+          "To suggest a record, message us on Instagram at @rosso.speakeasy."
+        ],
+        "faq": [
+          ["What are vinyl Sundays at ROSSO?", "Every Sunday from 4:00 to 11:00 pm one full vinyl record is played start to finish, with no skipping."],
+          ["Where can I see which record is playing?", "rossospeakeasy.com/en/noches announces the Sunday vinyl with its cover, with past Sundays listed below."],
+          ["Do I need to book on Sunday?", "Recommended. Tables for up to 4 at rossospeakeasy.com/en/reservar; groups on WhatsApp."]
+        ]
+      }
+    }
+  ]
+}

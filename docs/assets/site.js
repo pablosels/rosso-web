@@ -525,3 +525,54 @@
     document.getElementById("q-resultado").appendChild(vuelve);
   } else pregunta();
 })();
+
+/* perfil de DJ: imagen 1080x1920 para historia de Instagram, hecha en el teléfono */
+(function () {
+  var boton = document.getElementById("dj-historia");
+  if (!boton) return;
+  var API = document.body.dataset.api || "", EN = window.ROSSO_EN, tt = window.ROSSO_tt;
+  var k = (new URLSearchParams(location.search).get("n") || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+  var datos = null;
+  fetch(API + "/dj/" + k, { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    if (!d || !d.proximas || !d.proximas.length) return;
+    datos = d; boton.hidden = false;
+  }).catch(function () { });
+  function lineas(ctx, texto, maxw) {
+    var pal = texto.split(" "), out = [], cur = "";
+    pal.forEach(function (w) { var t = cur ? cur + " " + w : w; if (ctx.measureText(t).width > maxw && cur) { out.push(cur); cur = w; } else cur = t; });
+    if (cur) out.push(cur); return out;
+  }
+  boton.addEventListener("click", function () {
+    var n = datos.proximas[0], p = datos.perfil || {};
+    var W = 1080, H = 1920, c = document.createElement("canvas"); c.width = W; c.height = H;
+    var x = c.getContext("2d");
+    x.fillStyle = "#28000F"; x.fillRect(0, 0, W, H);
+    x.fillStyle = "#B40519"; x.fillRect(0, 0, W, 28); x.fillRect(0, H - 28, W, 28);
+    var logo = new Image();
+    logo.onload = function () {
+      var lw = 760, lh = lw * 252 / 1280; x.drawImage(logo, (W - lw) / 2, 230, lw, lh);
+      x.textAlign = "center"; x.fillStyle = "#E0364A";
+      x.font = "500 34px 'Geist Mono', monospace";
+      x.fillText((EN ? "T O N I G H T   A T   R O S S O" : "E S T A   N O C H E   E N   R O S S O"), W / 2, 560);
+      x.fillStyle = "#E5E8E8"; x.font = "900 130px Geist, Helvetica, Arial, sans-serif";
+      var y = 760; lineas(x, (p.dj || k).toUpperCase(), W - 160).forEach(function (l) { x.fillText(l, W / 2, y); y += 140; });
+      x.font = "400 50px Geist, Helvetica, Arial, sans-serif"; x.fillStyle = "rgba(229,232,232,.75)";
+      if (n.genero) { lineas(x, n.genero, W - 200).forEach(function (l) { x.fillText(l, W / 2, y + 10); y += 66; }); }
+      x.fillStyle = "#E0364A"; x.font = "500 40px 'Geist Mono', monospace";
+      x.fillText(((EN && n.fecha_larga_en ? n.fecha_larga_en : n.fecha_larga) + (n.hora ? "  ·  " + n.hora : "")).toUpperCase(), W / 2, y + 110);
+      x.fillStyle = "#E5E8E8"; x.font = "400 38px Geist, Helvetica, Arial, sans-serif";
+      x.fillText("Puebla 329, Roma Norte · " + (EN ? "through the kitchen" : "se entra por la cocina"), W / 2, H - 330);
+      x.font = "500 44px 'Geist Mono', monospace"; x.fillText("rossospeakeasy.com/dj", W / 2, H - 250);
+      c.toBlob(function (blob) {
+        var archivo = new File([blob], "rosso-" + k + ".png", { type: "image/png" });
+        var liga = "https://rossospeakeasy.com/dj/?n=" + k + "&de=dj";
+        if (navigator.canShare && navigator.canShare({ files: [archivo] })) {
+          navigator.share({ files: [archivo], text: (EN ? "Tonight at ROSSO. Book: " : "Hoy toco en ROSSO. Reserva: ") + liga }).catch(function () { });
+        } else {
+          var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = archivo.name; a.click();
+        }
+      }, "image/png");
+    };
+    logo.src = (document.querySelector(".marca img") || {}).src || "/assets/rosso-wordmark-letras.svg";
+  });
+})();

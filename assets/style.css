@@ -358,3 +358,12 @@ figure{margin:0}
 .q-ingredientes{color:var(--ink-suave);margin:0 0 1rem}
 .q-porque{font-size:clamp(18px,2vw,22px);line-height:1.4;max-width:34ch;margin:0 0 1.8rem}
 .enlace + .enlace{margin-left:1.4rem}
+
+/* páginas de búsqueda */
+.seo p{font-size:18px;line-height:1.55}
+.faq{border-top:1px solid var(--linea);padding:.9rem 0}
+.faq summary{cursor:pointer;font-weight:500;color:var(--ink);list-style:none}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";float:right;color:var(--carmin-claro);font-family:var(--mono)}
+.faq[open] summary::after{content:"–"}
+.faq p{margin:.6rem 0 0;font-size:16px}

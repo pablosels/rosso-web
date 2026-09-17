@@ -1,9 +1,39 @@
 {
-  "_nota": "Ligas cortas rossospeakeasy.com/<clave> -> inicio con ?de=<clave>. El sitio recuerda el canal 30 días y lo anota en cada clic.",
-  "ig": {"destino": "/", "nombre": "Instagram (link en bio)"},
-  "qr": {"destino": "/carta/", "nombre": "QR en mesa y tarjetas"},
-  "google": {"destino": "/", "nombre": "Ficha de Google"},
-  "prensa": {"destino": "/", "nombre": "Prensa / KAPR"},
-  "ot": {"destino": "/", "nombre": "OpenTable (perfil)"},
-  "wa": {"destino": "/reservar/", "nombre": "WhatsApp (estados y mensajes)"}
+  "_nota": "Ligas cortas rossospeakeasy.com/<clave> -> inicio con ?de=<clave>. El sitio recuerda el canal 30 días y lo anota en cada clic. El canal 'dj' no tiene liga corta (chocaría con la página /dj/): llega como ?de=dj en la liga del perfil.",
+  "ig": {
+    "destino": "/",
+    "nombre": "Instagram (link en bio)"
+  },
+  "qr": {
+    "destino": "/carta/",
+    "nombre": "QR en mesa y tarjetas"
+  },
+  "google": {
+    "destino": "/",
+    "nombre": "Ficha de Google"
+  },
+  "prensa": {
+    "destino": "/",
+    "nombre": "Prensa / KAPR"
+  },
+  "ot": {
+    "destino": "/",
+    "nombre": "OpenTable (perfil)"
+  },
+  "wa": {
+    "destino": "/reservar/",
+    "nombre": "WhatsApp (estados y mensajes)"
+  },
+  "ads": {
+    "destino": "/quiz/",
+    "nombre": "Anuncios de Instagram"
+  },
+  "pavo": {
+    "destino": "/",
+    "nombre": "Pavorosso (carta y cuenta)"
+  },
+  "resena": {
+    "destino": "https://search.google.com/local/writereview?placeid=ChIJeypSuKD_0YUR32-Gkjw8rD8",
+    "nombre": "Tarjeta para dejar reseña en Google"
+  }
 }

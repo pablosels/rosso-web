@@ -203,6 +203,15 @@ def recordatorio_agenda():
                       f"\nHoja: https://docs.google.com/spreadsheets/d/{vinilos_mod.SHEET_ID}/edit")
     except Exception as e:
         print("vinilo recordatorio fallo:", e)
+    try:
+        semana = [n for n in agenda_mod.proximas(dias=6)]
+        if semana:
+            texto += "\n\n📣 <b>Para mandarle a cada DJ</b> (que lo suban a su historia el día que tocan):"
+            for n in semana:
+                texto += (f"\n· {n['dj']} ({n['fecha_larga']}): «Te dejo tu página en ROSSO. Ábrela en el cel, toca “Imagen para tu historia” y súbela con la liga: "
+                          f"https://rossospeakeasy.com/dj/?n={n['slug']}&de=dj»")
+    except Exception as e:
+        print("mensajes dj fallo:", e)
     if pendientes:
         total = sum(p["_pago"] for p in pendientes)
         texto += ("\n\n💸 <b>Pagos a DJs pendientes</b> (" + dinero(total) + "):\n"

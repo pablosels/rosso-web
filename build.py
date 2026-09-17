@@ -27,6 +27,7 @@ if os.environ.get("BASE") is not None:
     SITE["base"] = os.environ["BASE"].rstrip("/")
 NOCHES = json.loads((CONT / "noches.json").read_text(encoding="utf-8"))
 QUIZ = json.loads((CONT / "quiz.json").read_text(encoding="utf-8"))
+SEO = json.loads((CONT / "seo.json").read_text(encoding="utf-8"))
 CARTA = json.loads((RAIZ / "carta_snapshot.json").read_text(encoding="utf-8"))
 A = SITE["base"]          # raíz de assets (no cambia con el idioma)
 B = SITE["base"]          # prefijo de las ligas internas: "" en español, "/en" en inglés
@@ -155,7 +156,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
   </div>
   <div class="pie-col pie-legal">
     <p>{t(f"Reservaciones hasta {SITE['max_widget']} personas por", f"Reservations for up to {SITE['max_widget']} on")} <a href="{SITE['opentable_url']}">OpenTable</a>. {t("Grupos y eventos por WhatsApp.", "Groups and events via WhatsApp.")}</p>
-    <p class="mini">© {dt.date.today().year} Rosso Speakeasy · Puebla 329, Roma Norte, CDMX · <a href="{B}/producciones/">{t("Locación", "Location hire")}</a> · <a href="{B}/club/">Club ROSSO</a> · <a href="{B}/privacidad/">{t("Privacidad", "Privacy")}</a></p>
+    <p class="mini">© {dt.date.today().year} Rosso Speakeasy · Puebla 329, Roma Norte, CDMX · <a href="{B}/speakeasy-roma-norte/">Speakeasy Roma Norte</a> · <a href="{B}/bar-con-dj-cdmx/">{t("Bar con DJ", "Bar with DJ")}</a> · <a href="{B}/bar-de-vinilos-cdmx/">{t("Vinilos", "Vinyl")}</a> · <a href="{B}/producciones/">{t("Locación", "Location hire")}</a> · <a href="{B}/club/">Club ROSSO</a> · <a href="{B}/privacidad/">{t("Privacidad", "Privacy")}</a></p>
   </div>
 </footer>
 <script src="{A}/assets/site.js?v={V_JS}" defer></script>
@@ -700,6 +701,7 @@ def pag_dj():
   <div class="dj-datos">
     <p id="dj-ig"></p>
     <p id="dj-resumen" class="nota"></p>
+    <p><button class="btn" type="button" id="dj-historia" hidden>{t("Imagen para tu historia", "Image for your story")}</button></p>
   </div>
   <div class="etiqueta">{t("Próximas fechas", "Upcoming dates")}</div>
   <ul class="agenda" id="dj-proximas"></ul>
@@ -771,6 +773,36 @@ def pag_quiz():
                   t("Cinco preguntas y te decimos cuál cóctel de la casa de ROSSO eres.", "Five questions and we tell you which ROSSO house cocktail you are."), clase="pag-quiz")
 
 
+# ---------------------------------------------------------------- páginas para búsqueda
+def pag_seo(p):
+    d = p[L]
+    faq_html = "".join(f'<details class="faq"><summary>{e(q)}</summary><p>{e(a)}</p></details>' for q, a in d["faq"])
+    faq_ld = json.dumps({"@context": "https://schema.org", "@type": "FAQPage",
+                         "mainEntity": [{"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in d["faq"]]}, ensure_ascii=False)
+    otras = "".join(f'<a class="enlace" href="{B}/{o["slug"]}/">{e(o[L]["etiqueta"])}</a>' for o in SEO["paginas"] if o["slug"] != p["slug"])
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">{e(d["etiqueta"])}</div>
+  <h1>{e(d["h1"])}</h1>
+</section>
+{cine(p["foto"][0], d["h1"], d["pie"], p["foto"][1])}
+<section class="legal seo">
+  {"".join(f"<p>{e(x)}</p>" for x in d["parrafos"])}
+  <div class="hero-cta">
+    <a class="btn" href="{B}/reservar/">{t("Reservar mesa", "Book a table")}</a>
+    <a class="btn btn-linea" href="{B}/carta/">{t("Ver la carta", "See the menu")}</a>
+    <a class="btn btn-linea" href="{B}/noches/">{t("Esta semana", "This week")}</a>
+  </div>
+  <div data-agenda="4" hidden></div>
+  <div class="etiqueta" style="margin-top:3rem">{t("Preguntas frecuentes", "Frequently asked questions")}</div>
+  {faq_html}
+  <p class="nota" style="margin-top:2rem">{otras}</p>
+</section>
+"""
+    return pagina(d["titulo"], cuerpo, f"/{p['slug']}/", d["descripcion"], clase="pag-seo",
+                  extra_head=f'<script type="application/ld+json">{faq_ld}</script>')
+
+
 def pag_404():
     cuerpo = f"""
 <section class="encabezado">
@@ -809,6 +841,8 @@ def main():
                    "club/index.html": pag_club(), "privacidad/index.html": pag_privacidad(),
                    "producciones/index.html": pag_producciones(), "dj/index.html": pag_dj(), "club/sello/index.html": pag_sello(),
                "quiz/index.html": pag_quiz()}
+        for p_ in SEO["paginas"]:
+            paginas[f"{p_['slug']}/index.html"] = pag_seo(p_)
         if idioma == "en":
             paginas.pop("regalo/canje/index.html")     # la barra trabaja en español
             paginas.pop("club/sello/index.html")
@@ -825,7 +859,7 @@ def main():
     for clave, c in canales.items():
         if clave.startswith("_"):
             continue
-        destino = f"{B}{c['destino']}?de={clave}"
+        destino = c["destino"] if c["destino"].startswith("http") else f"{B}{c['destino']}?de={clave}"
         (DOCS / clave).mkdir(parents=True, exist_ok=True)
         (DOCS / clave / "index.html").write_text(
             f'<!doctype html><html lang="es"><head><meta charset="utf-8"><title>ROSSO</title>'
@@ -837,7 +871,7 @@ def main():
     (DOCS / "carta.json").write_text(json.dumps(CARTA, ensure_ascii=False), encoding="utf-8")
     (DOCS / ".nojekyll").write_text("")
     (DOCS / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {URL}/sitemap.xml\n")
-    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/", "/producciones/", "/club/", "/privacidad/", "/quiz/"] + (["/regalo/"] if SITE.get("regalo_activo") else [])
+    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/", "/producciones/", "/club/", "/privacidad/", "/quiz/"] + [f"/{p_['slug']}/" for p_ in SEO["paginas"]] + (["/regalo/"] if SITE.get("regalo_activo") else [])
     urls = urls + ["/en" + u for u in urls]
     (DOCS / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
