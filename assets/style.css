@@ -367,3 +367,24 @@ figure{margin:0}
 .faq summary::after{content:"+";float:right;color:var(--carmin-claro);font-family:var(--mono)}
 .faq[open] summary::after{content:"–"}
 .faq p{margin:.6rem 0 0;font-size:16px}
+
+/* perfil de DJ v2 */
+.dj-hero{position:relative;min-height:min(62vh,560px);display:flex;align-items:flex-end;overflow:hidden}
+.dj-hero-img{position:absolute;inset:0}
+.dj-hero-img img{width:100%;height:100%;object-fit:cover;object-position:50% 72%;display:block}
+.dj-hero-img::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(40,0,15,.35) 0%,rgba(40,0,15,.55) 45%,var(--vermouth) 100%)}
+.dj-hero-txt{position:relative;padding:0 var(--gutter) 2.2rem;max-width:var(--ancho);margin:0 auto;width:100%}
+.dj-hero-txt h1{font-size:clamp(44px,9vw,110px);line-height:.95;margin-bottom:1rem;overflow-wrap:anywhere}
+.dj-chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.dj-chips span{font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;border:1px solid var(--carmin-claro);color:var(--blanco);padding:6px 12px;background:rgba(180,5,25,.25)}
+.dj-rejilla{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3rem;padding-top:2.5rem}
+.dj-col{display:grid;gap:1.6rem;align-content:start}
+.dj-proxima{border:1px solid var(--carmin-claro);padding:1.4rem;background:rgba(180,5,25,.12)}
+.dj-fecha{font-size:clamp(22px,3vw,32px);font-weight:900;text-transform:uppercase;line-height:1.1;margin-bottom:1.2rem}
+.dj-bio{font-size:18px;line-height:1.5;margin:0;max-width:44ch}
+.dj-foto{margin:0;max-width:360px}
+.dj-foto img{width:100%;aspect-ratio:1;object-fit:cover;display:block;filter:grayscale(1) contrast(1.05)}
+.dj-trago{border-top:1px solid var(--linea);padding-top:1.4rem}
+.dj-trago h2{margin-bottom:.4rem}
+.dj-llegar{border-top:1px solid var(--linea);padding-top:1.4rem}
+@media (max-width:760px){.dj-rejilla{grid-template-columns:1fr;gap:2rem}.dj-hero{min-height:52vh}}

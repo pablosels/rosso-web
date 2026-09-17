@@ -12,6 +12,13 @@ import agenda as agenda_mod
 import carta as carta_mod
 
 SEMANAS_BASE = 6
+SEMANAS_MAX = 12
+import json as _json, os as _os
+try:
+    with open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "noches_especiales.json"), encoding="utf-8") as _fh:
+        ESPECIALES = {k: v for k, v in _json.load(_fh).items() if not k.startswith("_")}
+except Exception:
+    ESPECIALES = {}
 
 
 def _num(x):
@@ -76,10 +83,16 @@ def marcador(sub, pwd, leer, guardar, dias=8, hoy=None):
         except Exception as e:
             print("marcador: sin datos", f, e)
             continue
-        base = []
-        for k in range(1, SEMANAS_BASE + 1):
+        base, saltadas = [], []
+        for k in range(1, SEMANAS_MAX + 1):
+            if len(base) >= SEMANAS_BASE or (k > SEMANAS_BASE and len(base) >= 3):
+                break
+            fb = f - dt.timedelta(days=7 * k)
+            if fb.isoformat() in ESPECIALES:          # noche de evento: no es "lo normal"
+                saltadas.append(ESPECIALES[fb.isoformat()])
+                continue
             try:
-                b = resumen_dia(f - dt.timedelta(days=7 * k), sub, pwd, leer, guardar)
+                b = resumen_dia(fb, sub, pwd, leer, guardar)
                 if b["venta"] > 0:
                     base.append(b)
             except Exception:
@@ -90,7 +103,8 @@ def marcador(sub, pwd, leer, guardar, dias=8, hoy=None):
                     **{k: r[k] for k in ("venta", "venta_noche", "personas", "cuentas", "cortesias")},
                     "ticket": round(r["venta"] / r["personas"]) if r["personas"] else 0,
                     "promedio_dia": round(prom), "promedio_personas": round(prom_pers),
-                    "vs": round((r["venta"] / prom - 1) * 100) if prom else None})
+                    "vs": round((r["venta"] / prom - 1) * 100) if prom else None,
+                    "base_n": len(base), "base_sin": sorted(set(saltadas))})
     return out
 
 
@@ -101,7 +115,8 @@ def texto(filas):
     for x in filas:
         flecha = "" if x["vs"] is None else (" 🟢 +" if x["vs"] >= 10 else " 🔴 " if x["vs"] <= -10 else " ⚪ ") + (f"{x['vs']}%" if x["vs"] < 0 or x["vs"] < 10 else f"{x['vs']}%")
         lin.append(f"\n<b>{x['dj']}</b> · {x['fecha_larga']}")
-        lin.append(f"Venta ${x['venta']:,} (normal ${x['promedio_dia']:,}){flecha}")
+        lin.append(f"Venta ${x['venta']:,} (normal ${x['promedio_dia']:,}){flecha}"
+                   + (f" · referencia de {x['base_n']} noches, sin {', '.join(x['base_sin'])}" if x.get("base_sin") else ""))
         lin.append(f"{x['personas']} personas (normal {x['promedio_personas']}) · ticket ${x['ticket']:,} por persona · de 9 pm en adelante ${x['venta_noche']:,}")
         extra = []
         if x["cortesias"]:

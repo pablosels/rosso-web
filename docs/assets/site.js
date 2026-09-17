@@ -411,18 +411,50 @@
   var perfil = document.getElementById("dj");
   if (perfil && API) {
     var k = (new URLSearchParams(location.search).get("n") || "").toLowerCase().replace(/[^a-z0-9-]/g, "");
+    var MARIDAJE = {}; try { MARIDAJE = JSON.parse(document.getElementById("dj-maridaje").textContent); } catch (e) { }
+    // qué pedir según lo que suena; el orden importa: gana la primera coincidencia
+    var REGLAS = [[/italo|synth|new wave|pop/i, "rosso-tonic"], [/hip.?hop|rap|r&b|rnb/i, "pellizco"], [/latin|mundo|world|afro|cumbia|salsa|tropical/i, "camasotz"],
+                  [/house|techno|electr/i, "picarilla"], [/disco|funk|boogie/i, "sabor-a-mi"], [/soul|jazz|groove|cinematic/i, "querido-diario"]];
+    function slugDe(t) { return String(t || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""); }
+    function pon(id, txt) { var el = document.getElementById(id); if (el) el.textContent = txt; return el; }
     fetch(API + "/dj/" + k, { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
-      if (!d) { document.getElementById("dj-nombre").textContent = "…"; document.getElementById("dj-error").hidden = false; return; }
+      if (!d) { pon("dj-nombre", "ROSSO"); document.getElementById("dj-error").hidden = false; return; }
       var p = d.perfil || {};
-      document.getElementById("dj-nombre").textContent = p.dj || k;
+      pon("dj-nombre", p.dj || k);
       document.title = (p.dj || k) + " · ROSSO";
-      document.getElementById("dj-genero").textContent = p.genero || "";
-      document.getElementById("dj-ig").innerHTML = p.instagram ? '<a class="enlace" href="https://www.instagram.com/' + esc(p.instagram) + '/" rel="noopener">@' + esc(p.instagram) + "</a>" : "";
-      document.getElementById("dj-resumen").textContent = tt(p.fechas + (p.fechas === 1 ? " noche" : " noches") + " en ROSSO.", p.fechas + (p.fechas === 1 ? " night" : " nights") + " at ROSSO.");
-      function li(n) { return '<li><span class="f">' + esc(EN && n.fecha_larga_en ? n.fecha_larga_en : n.fecha_larga) + (n.hora ? " · " + esc(n.hora) : "") + '</span><span class="t">' + (n.genero ? '<span class="g">' + esc(n.genero) + "</span>" : "") + (n.preventa ? ' <a class="enlace enlace-mini" href="' + esc(n.preventa) + '" rel="noopener">' + tt("Preventa", "Tickets") + "</a>" : "") + "</span></li>"; }
-      document.getElementById("dj-proximas").innerHTML = d.proximas.length ? d.proximas.map(li).join("") : "<li><span class=\"t\">" + tt("Sin fecha programada todavía.", "No date scheduled yet.") + "</span></li>";
-      document.getElementById("dj-pasadas").innerHTML = d.pasadas.map(li).join("");
+      var generos = String(p.genero || "").split(/\s*(?:,|&|\/|\sy\s|\sand\s)\s*/).map(function (g) { return g.trim(); }).filter(Boolean);
+      document.getElementById("dj-chips").innerHTML = generos.map(function (g) { return "<span>" + esc(g) + "</span>"; }).join("");
+      document.getElementById("dj-ig").innerHTML = (p.instagram ? '<a class="enlace" href="https://www.instagram.com/' + esc(p.instagram) + '/" rel="noopener">@' + esc(p.instagram) + "</a>" : "")
+        + (p.musica ? ' <a class="enlace" href="' + esc(p.musica) + '" rel="noopener">' + tt("Escúchalo", "Listen") + "</a>" : "");
+      pon("dj-resumen", tt(p.fechas + (p.fechas === 1 ? " noche" : " noches") + " en ROSSO.", p.fechas + (p.fechas === 1 ? " night" : " nights") + " at ROSSO."));
+      if (p.bio) { pon("dj-bio", p.bio).hidden = false; }
+      if (p.foto) { var f = document.getElementById("dj-foto"); f.innerHTML = '<img src="' + esc(p.foto) + '" alt="' + esc(p.dj || "") + '" loading="lazy">'; f.hidden = false; }
+      // próxima fecha, con reserva de esa noche
+      var n = d.proximas[0];
+      if (n) {
+        var hoy = new Date(), hoyISO = hoy.getFullYear() + "-" + String(hoy.getMonth() + 1).padStart(2, "0") + "-" + String(hoy.getDate()).padStart(2, "0");
+        if (n.fecha === hoyISO) pon("dj-proxima-k", tt("Hoy toca", "Playing tonight"));
+        pon("dj-proxima-fecha", (EN && n.fecha_larga_en ? n.fecha_larga_en : n.fecha_larga) + (n.hora ? " · " + n.hora : ""));
+        document.getElementById("dj-reservar").href = B + "/reservar/?fecha=" + n.fecha;
+        document.getElementById("dj-proxima").hidden = false;
+      }
+      // trago: el que eligió el DJ en la hoja, o el maridaje por género
+      var trago = null, deDJ = false;
+      if (p.trago && MARIDAJE[slugDe(p.trago)]) { trago = MARIDAJE[slugDe(p.trago)]; deDJ = true; }
+      if (!trago) { for (var i = 0; i < REGLAS.length; i++) { if (REGLAS[i][0].test(p.genero || "")) { trago = MARIDAJE[REGLAS[i][1]]; break; } } }
+      if (!trago) trago = MARIDAJE["l-origine-du-monde"];
+      if (trago) {
+        if (deDJ) pon("dj-trago-k", (p.dj || "") + " " + tt("toma", "drinks"));
+        pon("dj-trago-nombre", trago.nombre); pon("dj-trago-notas", trago.notas); pon("dj-trago-ing", trago.ingredientes);
+        document.getElementById("dj-trago").hidden = false;
+      }
+      function li(n, conDJ) { return '<li><span class="f">' + esc(EN && n.fecha_larga_en ? n.fecha_larga_en : n.fecha_larga) + (n.hora ? " · " + esc(n.hora) : "") + '</span><span class="t">' + (conDJ ? '<strong><a href="' + B + "/dj/?n=" + encodeURIComponent(n.slug) + '">' + esc(n.dj) + "</a></strong> " : "") + (n.genero ? '<span class="g">' + esc(n.genero) + "</span>" : "") + (n.preventa ? ' <a class="enlace enlace-mini" href="' + esc(n.preventa) + '" rel="noopener">' + tt("Preventa", "Tickets") + "</a>" : "") + "</span></li>"; }
+      var resto = d.proximas.slice(1);
+      document.getElementById("dj-proximas").innerHTML = resto.map(function (x) { return li(x); }).join("");
+      if (!resto.length) { document.getElementById("dj-proximas").hidden = true; document.getElementById("dj-prox-k").hidden = true; }
+      document.getElementById("dj-pasadas").innerHTML = d.pasadas.map(function (x) { return li(x); }).join("");
       if (!d.pasadas.length) { var hp = document.getElementById("dj-pasadas"); hp.hidden = true; hp.previousElementSibling.hidden = true; }
+      if (d.semana && d.semana.length) { document.getElementById("dj-semana").innerHTML = d.semana.map(function (x) { return li(x, true); }).join(""); document.getElementById("dj-semana-caja").hidden = false; }
       perfil.hidden = false;
     }).catch(function () { document.getElementById("dj-error").hidden = false; });
   }
@@ -552,9 +584,20 @@
     var W = 1080, H = 1920, c = document.createElement("canvas"); c.width = W; c.height = H;
     var x = c.getContext("2d");
     x.fillStyle = "#28000F"; x.fillRect(0, 0, W, H);
-    x.fillStyle = "#B40519"; x.fillRect(0, 0, W, 28); x.fillRect(0, H - 28, W, 28);
-    var logo = new Image();
-    logo.onload = function () {
+    var fondo = new Image(), logo = new Image(), listos = 0;
+    function listo() { if (++listos === 2) pinta(); }
+    fondo.onload = listo; fondo.onerror = function () { fondo = null; listo(); };
+    logo.onload = listo;
+    fondo.src = "/assets/fotos/espacio_vistaconsola-m.jpg";
+    function pinta() {
+      if (fondo) {   // foto de la cabina cubriendo el lienzo, con velo vino para que el texto se lea
+        var e = Math.max(W / fondo.width, H / fondo.height), fw = fondo.width * e, fh = fondo.height * e;
+        x.drawImage(fondo, (W - fw) / 2, (H - fh) / 2, fw, fh);
+        var g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "rgba(40,0,15,.78)"); g.addColorStop(.5, "rgba(40,0,15,.62)"); g.addColorStop(1, "rgba(40,0,15,.92)");
+        x.fillStyle = g; x.fillRect(0, 0, W, H);
+      }
+      x.fillStyle = "#B40519"; x.fillRect(0, 0, W, 28); x.fillRect(0, H - 28, W, 28);
+      (function () {
       var lw = 760, lh = lw * 252 / 1280; x.drawImage(logo, (W - lw) / 2, 230, lw, lh);
       x.textAlign = "center"; x.fillStyle = "#E0364A";
       x.font = "500 34px 'Geist Mono', monospace";
@@ -577,7 +620,8 @@
           var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = archivo.name; a.click();
         }
       }, "image/png");
-    };
+      })();
+    }
     logo.src = (document.querySelector(".marca img") || {}).src || "/assets/rosso-wordmark-letras.svg";
   });
 })();

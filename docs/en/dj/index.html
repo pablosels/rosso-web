@@ -24,7 +24,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;900&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/assets/style.css?v=bf2ceac1">
+<link rel="stylesheet" href="/assets/style.css?v=6bf61712">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BarOrPub", "name": "Rosso Speakeasy", "url": "https://rossospeakeasy.com", "telephone": "+525664357899", "servesCuisine": "Cocktails", "address": {"@type": "PostalAddress", "streetAddress": "Puebla 329", "addressLocality": "Ciudad de México", "addressRegion": "CDMX", "postalCode": "06700", "addressCountry": "MX"}, "acceptsReservations": "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico", "menu": "https://rossospeakeasy.com/carta/", "sameAs": ["https://www.instagram.com/rosso.speakeasy/", "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico"], "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "opens": "18:00", "closes": "02:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "16:00", "closes": "23:00"}]}</script>
 <meta name="robots" content="noindex">
 
@@ -38,24 +38,59 @@
 </header>
 <main id="contenido">
 
-<section class="encabezado">
-  <div class="etiqueta">Selector</div>
-  <h1 id="dj-nombre">…</h1>
-  <p class="nota" id="dj-genero"></p>
+<section class="dj-hero">
+  <div class="dj-hero-img"><img src="/assets/fotos/espacio_vistaconsola.jpg" srcset="/assets/fotos/espacio_vistaconsola-m.jpg 900w, /assets/fotos/espacio_vistaconsola.jpg 1800w" sizes="100vw" alt="ROSSO&#x27;s booth under the ceiling of red circles"></div>
+  <div class="dj-hero-txt">
+    <div class="etiqueta">Selector at ROSSO</div>
+    <h1 id="dj-nombre">…</h1>
+    <div class="dj-chips" id="dj-chips"></div>
+  </div>
 </section>
 <section class="dj-sec" id="dj" hidden>
-  <div class="dj-datos">
-    <p id="dj-ig"></p>
-    <p id="dj-resumen" class="nota"></p>
-    <p><button class="btn" type="button" id="dj-historia" hidden>Image for your story</button></p>
+  <div class="dj-rejilla">
+    <div class="dj-col">
+      <div class="dj-proxima" id="dj-proxima" hidden>
+        <div class="etiqueta" id="dj-proxima-k">Next date</div>
+        <div class="dj-fecha" id="dj-proxima-fecha"></div>
+        <div class="hero-cta">
+          <a class="btn" id="dj-reservar" href="/en/reservar/">Book that night</a>
+          <button class="btn btn-linea" type="button" id="dj-historia" hidden>Image for your story</button>
+        </div>
+      </div>
+      <figure class="dj-foto" id="dj-foto" hidden></figure>
+      <p class="dj-bio" id="dj-bio" hidden></p>
+      <p id="dj-ig"></p>
+      <p id="dj-resumen" class="nota"></p>
+    </div>
+    <div class="dj-col">
+      <div class="dj-trago" id="dj-trago" hidden>
+        <div class="etiqueta" id="dj-trago-k">For this music, order</div>
+        <h2 id="dj-trago-nombre"></h2>
+        <p class="q-notas" id="dj-trago-notas"></p>
+        <p class="nota" id="dj-trago-ing"></p>
+        <a class="enlace" href="/en/quiz/">Or find out which cocktail you are</a>
+      </div>
+      <div class="dj-llegar">
+        <div class="etiqueta">How to get in</div>
+        <p>Puebla 329, Roma Norte. Walk in through Pavorosso, cross the kitchen and pull back the red curtain. The booth is the first thing you see.</p>
+        <p class="nota">Session 9 pm to 1 am · no cover · tables for up to 4 with a booking; groups via <a href="https://wa.me/525664357899?text=Hi%20ROSSO%2C%20I%20would%20like%20to%20book%20for%20a%20group.">WhatsApp</a>.</p>
+      </div>
+    </div>
   </div>
-  <div class="etiqueta">Upcoming dates</div>
-  <ul class="agenda" id="dj-proximas"></ul>
-  <div class="etiqueta" style="margin-top:2rem">Has played at ROSSO</div>
-  <ul class="agenda agenda-pasada" id="dj-pasadas"></ul>
-  <p class="nota"><a class="enlace" href="/en/noches/">All the nights</a></p>
+  <div id="dj-fechas-caja">
+    <div class="etiqueta" style="margin-top:2.5rem" id="dj-prox-k">Upcoming dates</div>
+    <ul class="agenda" id="dj-proximas"></ul>
+    <div class="etiqueta" style="margin-top:2rem">Has played at ROSSO</div>
+    <ul class="agenda agenda-pasada" id="dj-pasadas"></ul>
+  </div>
+  <div id="dj-semana-caja" hidden>
+    <div class="etiqueta" style="margin-top:2.5rem">Also this week</div>
+    <ul class="agenda" id="dj-semana"></ul>
+  </div>
+  <p class="nota" style="margin-top:2rem"><a class="enlace" href="/en/noches/">All the nights</a></p>
 </section>
-<p class="nota" id="dj-error" hidden>We could not find that selector.</p>
+<p class="nota" id="dj-error" hidden style="padding:0 var(--gutter) 4rem">We could not find that selector.</p>
+<script id="dj-maridaje" type="application/json">{"picarilla": {"nombre": "Picarilla", "notas": "Citrusy, spicy, vibrant.", "ingredientes": "Tequila, honey, plum, chile de árbol and lime."}, "pellizco": {"nombre": "Pellizco", "notas": "Fruity, citrusy, silky.", "ingredientes": "Mezcal, walnut bitters, pear cordial, lemon and egg white."}, "sabor-a-mi": {"nombre": "Sabor a Mi", "notas": "Tropical, tart, refreshing.", "ingredientes": "White rum infused with coconut oil, passion fruit, coconut water and pineapple vinegar."}, "camasotz": {"nombre": "Camasotz", "notas": "Fruity, dry, vibrant.", "ingredientes": "Blanco tequila, fino sherry, guava, hibiscus and nutmeg."}, "rosso-tonic": {"nombre": "Rosso Tonic", "notas": "Fresh, herbal, fruity.", "ingredientes": "Strawberry gin, sweet vermouth, lime and tonic water."}, "l-origine-du-monde": {"nombre": "L'Origine du Monde", "notas": "Velvety, aromatic, deep.", "ingredientes": "Gin infused with cocoa butter, coconut liqueur, blanc vermouth and chocolate bitters."}, "rococócrème": {"nombre": "Rococócrème", "notas": "Light, floral, sparkling.", "ingredientes": "Cirilo, peach and lavender bitters."}, "paola": {"nombre": "Paola", "notas": "Floral, sweet, delicate.", "ingredientes": "Blanc vermouth, dry vermouth, strawberry compote and roses."}, "voyeur": {"nombre": "Voyeur", "notas": "Herbal, tropical, unctuous.", "ingredientes": "Gin, mango, lime and thyme. Contains dairy."}, "querido-diario": {"nombre": "Querido Diario", "notas": "Intense, spiced, deep.", "ingredientes": "Whiskey, sweet vermouth, fig vinegar and Angostura bitters."}, "spf-0": {"nombre": "SPF 0", "notas": "Bitter, toasty, silky.", "ingredientes": "Coconut liqueur and cold brew."}, "under-wear": {"nombre": "Under Wear", "notas": "Tropical, tart, refreshing.", "ingredientes": "Passion fruit, coconut water and pineapple vinegar."}, "copa-de-edipo": {"nombre": "Copa de Edipo", "notas": "Fruity, citrusy, silky.", "ingredientes": "Walnut, pear cordial, lemon and egg white."}, "el-ojo": {"nombre": "El Ojo", "notas": "Herbal, tropical, unctuous.", "ingredientes": "Mango, lime and thyme. Contains dairy."}, "a-coup-de-creme": {"nombre": "A Coup de Crème", "notas": "Light, floral, sparkling.", "ingredientes": "Sparkling tea, peach and lavender bitters."}}</script>
 
 </main>
 <footer class="pie">
@@ -76,7 +111,7 @@
     <p class="mini">© 2026 Rosso Speakeasy · Puebla 329, Roma Norte, CDMX · <a href="/en/speakeasy-roma-norte/">Speakeasy Roma Norte</a> · <a href="/en/bar-con-dj-cdmx/">Bar with DJ</a> · <a href="/en/bar-de-vinilos-cdmx/">Vinyl</a> · <a href="/en/producciones/">Location hire</a> · <a href="/en/club/">Club ROSSO</a> · <a href="/en/privacidad/">Privacy</a></p>
   </div>
 </footer>
-<script src="/assets/site.js?v=28b850f4" defer></script>
+<script src="/assets/site.js?v=059dd25d" defer></script>
 
 </body>
 </html>

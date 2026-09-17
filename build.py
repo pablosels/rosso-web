@@ -700,25 +700,62 @@ def pag_producciones():
 
 # ---------------------------------------------------------------- perfil de DJ y Sello ROSSO
 def pag_dj():
+    # maridaje por género: qué pedir según lo que suena (nombres de la carta)
+    maridaje = {c["slug"]: {"nombre": c["nombre"], "notas": c[L]["notas"], "ingredientes": c[L]["ingredientes"]} for c in QUIZ["cocteles"]}
     cuerpo = f"""
-<section class="encabezado">
-  <div class="etiqueta">{t("Selector", "Selector")}</div>
-  <h1 id="dj-nombre">…</h1>
-  <p class="nota" id="dj-genero"></p>
+<section class="dj-hero">
+  <div class="dj-hero-img">{img("espacio_vistaconsola", t("La cabina de ROSSO bajo el techo de círculos rojos", "ROSSO's booth under the ceiling of red circles"), "100vw", lazy=False)}</div>
+  <div class="dj-hero-txt">
+    <div class="etiqueta">{t("Selector en ROSSO", "Selector at ROSSO")}</div>
+    <h1 id="dj-nombre">…</h1>
+    <div class="dj-chips" id="dj-chips"></div>
+  </div>
 </section>
 <section class="dj-sec" id="dj" hidden>
-  <div class="dj-datos">
-    <p id="dj-ig"></p>
-    <p id="dj-resumen" class="nota"></p>
-    <p><button class="btn" type="button" id="dj-historia" hidden>{t("Imagen para tu historia", "Image for your story")}</button></p>
+  <div class="dj-rejilla">
+    <div class="dj-col">
+      <div class="dj-proxima" id="dj-proxima" hidden>
+        <div class="etiqueta" id="dj-proxima-k">{t("Próxima fecha", "Next date")}</div>
+        <div class="dj-fecha" id="dj-proxima-fecha"></div>
+        <div class="hero-cta">
+          <a class="btn" id="dj-reservar" href="{B}/reservar/">{t("Reservar esa noche", "Book that night")}</a>
+          <button class="btn btn-linea" type="button" id="dj-historia" hidden>{t("Imagen para tu historia", "Image for your story")}</button>
+        </div>
+      </div>
+      <figure class="dj-foto" id="dj-foto" hidden></figure>
+      <p class="dj-bio" id="dj-bio" hidden></p>
+      <p id="dj-ig"></p>
+      <p id="dj-resumen" class="nota"></p>
+    </div>
+    <div class="dj-col">
+      <div class="dj-trago" id="dj-trago" hidden>
+        <div class="etiqueta" id="dj-trago-k">{t("Para esta música, pide", "For this music, order")}</div>
+        <h2 id="dj-trago-nombre"></h2>
+        <p class="q-notas" id="dj-trago-notas"></p>
+        <p class="nota" id="dj-trago-ing"></p>
+        <a class="enlace" href="{B}/quiz/">{t("¿O prefieres saber qué cóctel eres?", "Or find out which cocktail you are")}</a>
+      </div>
+      <div class="dj-llegar">
+        <div class="etiqueta">{t("Cómo llegar", "How to get in")}</div>
+        <p>{t("Puebla 329, Roma Norte. Entras por Pavorosso, cruzas la cocina y abres la cortina roja. La cabina es lo primero que ves.", "Puebla 329, Roma Norte. Walk in through Pavorosso, cross the kitchen and pull back the red curtain. The booth is the first thing you see.")}</p>
+        <p class="nota">{t("Sesión de 9 pm a 1 am · sin cover · mesas de hasta 4 personas con reserva; grupos por", "Session 9 pm to 1 am · no cover · tables for up to 4 with a booking; groups via")} <a href="{wa(t('Hola, ROSSO. Quiero reservar para un grupo.', 'Hi ROSSO, I would like to book for a group.'))}">WhatsApp</a>.</p>
+      </div>
+    </div>
   </div>
-  <div class="etiqueta">{t("Próximas fechas", "Upcoming dates")}</div>
-  <ul class="agenda" id="dj-proximas"></ul>
-  <div class="etiqueta" style="margin-top:2rem">{t("Ha tocado en ROSSO", "Has played at ROSSO")}</div>
-  <ul class="agenda agenda-pasada" id="dj-pasadas"></ul>
-  <p class="nota"><a class="enlace" href="{B}/noches/">{t("Todas las noches", "All the nights")}</a></p>
+  <div id="dj-fechas-caja">
+    <div class="etiqueta" style="margin-top:2.5rem" id="dj-prox-k">{t("Próximas fechas", "Upcoming dates")}</div>
+    <ul class="agenda" id="dj-proximas"></ul>
+    <div class="etiqueta" style="margin-top:2rem">{t("Ha tocado en ROSSO", "Has played at ROSSO")}</div>
+    <ul class="agenda agenda-pasada" id="dj-pasadas"></ul>
+  </div>
+  <div id="dj-semana-caja" hidden>
+    <div class="etiqueta" style="margin-top:2.5rem">{t("También esta semana", "Also this week")}</div>
+    <ul class="agenda" id="dj-semana"></ul>
+  </div>
+  <p class="nota" style="margin-top:2rem"><a class="enlace" href="{B}/noches/">{t("Todas las noches", "All the nights")}</a></p>
 </section>
-<p class="nota" id="dj-error" hidden>{t("No encontramos a ese selector.", "We could not find that selector.")}</p>
+<p class="nota" id="dj-error" hidden style="padding:0 var(--gutter) 4rem">{t("No encontramos a ese selector.", "We could not find that selector.")}</p>
+<script id="dj-maridaje" type="application/json">{json.dumps(maridaje, ensure_ascii=False)}</script>
 """
     return pagina(t("Selector · ROSSO", "Selector · ROSSO"), cuerpo, "/dj/", t("Selectores que tocan en ROSSO.", "Selectors who play at ROSSO."), clase="pag-dj", extra_head='<meta name="robots" content="noindex">')
 

@@ -118,6 +118,35 @@ def leer_filas():
     return out
 
 
+DJS_SHEET_ID = os.environ.get("DJS_SHEET_ID", "")
+_fichas = {"t": 0, "datos": {}}
+
+
+def fichas():
+    """Hoja opcional "DJs ROSSO": dj, bio, trago, musica (liga a SoundCloud/Mixcloud/Spotify), foto (liga a imagen)."""
+    import time as _t
+    if not DJS_SHEET_ID:
+        return {}
+    if _t.time() - _fichas["t"] < 600 and _fichas["datos"]:
+        return _fichas["datos"]
+    try:
+        r = _session().get(f"https://sheets.googleapis.com/v4/spreadsheets/{DJS_SHEET_ID}/values/A1:F300", timeout=20)
+        r.raise_for_status()
+        filas = r.json().get("values", [])
+        cab = [c.strip().lower() for c in filas[0]] if filas else []
+        out = {}
+        for f in filas[1:]:
+            d = {cab[i]: (f[i].strip() if i < len(f) else "") for i in range(len(cab))}
+            if d.get("dj"):
+                out[slug(d["dj"])] = {"bio": d.get("bio", "")[:600], "trago": d.get("trago", "")[:60],
+                                      "musica": d.get("musica", "") if d.get("musica", "").startswith("http") else "",
+                                      "foto": d.get("foto", "") if d.get("foto", "").startswith("http") else ""}
+        _fichas.update(t=_t.time(), datos=out)
+    except Exception as e:
+        print("fichas de DJ no leídas:", e)
+    return _fichas["datos"]
+
+
 def slug(nombre):
     import unicodedata
     s = unicodedata.normalize("NFKD", str(nombre or "")).encode("ascii", "ignore").decode().lower()
@@ -153,7 +182,10 @@ def dj(k, hoy=None):
     if not filas:
         return None
     base = next((d for d in djs(hoy) if d["slug"] == k), None)
-    return {"perfil": base, "proximas": [x for x in filas if x["fecha"] >= hoy.isoformat()],
+    if base:
+        base = dict(base, **fichas().get(k, {}))
+    semana = [x for x in proximas(dias=7, hoy=hoy) if slug(x["dj"]) != k][:5]
+    return {"perfil": base, "semana": semana, "proximas": [x for x in filas if x["fecha"] >= hoy.isoformat()],
             "pasadas": [x for x in filas if x["fecha"] < hoy.isoformat()][::-1][:24]}
 
 
