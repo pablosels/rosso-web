@@ -108,13 +108,26 @@
   // reservar: arma el link de OpenTable con fecha, hora y personas (tope = opciones del select)
   var reserva = document.getElementById("forma-reserva");
   if (reserva) {
+    var rFecha = document.getElementById("r-fecha"), rHora = document.getElementById("r-hora"), rPers = document.getElementById("r-personas"), rDirecto = document.getElementById("r-directo");
+    function hoyLocal() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+    // la página es estática: la fecha mínima y la inicial son las de HOY en el reloj del cliente, no las del día en que se construyó
+    var hoy = hoyLocal();
+    rFecha.min = hoy;
+    if (!rFecha.value || rFecha.value < hoy) rFecha.value = hoy;
+    function urlOT() {
+      var f = rFecha.value || hoy, h = rHora.value || "20:00", p = rPers.value || "2";
+      return "https://www.opentable.com.mx/restref/client/?rid=1498843&restref=1498843&lang=" + (EN ? "en-US" : "es-MX") + "&datetime=" + encodeURIComponent(f + "T" + h) + "&covers=" + p + "&otSource=Restaurant%20website";
+    }
+    function actualizarDirecto() { if (rDirecto) rDirecto.href = urlOT(); }
+    [rFecha, rHora, rPers].forEach(function (el) { el.addEventListener("change", actualizarDirecto); el.addEventListener("input", actualizarDirecto); });
+    actualizarDirecto();
     reserva.addEventListener("submit", function (ev) {
       ev.preventDefault();
-      var f = document.getElementById("r-fecha").value, h = document.getElementById("r-hora").value, p = document.getElementById("r-personas").value;
-      if (!f) return;
-      var url = "https://www.opentable.com.mx/restref/client/?rid=1498843&restref=1498843&lang=" + (EN ? "en-US" : "es-MX") + "&datetime=" + encodeURIComponent(f + "T" + h) + "&covers=" + p + "&otSource=Restaurant%20website";
+      if (rFecha.value && rFecha.value < hoy) rFecha.value = hoy;
+      var url = urlOT();
       medir("reservar");
-      window.open(url, "_blank", "noopener");
+      // navegación normal en la misma pestaña: window.open no abre nada en el navegador interno de Instagram/Facebook (iPhone)
+      location.assign(url);
     });
   }
 
@@ -362,7 +375,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function hoyISO() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
   var fecha = document.getElementById("r-fecha");
-  if (fecha) { var q = new URLSearchParams(location.search).get("fecha"); if (q && /^\d{4}-\d{2}-\d{2}$/.test(q) && q >= fecha.min) fecha.value = q; }
+  if (fecha) { var q = new URLSearchParams(location.search).get("fecha"); if (q && /^\d{4}-\d{2}-\d{2}$/.test(q) && q >= hoyISO()) { fecha.min = hoyISO(); fecha.value = q; fecha.dispatchEvent(new Event("change")); } }
   var caja = document.querySelector("[data-hoy]");
   if (!caja || !API) return;
   var hoy = hoyISO(), dow = new Date().getDay();   // 0 domingo, 1 lunes

@@ -388,3 +388,7 @@ figure{margin:0}
 .dj-trago h2{margin-bottom:.4rem}
 .dj-llegar{border-top:1px solid var(--linea);padding-top:1.4rem}
 @media (max-width:760px){.dj-rejilla{grid-template-columns:1fr;gap:2rem}.dj-hero{min-height:52vh}}
+
+.reserva-directo{margin:.9rem 0 0;font-size:.9rem;text-align:center}
+.reserva-directo a{color:inherit;opacity:.8;text-decoration:underline;text-underline-offset:3px}
+.reserva-directo a:hover{opacity:1}
