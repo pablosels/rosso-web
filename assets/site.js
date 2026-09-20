@@ -119,13 +119,7 @@
       // página del restaurante en OpenTable (no la ruta /restref/, cuyo muro anti-bots contesta "Access Denied" a algunos teléfonos)
       return "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico?covers=" + p + "&dateTime=" + encodeURIComponent(f + "T" + h) + "&lang=" + (EN ? "en-US" : "es-MX") + "&otSource=Restaurant%20website";
     }
-    var rWa = document.getElementById("r-wa"), waBase = rWa ? rWa.href.split("?")[0] : "";
-    function textoWa() {
-      var f = rFecha.value || hoy, p = rPers.value || "2", hTxt = (rHora.options[rHora.selectedIndex] || {}).text || rHora.value, fTxt = f;
-      try { fTxt = new Date(f + "T12:00:00").toLocaleDateString(EN ? "en-US" : "es-MX", { weekday: "long", day: "numeric", month: "long" }); } catch (e) { /* queda ISO */ }
-      return EN ? "Hi ROSSO, I would like to book a table for " + p + " on " + fTxt + " at " + hTxt + "." : "Hola, ROSSO. Quiero reservar una mesa para " + p + " el " + fTxt + " a las " + hTxt + ".";
-    }
-    function actualizarDirecto() { if (rDirecto) rDirecto.href = urlOT(); if (rWa) rWa.href = waBase + "?text=" + encodeURIComponent(textoWa()); }
+    function actualizarDirecto() { if (rDirecto) rDirecto.href = urlOT(); }
     [rFecha, rHora, rPers].forEach(function (el) { el.addEventListener("change", actualizarDirecto); el.addEventListener("input", actualizarDirecto); });
     actualizarDirecto();
     reserva.addEventListener("submit", function (ev) {
