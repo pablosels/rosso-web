@@ -874,7 +874,9 @@ def eventos():
              f"pidió: {sol['tipo']} · idioma {sol['idioma']}"
              + (f"\nMotivo: {sol['motivo']}" if sol["motivo"] else "")
              + (f"\nMensaje: {sol['mensaje']}" if sol["mensaje"] else "")
-             + f"\n\n{resumen}\n\nLa cotización en PDF va adjunta, lista para reenviar al cliente. Al cliente sólo se le dijo que le contestamos por WhatsApp en menos de 24 h.")
+             + f"\n\n{resumen}"
+             + "".join(f"\n\n🔎 {a}" for a in calc.get("avisos", []))
+             + "\n\nLa cotización en PDF va adjunta, lista para reenviar al cliente. Al cliente sólo se le dijo que le contestamos por WhatsApp en menos de 24 h.")
     if sol["email"] and ruta_pdf and correo_mod.configurado():
         try:
             asunto = (f"Cotización ROSSO · {tf.fecha_larga(fecha, 'es')}" if sol["idioma"] == "es" else f"ROSSO proposal · {tf.fecha_larga(fecha, 'en')}")

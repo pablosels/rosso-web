@@ -5,16 +5,45 @@ servicio que los jobs de facturas). **Todo se corre desde `rosso-web\api`**: si 
 corre desde otra carpeta, Cloud Build no encuentra `app.py` ni el `Dockerfile` y
 falla con "provide a main.py or app.py file".
 
-## En PowerShell (Windows), copiar y pegar tal cual
+## Redesplegar despues de cambiar codigo (lo normal)
+
+**No pases `--set-env-vars` ni `--set-secrets`.** Si los omites, Cloud Run
+conserva el entorno que ya tiene el servicio. Si los pasas, REEMPLAZA TODO:
+el 17-sep-2026 el bloque de mas abajo listaba 4 variables y el servicio vivo
+ya tenia 14 + 5 secretos — correrlo habria tumbado tarjetas de regalo, Club
+ROSSO, metricas, vinilos, descripciones, visitas, perfiles de DJ y el correo
+del bot.
+
+```powershell
+cd C:\Users\minis\Downloads\rosso-web\api
+gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas
+```
+
+Antes de correrlo conviene ver que hay vivo:
+
+```powershell
+gcloud run services describe rosso-web-api --region us-central1 --project motor-facturas --format="value(spec.template.spec.containers[0].env)"
+```
+
+## Primer despliegue o reconstruir el servicio desde cero
+
+Solo en este caso se pasan entorno y secretos, y hay que pasarlos TODOS.
+Sacar la lista viva con el `describe` de arriba y confirmar que no falte
+ninguno.
 
 ```powershell
 cd C:\Users\minis\Downloads\rosso-web\api
 if (-not (Test-Path .refresh_key)) { python -c "import secrets;print(secrets.token_urlsafe(24))" | Out-File -Encoding ascii -NoNewline .refresh_key }
 $KEY = (Get-Content .refresh_key -Raw).Trim()
-gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest" --set-env-vars "^|^BUCKET=motor-facturas-respaldos|REFRESH_KEY=$KEY|AGENDA_SHEET_ID=19r4AcTUgtYO2SL8dxvSgQxTF2oeGOJOOgk2xFJjd6NY|ALLOWED_ORIGINS=https://rossospeakeasy.com,http://rossospeakeasy.com,https://www.rossospeakeasy.com,http://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8765"
+gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest,GMAIL_APP_PASSWORD=gmail-app-rosso:latest" --set-env-vars "^|^BUCKET=motor-facturas-respaldos|REFRESH_KEY=$KEY|AGENDA_SHEET_ID=19r4AcTUgtYO2SL8dxvSgQxTF2oeGOJOOgk2xFJjd6NY|METRICAS_SHEET_ID=15fGLQztLHOZpXmS2Az0WsUgZS1vrbIz47VMwQwTHtrg|REGALO_SHEET_ID=1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM|CLIENTES_SHEET_ID=1GkCp6s-f8VV0bKhIl8MjYnAE_Klo2XIGv2cBQ3Rs4g0|DESCRIPCIONES_SHEET_ID=1Z-0yeDD-nMJnR0hvnSKyh6Adu2TmI7GER38TzerZzwY|VINILOS_SHEET_ID=1Cu9DkIA_yHkblMxnoW3_WtZ0NgGtErRhs4HF9gqYdcA|VISITAS_SHEET_ID=1bjMJKcMpXk2aG-qGx8wnYpbXWgK08hGX_6L8vzP4l24|DJS_SHEET_ID=1Bzi-5GKlEWhwo0L0MXBRNP_X6jMi9-ZFJywEjK5Ky-U|CANJE_PIN=918074|FECHAS_LITERAL=1|GMAIL_USER=pabloseldner87@gmail.com|ALLOWED_ORIGINS=https://rossospeakeasy.com,http://rossospeakeasy.com,https://www.rossospeakeasy.com,http://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8765"
 ```
 
 (El `^|^` al inicio cambia el separador a `|` porque ALLOWED_ORIGINS lleva comas.)
+
+**Ojo con `.refresh_key`:** si el archivo local no existe, el bloque genera una
+llave NUEVA y los jobs de Cloud Scheduler (`rosso-carta-diaria`,
+`rosso-agenda-recordatorio`) se quedan mandando la vieja y empiezan a fallar
+con 403. Verificar que la local y la viva coincidan antes de redesplegar.
 
 ## Agenda de DJs (hoja "Agenda ROSSO")
 
