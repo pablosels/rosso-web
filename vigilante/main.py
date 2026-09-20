@@ -27,6 +27,7 @@ OBJETIVOS = [
     {"nombre": "API (salud)", "url": "https://rosso-web-api-703407013960.us-central1.run.app/health", "espera": '"ok"'},
     {"nombre": "API (carta viva)", "url": "https://rosso-web-api-703407013960.us-central1.run.app/carta", "espera": "secciones"},
     {"nombre": "API (agenda)", "url": "https://rosso-web-api-703407013960.us-central1.run.app/agenda", "espera": "noches"},
+    {"nombre": "Página de reservas (formulario y liga directa a OpenTable)", "url": "https://rossospeakeasy.com/reservar/?vigilante=1", "espera": 'id="r-directo"'},
 ]
 
 

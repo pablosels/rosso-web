@@ -398,7 +398,7 @@ def pag_reservar():
         <div class="campo"><label for="r-personas">{t("Personas", "Guests")}</label><select id="r-personas" name="personas">{personas}</select></div>
       </div>
       <button class="btn" type="submit">{t("Buscar mesa en OpenTable", "Find a table on OpenTable")}</button>
-      <p class="reserva-directo"><a id="r-directo" href="{SITE['opentable_url']}" target="_blank" rel="noopener">{t("¿No se abrió? Abre OpenTable aquí", "Didn't open? Open OpenTable here")}</a></p>
+      <p class="reserva-directo">{t("¿No se abrió?", "Didn't open?")} <a id="r-directo" href="{SITE['opentable_url']}" target="_blank" rel="noopener">{t("Abre OpenTable aquí", "Open OpenTable here")}</a> {t("o", "or")} <a id="r-wa" href="{wa(t('Hola, ROSSO. Quiero reservar una mesa.', 'Hi ROSSO, I would like to book a table.'))}" rel="noopener">{t("reserva por WhatsApp", "book on WhatsApp")}</a></p>
       <p class="reserva-nota">{t(f"Se abre OpenTable con tu selección; ahí confirmas con tu tarjeta. Para más de {SITE['max_widget']} personas, escríbenos por WhatsApp.", f"OpenTable opens with your selection; you confirm there with a card. For more than {SITE['max_widget']} guests, message us on WhatsApp.")}</p>
     </form>
   </div>
