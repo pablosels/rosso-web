@@ -555,6 +555,16 @@
     document.getElementById("q-ingredientes").textContent = c.ingredientes;
     document.getElementById("q-porque").textContent = c.porque;
     var res = document.getElementById("q-resultado"); res.hidden = false;
+    var fig = document.getElementById("q-foto"), conFoto = (res.dataset.fotos || "").split(" ").indexOf(c.slug) >= 0;
+    if (fig) {
+      if (conFoto) {
+        var img = fig.querySelector("img"), A = document.body.dataset.assets || "";
+        img.src = A + "/assets/fotos/cocteles/" + c.slug + "-m.jpg";
+        img.srcset = A + "/assets/fotos/cocteles/" + c.slug + "-m.jpg 640w, " + A + "/assets/fotos/cocteles/" + c.slug + ".jpg 1200w";
+        img.sizes = "(min-width: 900px) 420px, 100vw"; img.alt = c.nombre;
+      }
+      fig.hidden = !conFoto; res.classList.toggle("con-foto", conFoto);
+    }
     document.title = tt("Soy ", "I am ") + c.nombre + " · ROSSO";
     try { history.replaceState(null, "", location.pathname + "?r=" + c.slug); } catch (e) { }
     if (window.ROSSO_medir) window.ROSSO_medir("quiz");

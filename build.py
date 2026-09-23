@@ -800,7 +800,9 @@ def pag_quiz():
   <div id="q-caja" class="quiz-caja">
     <p class="nota">{t("Cargando…", "Loading…")}</p>
   </div>
-  <div id="q-resultado" class="quiz-resultado" hidden>
+  <div id="q-resultado" class="quiz-resultado" hidden data-fotos="{' '.join(sorted(p.stem for p in (RAIZ / 'assets' / 'fotos' / 'cocteles').glob('*.jpg') if not p.stem.endswith('-m')))}">
+    <figure class="q-foto" id="q-foto" hidden><img alt="" loading="lazy"></figure>
+    <div class="q-texto">
     <div class="etiqueta">{t("Tú eres", "You are")}</div>
     <h2 id="q-nombre"></h2>
     <p class="q-notas" id="q-notas"></p>
@@ -812,6 +814,7 @@ def pag_quiz():
       <a class="btn btn-linea" href="{B}/carta/">{t("Ver la carta", "See the menu")}</a>
     </div>
     <p class="nota mini"><a class="enlace" href="{B}/quiz/">{t("Volver a empezar", "Start over")}</a></p>
+    </div>
   </div>
 </section>
 <script id="q-datos" type="application/json">{json.dumps(datos, ensure_ascii=False)}</script>

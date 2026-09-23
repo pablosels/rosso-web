@@ -204,14 +204,19 @@ def recordatorio_agenda():
                       f"\nHoja: https://docs.google.com/spreadsheets/d/{vinilos_mod.SHEET_ID}/edit")
     except Exception as e:
         print("vinilo recordatorio fallo:", e)
+    mensajes_dj = []
     try:
         semana = [n for n in agenda_mod.proximas(dias=6)]
         if semana:
-            texto += "\n\n📣 <b>Para mandarle a cada DJ</b> (que lo suban a su historia el día que tocan):"
+            texto += "\n\n📣 Abajo va un mensaje por DJ, listo para reenviar tal cual (que lo suban a su historia el día que tocan)."
             for n in semana:
-                texto += (f"\n· {n['dj']} ({n['fecha_larga']}): «Te dejo tu página en ROSSO: https://rossospeakeasy.com/dj/?n={n['slug']}&de=dj "
-                          f"— Ábrela en el cel y toca “Imagen para tu historia”. Al subirla a IG: sticker “Enlace”, pega esta misma liga y ponle “Reservar”. "
-                          f"Sin el sticker la gente no puede entrar.»")
+                mensajes_dj.append(
+                    f"Hola {n['dj']}, te dejo tu página en ROSSO para el {n['fecha_larga']}:\n"
+                    f"https://rossospeakeasy.com/dj/?n={n['slug']}&de=dj\n\n"
+                    "1. Ábrela en tu cel y toca “Imagen para tu historia”.\n"
+                    "2. Al subirla a Instagram, agrega el sticker “Enlace” y pega esa misma liga.\n"
+                    "3. Ponle “Reservar” al sticker.\n\n"
+                    "Sin el sticker la gente no puede entrar a reservar. ¡Gracias!")
     except Exception as e:
         print("mensajes dj fallo:", e)
     if pendientes:
@@ -220,9 +225,11 @@ def recordatorio_agenda():
                   + "\n".join(f"· {p['dj']} — {p['fecha_larga']} — {dinero(p['_pago'])}" for p in pendientes)
                   + "\nMarca SI en la columna <i>pagado</i> cuando los liquides.")
     telegram(texto)
+    for m in mensajes_dj:
+        telegram(m)
     with _lock:
         _agenda_cache.update(datos=None, t=0)
-    return jsonify(ok=True, faltan=faltan)
+    return jsonify(ok=True, faltan=faltan, mensajes_dj=len(mensajes_dj))
 
 
 # ------------------------------------------------------------------ mantenimiento de hojas
