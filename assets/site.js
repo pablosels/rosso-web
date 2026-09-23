@@ -625,6 +625,8 @@
       x.fillStyle = "#E5E8E8"; x.font = "400 38px Geist, Helvetica, Arial, sans-serif";
       x.fillText("Puebla 329, Roma Norte · " + (EN ? "through the kitchen" : "se entra por la cocina"), W / 2, H - 330);
       x.font = "500 44px 'Geist Mono', monospace"; x.fillText("rossospeakeasy.com/dj", W / 2, H - 250);
+      x.font = "500 38px 'Geist Mono', monospace"; x.fillStyle = "rgba(229,232,232,.85)";
+      x.fillText(EN ? "\u2191  TAP THE STICKER TO BOOK" : "\u2191  TOCA EL STICKER PARA RESERVAR", W / 2, H - 170);
       c.toBlob(function (blob) {
         var archivo = new File([blob], "rosso-" + k + ".png", { type: "image/png" });
         var liga = "https://rossospeakeasy.com/dj/?n=" + k + "&de=dj";

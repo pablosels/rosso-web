@@ -209,8 +209,9 @@ def recordatorio_agenda():
         if semana:
             texto += "\n\n📣 <b>Para mandarle a cada DJ</b> (que lo suban a su historia el día que tocan):"
             for n in semana:
-                texto += (f"\n· {n['dj']} ({n['fecha_larga']}): «Te dejo tu página en ROSSO. Ábrela en el cel, toca “Imagen para tu historia” y súbela con la liga: "
-                          f"https://rossospeakeasy.com/dj/?n={n['slug']}&de=dj»")
+                texto += (f"\n· {n['dj']} ({n['fecha_larga']}): «Te dejo tu página en ROSSO: https://rossospeakeasy.com/dj/?n={n['slug']}&de=dj "
+                          f"— Ábrela en el cel y toca “Imagen para tu historia”. Al subirla a IG: sticker “Enlace”, pega esta misma liga y ponle “Reservar”. "
+                          f"Sin el sticker la gente no puede entrar.»")
     except Exception as e:
         print("mensajes dj fallo:", e)
     if pendientes:
