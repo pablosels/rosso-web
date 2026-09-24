@@ -35,10 +35,17 @@ ninguno.
 cd C:\Users\minis\Downloads\rosso-web\api
 if (-not (Test-Path .refresh_key)) { python -c "import secrets;print(secrets.token_urlsafe(24))" | Out-File -Encoding ascii -NoNewline .refresh_key }
 $KEY = (Get-Content .refresh_key -Raw).Trim()
-gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest,GMAIL_APP_PASSWORD=gmail-app-rosso:latest" --set-env-vars "^|^BUCKET=motor-facturas-respaldos|REFRESH_KEY=$KEY|AGENDA_SHEET_ID=19r4AcTUgtYO2SL8dxvSgQxTF2oeGOJOOgk2xFJjd6NY|METRICAS_SHEET_ID=15fGLQztLHOZpXmS2Az0WsUgZS1vrbIz47VMwQwTHtrg|REGALO_SHEET_ID=1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM|CLIENTES_SHEET_ID=1GkCp6s-f8VV0bKhIl8MjYnAE_Klo2XIGv2cBQ3Rs4g0|DESCRIPCIONES_SHEET_ID=1Z-0yeDD-nMJnR0hvnSKyh6Adu2TmI7GER38TzerZzwY|VINILOS_SHEET_ID=1Cu9DkIA_yHkblMxnoW3_WtZ0NgGtErRhs4HF9gqYdcA|VISITAS_SHEET_ID=1bjMJKcMpXk2aG-qGx8wnYpbXWgK08hGX_6L8vzP4l24|DJS_SHEET_ID=1Bzi-5GKlEWhwo0L0MXBRNP_X6jMi9-ZFJywEjK5Ky-U|CANJE_PIN=918074|FECHAS_LITERAL=1|GMAIL_USER=pabloseldner87@gmail.com|ALLOWED_ORIGINS=https://rossospeakeasy.com,http://rossospeakeasy.com,https://www.rossospeakeasy.com,http://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8765"
+gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest,GMAIL_APP_PASSWORD=gmail-app-rosso:latest,CANJE_PIN=rosso-canje-pin:latest" --set-env-vars "^|^BUCKET=motor-facturas-respaldos|REFRESH_KEY=$KEY|AGENDA_SHEET_ID=19r4AcTUgtYO2SL8dxvSgQxTF2oeGOJOOgk2xFJjd6NY|METRICAS_SHEET_ID=15fGLQztLHOZpXmS2Az0WsUgZS1vrbIz47VMwQwTHtrg|REGALO_SHEET_ID=1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM|CLIENTES_SHEET_ID=1GkCp6s-f8VV0bKhIl8MjYnAE_Klo2XIGv2cBQ3Rs4g0|DESCRIPCIONES_SHEET_ID=1Z-0yeDD-nMJnR0hvnSKyh6Adu2TmI7GER38TzerZzwY|VINILOS_SHEET_ID=1Cu9DkIA_yHkblMxnoW3_WtZ0NgGtErRhs4HF9gqYdcA|VISITAS_SHEET_ID=1bjMJKcMpXk2aG-qGx8wnYpbXWgK08hGX_6L8vzP4l24|DJS_SHEET_ID=1Bzi-5GKlEWhwo0L0MXBRNP_X6jMi9-ZFJywEjK5Ky-U|FECHAS_LITERAL=1|GMAIL_USER=pabloseldner87@gmail.com|ALLOWED_ORIGINS=https://rossospeakeasy.com,http://rossospeakeasy.com,https://www.rossospeakeasy.com,http://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8765"
 ```
 
 (El `^|^` al inicio cambia el separador a `|` porque ALLOWED_ORIGINS lleva comas.)
+
+**Este repo es público: aquí nunca van valores secretos**, solo nombres de secretos
+de Secret Manager. Los IDs de hojas de arriba no dan acceso por sí solos porque las
+hojas son privadas (compartidas solo con la cuenta de servicio; el 24-sep-2026 las 9
+respondían 401 sin sesión). Nunca compartir "cualquiera con el enlace" las hojas
+Tarjetas ROSSO, Clientes ROSSO ni Visitas ROSSO: con el ID público, la liga sería
+pública.
 
 **Ojo con `.refresh_key`:** si el archivo local no existe, el bloque genera una
 llave NUEVA y los jobs de Cloud Scheduler (`rosso-carta-diaria`,
@@ -62,7 +69,8 @@ Al final imprime `Service URL: https://rosso-web-api-....run.app`. Esa URL va en
 `content/site.json` → `"api"`, y luego `python build.py` + commit + push.
 
 Ojo: `--set-env-vars` reemplaza TODO el entorno en cada deploy (misma regla que el
-motor de facturas), por eso siempre se pasan las dos variables.
+motor de facturas); para cambiar una sola variable usar `--update-env-vars` o
+`--update-secrets` (ver arriba).
 
 ## Primera carta (después del deploy)
 
@@ -108,9 +116,6 @@ Luego, en PowerShell (pegar cada valor cuando lo pida):
 
 ```powershell
 Read-Host "rk_live" | Set-Content -NoNewline $env:TEMP\rk.txt; gcloud secrets create stripe-key-rosso --data-file=$env:TEMP\rk.txt --project motor-facturas; Remove-Item $env:TEMP\rk.txt
-k.txt; gcloud secrets create stripe-key-rosso --data-file=$env:TEMP
-k.txt --project motor-facturas; Remove-Item $env:TEMP
-k.txt
 Read-Host "whsec" | Set-Content -NoNewline $env:TEMP\wh.txt; gcloud secrets create stripe-webhook-rosso --data-file=$env:TEMP\wh.txt --project motor-facturas; Remove-Item $env:TEMP\wh.txt
 gcloud secrets add-iam-policy-binding stripe-key-rosso --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project motor-facturas
 gcloud secrets add-iam-policy-binding stripe-webhook-rosso --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project motor-facturas
@@ -119,8 +124,32 @@ gcloud run services update rosso-web-api --region us-central1 --project motor-fa
 
 Después: `content/site.json` → `"regalo_activo": true`, `python build.py`, commit y push (aparece "Regalo" en el menú).
 
-Variables ya puestas: `REGALO_SHEET_ID` (hoja "Tarjetas ROSSO", 1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM) y `CANJE_PIN` (guardado en `api/.canje_pin`, no se sube a git).
+Variables ya puestas: `REGALO_SHEET_ID` (hoja "Tarjetas ROSSO", 1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM) y `CANJE_PIN` (secreto `rosso-canje-pin`, ver abajo).
 Páginas: `/regalo/` compra · `/regalo/gracias/?s=cs_...` código · `/regalo/tarjeta/?c=ROSSO-XXXX-XXXX` tarjeta imprimible · `/regalo/canje/` barra (PIN).
+
+## PIN de barra (`CANJE_PIN`)
+
+Protege `POST /regalo/canjear` (descontar saldo de tarjetas de regalo) y el Sello
+ROSSO (`GET /sello/buscar`, `POST /sello/registrar`). Vive en Secret Manager como
+`rosso-canje-pin`, con versión fija en el servicio (`rosso-canje-pin:N`) para que
+cada rotación cree revisión nueva y todas las instancias cambien a la vez. Copia
+local en `api/.canje_pin` (gitignored). El valor nunca se escribe en este repo.
+
+El 24-sep-2026 se rotó porque el PIN anterior quedó en el historial público de
+este archivo (commit d3ca4d3): pasó de variable normal a secreto, versión 1.
+
+Rotarlo otra vez (PowerShell, desde `rosso-web\api`):
+
+```powershell
+python -c "import secrets;print(''.join(secrets.choice('0123456789') for _ in range(8)),end='')" | Out-File -Encoding ascii -NoNewline .canje_pin
+gcloud secrets versions add rosso-canje-pin --data-file=.canje_pin --project motor-facturas
+gcloud run services update rosso-web-api --region us-central1 --project motor-facturas --update-secrets=CANJE_PIN=rosso-canje-pin:N
+gcloud secrets versions disable ANTERIOR --secret rosso-canje-pin --project motor-facturas
+```
+
+`N` es el número que imprime `versions add`; `ANTERIOR` es el que estaba en uso.
+Avisar a la barra el PIN nuevo antes de abrir: el viejo deja de servir en cuanto
+termina el `update`.
 
 ## Vigilante (servicio aparte)
 
