@@ -151,6 +151,35 @@ gcloud secrets versions disable ANTERIOR --secret rosso-canje-pin --project moto
 Avisar a la barra el PIN nuevo antes de abrir: el viejo deja de servir en cuanto
 termina el `update`.
 
+`.canje_pin` también va en `.gcloudignore` (desde el 28-sep-2026): sin eso,
+`gcloud run deploy --source .` subía la copia local del PIN a Cloud Build y
+quedaba dentro de la imagen.
+
+### Freno de intentos fallidos (`freno.py`, 28-sep-2026)
+
+Las tres rutas comparan el PIN con `hmac.compare_digest` (`regalo.pin_correcto`)
+y comparten un contador de PIN equivocados por IP (la última de
+`X-Forwarded-For`, que es la que pone el frontal de Google; las IPv6 cuentan
+por su /64). **10 fallos en 15 min bloquean esa IP 15 min** con HTTP 429
+(«Demasiados intentos…», header `Retry-After`), aunque luego mande el PIN
+bueno. Un PIN bueno borra los fallos de su IP; un PIN vacío no cuenta.
+
+Cada bloqueo manda un Telegram de Rosso («🔒 PIN de barra») con la IP y las
+rutas: uno por IP y por ventana, y a lo más 5 por ventana en total (el 5º
+avisa que ya no avisará más). Todo queda en el log de Cloud Run como
+`freno pin: fallo N/10 de <ip>` y `freno pin: bloqueada <ip>`.
+
+**Es un freno parcial**, a propósito sin base de datos: vive en la memoria de
+cada instancia (hay hasta 2, así que en el peor caso son ~20 intentos por
+ventana y el mismo bloqueo puede avisar dos veces), y un redespliegue, un
+reinicio o el escalado a cero lo pone en ceros. Quien tenga muchas IPs no
+queda frenado, sólo avisado. Si llegan avisos de varias IPs, o se repiten,
+**rotar el PIN** (bloque de arriba).
+
+Si la barra ve «Demasiados intentos»: toda la barra sale por la misma IP, así
+que basta con que alguien en ese WiFi se equivoque 10 veces. Esperar 15 min o
+usar los datos del celular.
+
 ## Vigilante (servicio aparte)
 
 Carpeta `vigilante/`. Cloud Run `rosso-vigilante` + Cloud Scheduler `rosso-vigilante` cada 10 min (POST /revisar, header X-Refresh-Key).

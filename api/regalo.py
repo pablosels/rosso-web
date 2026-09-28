@@ -169,8 +169,14 @@ def publica(d):
             "fecha_compra": d["fecha_compra"]}
 
 
+def pin_correcto(pin):
+    """PIN de barra, comparado en tiempo constante (no revela cuántos dígitos se atinaron).
+    Se compara en bytes: compare_digest truena con texto que no sea ASCII."""
+    return bool(CANJE_PIN) and hmac.compare_digest(str(pin or "").encode(), CANJE_PIN.encode())
+
+
 def canjear(codigo, monto, pin):
-    if not CANJE_PIN or pin != CANJE_PIN:
+    if not pin_correcto(pin):
         raise PermissionError("PIN incorrecto")
     fila, d = buscar(codigo=codigo)
     if not d:

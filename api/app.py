@@ -28,6 +28,7 @@ import descripciones as descripciones_mod
 import vinilos as vinilos_mod
 import sello as sello_mod
 import marcador as marcador_mod
+import freno as freno_mod
 import cotizador
 import pdf_cotizacion
 import correo as correo_mod
@@ -118,6 +119,28 @@ def telegram(texto, archivo=None, nombre_archivo=None):
 
 def dinero(n):
     return "${:,.0f}".format(round(float(n)))
+
+
+# ------------------------------------------------------------------ PIN de barra con freno de intentos
+freno_pin = freno_mod.Freno(avisar=lambda texto: telegram(texto))
+
+
+def revisar_pin(pin, ruta):
+    """None si el PIN de barra es bueno; si no, la respuesta de error (403, o 429 si esa IP ya
+    se equivocó demasiadas veces). Ver freno.py: el freno vive en memoria y es parcial."""
+    ip = freno_mod.clave_ip(request.headers.get("X-Forwarded-For"), request.remote_addr)
+    espera = freno_pin.espera(ip)
+    if not espera:
+        if regalo_mod.pin_correcto(pin):
+            freno_pin.acierto(ip)
+            return None
+        # un PIN vacío nunca atina: no cuenta como intento
+        if not str(pin or "").strip() or not freno_pin.fallo(ip, ruta):
+            return jsonify(error="PIN incorrecto"), 403
+        espera = freno_pin.espera(ip)   # este fallo fue el que la bloqueó
+    resp = jsonify(error=f"Demasiados intentos con PIN equivocado. Espera {-(-espera // 60)} min y vuelve a intentar.")
+    resp.headers["Retry-After"] = str(espera)
+    return resp, 429
 
 
 # ------------------------------------------------------------------ carta
@@ -345,8 +368,9 @@ def get_dj(k):
 # ------------------------------------------------------------------ Sello ROSSO (lealtad por visitas)
 @app.get("/sello/buscar")
 def sello_buscar():
-    if not regalo_mod.CANJE_PIN or request.headers.get("X-Pin") != regalo_mod.CANJE_PIN:
-        return jsonify(error="PIN incorrecto"), 403
+    error = revisar_pin(request.headers.get("X-Pin"), "sello/buscar")
+    if error:
+        return error
     q = regalo_mod.limpiar_texto(request.args.get("q"), 40)
     if len(q) < 3:
         return jsonify(error="escribe al menos 3 caracteres"), 400
@@ -360,8 +384,9 @@ def sello_buscar():
 @app.post("/sello/registrar")
 def sello_registrar():
     d = request.get_json(silent=True, force=True) or {}
-    if not regalo_mod.CANJE_PIN or str(d.get("pin", "")) != regalo_mod.CANJE_PIN:
-        return jsonify(error="PIN incorrecto"), 403
+    error = revisar_pin(d.get("pin"), "sello/registrar")
+    if error:
+        return error
     try:
         r = sello_mod.registrar(d.get("whatsapp"), regalo_mod.limpiar_texto(d.get("quien"), 40))
     except LookupError as e:
@@ -506,6 +531,9 @@ def regalo_saldo():
 @app.post("/regalo/canjear")
 def regalo_canjear():
     d = request.get_json(silent=True, force=True) or {}
+    error = revisar_pin(d.get("pin"), "regalo/canjear")
+    if error:
+        return error
     try:
         t = regalo_mod.canjear(regalo_mod.limpiar_texto(d.get("codigo"), 16), d.get("monto"), str(d.get("pin", "")))
     except PermissionError as e:
