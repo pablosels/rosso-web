@@ -3,7 +3,7 @@
 ## Estado al martes 6 de octubre
 
 - **Quiz**: campaña, conjunto y anuncio ya publicados con la foto de la cortina. Meta la tiene "en revisión"; en cuanto apruebe, corre sola con $100 diarios.
-- **Noche fuerte**: campaña y conjunto en borrador con todo capturado (radio 5 km, jueves a sábado de 4 a 9 pm, $750 del 6 al 18 de octubre). Al anuncio le falta subir la imagen semanal, el texto y el botón; luego "Revisar y publicar".
+- **Noche fuerte**: campaña y conjunto en borrador con todo capturado (radio 5 km, miércoles a sábado de 4 a 9 pm, $750 del 6 al 18 de octubre). Al anuncio le falta subir la imagen semanal, el texto y el botón; luego "Revisar y publicar".
 - **Públicos**: existe "ROSSO" (base), "ROSSO 5 km - copy" y "ROSSO visitantes web 30 dias". Faltan "Interactuó en Instagram 90 días" y "Equipo" (exclusión); no estorban para encender.
 
 Para pegar valor por valor en el Administrador de anuncios (business.facebook.com). Sigue el orden: públicos primero, campañas después. Todo queda en **borrador**; tú publicas al final.
@@ -124,25 +124,25 @@ Administrador de anuncios › Crear › Configuración manual.
 
 | Campo | Valor |
 |---|---|
-| Nombre | Noche fuerte · 5 km · Jue-Sáb tarde |
+| Nombre | Noche fuerte · 5 km · Mié-Sáb tarde |
 | Conversión / destino | Sitio web |
 | Optimización de la entrega | Visitas a la página de destino |
 | Presupuesto | Total por tiempo: $375.00 MXN por semana. Si Meta solo permite presupuesto total por periodo, pon $750 para dos semanas y fecha de fin a los 14 días. |
-| Programación de anuncios | Activar "Publicar anuncios según un calendario". Marcar **jueves, viernes y sábado de 16:00 a 21:00**, hora de la cuenta. |
+| Programación de anuncios | Activar "Publicar anuncios según un calendario". Marcar **miércoles, jueves, viernes y sábado de 16:00 a 21:00**, hora de la cuenta. |
 | Público | **ROSSO · Base**, cambiando la ubicación a: pin en Puebla 329, Roma Norte, Ciudad de México, radio **5 km**. Mantener edad e intereses. |
 | Excluir | **ROSSO · Equipo** |
 | Ubicaciones | Manual. Solo Instagram: Historias y Reels. |
 
 ### Nivel anuncio (uno por semana, se renueva cada lunes)
 
-Un solo anuncio con las tres noches. Si fueran tres anuncios en el mismo conjunto, Meta mostraría el del jueves también el sábado; separarlos en tres conjuntos repartiría $125 por noche y no aprendería nada.
+Un solo anuncio con las noches de la semana (miércoles a sábado). Si fuera un anuncio por noche en el mismo conjunto, Meta mostraría el del jueves también el sábado; separarlos en conjuntos repartiría el presupuesto en pedazos muy chicos y no aprendería nada.
 
 | Campo | Valor |
 |---|---|
-| Nombre | Noche fuerte · semana del [fecha del jueves] |
+| Nombre | Noche fuerte · semana del [fecha del miércoles] |
 | Formato | Una sola imagen |
-| Pieza | `plan/anuncios/noche-fuerte-semana-AAAA-MM-DD.jpg` (1080x1920). Se genera cada lunes con la agenda de la semana: jueves, viernes y sábado con DJ, género y hora. |
-| Texto principal | Jueves [DJ], viernes [DJ] y sábado [DJ] en ROSSO. Puebla 329, Roma Norte. Reserva tu mesa. |
+| Pieza | `plan/anuncios/noche-fuerte-semana-AAAA-MM-DD.jpg` (1080x1920). Se genera cada lunes con la agenda de la semana: miércoles a sábado con DJ, género y hora. |
+| Texto principal | Miércoles [DJ], jueves [DJ], viernes [DJ] y sábado [DJ] en ROSSO. Puebla 329, Roma Norte. Reserva tu mesa. |
 | Sitio web (URL) | `https://rossospeakeasy.com/noches/?de=ads` |
 | Llamada a la acción | Reservar |
 
@@ -174,7 +174,7 @@ Si una no pasa, se apaga y su presupuesto va a la otra.
 | Fecha | Qué |
 |---|---|
 | Martes 6 oct | Quiz publicada (en revisión). Noche fuerte en borrador; falta imagen, texto y botón. |
-| Jueves 8 oct | Primera noche con anuncio: ALEJAINA. Viernes HARFUSH, sábado RO LAUTREC. |
+| Miércoles 7 oct | Primera noche con anuncio: OZZO. Jueves ALEJAINA, viernes HARFUSH, sábado RO LAUTREC. |
 | Lunes 12 oct | Renovar la imagen semanal de Noche fuerte con la agenda nueva. Confirmar en Administrador de eventos que llegan visitas con `de=ads`. |
 | Lunes 19 oct | Corte a dos semanas (paso 7). |
 | Semana del 26 oct | Segunda ola si pasó el corte: campaña en inglés ($1,000/mes, liga /en/speakeasy-roma-norte, texto "A speakeasy behind a kitchen.") y retorno ($500/mes, público "Visitó el sitio 30 días" excluyendo quien ya buscó mesa, texto "Tu mesa te espera", liga /reservar/). |
