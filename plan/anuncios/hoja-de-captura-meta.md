@@ -91,12 +91,12 @@ Administrador de anuncios › Crear › Configuración manual.
 
 | Campo | Valor |
 |---|---|
-| Nombre | Quiz · Cortina · Video 9:16 |
+| Nombre | Quiz · Cortina · Imagen 9:16 |
 | Identidad | Página de Facebook ROSSO, cuenta de Instagram @rosso.speakeasy |
-| Formato | Una sola imagen o video |
-| Pieza | Video vertical de la cortina, 1080x1920, 8 a 10 segundos, sin música con derechos. Mientras no exista el video, usar `plan/anuncios/quiz-cortina-1080x1920.jpg`. |
-| Texto en pantalla (dentro del video) | Cinco sentidos, cinco preguntas. ¿Qué cóctel eres? |
-| Texto principal | Cinco sentidos, cinco preguntas. Descubre qué cóctel eres. |
+| Formato | Una sola imagen |
+| Pieza | Foto de la cortina con el texto ya puesto: `plan/anuncios/quiz-cortina-1080x1920.jpg` (1080x1920, 9:16). Subirla tal cual, sin recortar ni dejar que Meta la ajuste a 1:1. |
+| Texto en la imagen (ya viene) | ¿Qué cóctel eres? Cinco preguntas. Un trago con tu nombre. rossospeakeasy.com/ads |
+| Texto principal | Cinco preguntas. Un trago con tu nombre. Descubre qué cóctel eres. |
 | Sitio web (URL) | https://rossospeakeasy.com/ads |
 | Mostrar enlace | rossospeakeasy.com |
 | Llamada a la acción | Más información |
@@ -163,7 +163,7 @@ Si una no pasa, se apaga y su presupuesto va a la otra.
 
 | Fecha | Qué |
 |---|---|
-| Esta semana | Pasos 1 a 5 con esta hoja. Video de la cortina de tu lado. |
+| Esta semana | Pasos 1 a 5 con esta hoja. El CSV del equipo de tu lado. |
 | Lunes 13 oct | Encendido de Quiz y Noche fuerte. |
 | Lunes 27 oct | Corte a dos semanas (paso 7). |
 | Semana del 3 nov | Segunda ola si pasó el corte: campaña en inglés ($1,000/mes, liga /en/speakeasy-roma-norte, texto "A speakeasy behind a kitchen.") y retorno ($500/mes, público "Visitó el sitio 30 días" excluyendo quien ya buscó mesa, texto "Tu mesa te espera", liga /reservar/). |
