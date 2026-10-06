@@ -392,6 +392,8 @@ figure{margin:0}
 .reserva-directo{margin:.9rem 0 0;font-size:.9rem;text-align:center}
 .reserva-directo a{color:inherit;opacity:.8;text-decoration:underline;text-underline-offset:3px}
 .reserva-directo a:hover{opacity:1}
+.reserva-directo.alerta{border:1px solid var(--carmin);padding:.8rem 1rem;font-size:1rem}
+.reserva-directo.alerta a{opacity:1;font-weight:600}
 
 /* quiz: foto del cóctel en el resultado */
 .quiz-resultado.con-foto{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:start}

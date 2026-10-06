@@ -27,7 +27,7 @@ OBJETIVOS = [
     {"nombre": "API (salud)", "url": "https://rosso-web-api-703407013960.us-central1.run.app/health", "espera": '"ok"'},
     {"nombre": "API (carta viva)", "url": "https://rosso-web-api-703407013960.us-central1.run.app/carta", "espera": "secciones"},
     {"nombre": "API (agenda)", "url": "https://rosso-web-api-703407013960.us-central1.run.app/agenda", "espera": "noches"},
-    {"nombre": "Página de reservas (formulario y liga directa a OpenTable)", "url": "https://rossospeakeasy.com/reservar/?vigilante=1", "espera": 'id="r-directo"'},
+    {"nombre": "Página de reservas (liga RestRef y respaldo a OpenTable)", "url": "https://rossospeakeasy.com/reservar/?vigilante=1", "espera": ['id="r-directo"', "restref=1498843"]},
 ]
 
 
@@ -42,8 +42,10 @@ def revisar(o):
         ms = int((time.time() - t0) * 1000)
         if r.status_code != 200:
             return False, f"HTTP {r.status_code} ({ms} ms)"
-        if o["espera"] not in r.text:
-            return False, f"respondió 200 pero sin el contenido esperado ({ms} ms)"
+        esperas = o["espera"] if isinstance(o["espera"], list) else [o["espera"]]
+        faltan = [x for x in esperas if x not in r.text]
+        if faltan:
+            return False, f"respondió 200 pero sin el contenido esperado: {', '.join(faltan)} ({ms} ms)"
         return True, f"200 en {ms} ms"
     except Exception as e:
         return False, f"sin respuesta: {type(e).__name__}"
