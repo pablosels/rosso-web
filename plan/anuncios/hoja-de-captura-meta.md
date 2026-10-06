@@ -1,5 +1,11 @@
 # Hoja de captura · Anuncios de Instagram para ROSSO
 
+## Estado al martes 6 de octubre
+
+- **Quiz**: campaña, conjunto y anuncio ya publicados con la foto de la cortina. Meta la tiene "en revisión"; en cuanto apruebe, corre sola con $100 diarios.
+- **Noche fuerte**: campaña y conjunto en borrador con todo capturado (radio 5 km, jueves a sábado de 4 a 9 pm, $750 del 6 al 18 de octubre). Al anuncio le falta subir la imagen semanal, el texto y el botón; luego "Revisar y publicar".
+- **Públicos**: existe "ROSSO" (base), "ROSSO 5 km - copy" y "ROSSO visitantes web 30 dias". Faltan "Interactuó en Instagram 90 días" y "Equipo" (exclusión); no estorban para encender.
+
 Para pegar valor por valor en el Administrador de anuncios (business.facebook.com). Sigue el orden: públicos primero, campañas después. Todo queda en **borrador**; tú publicas al final.
 
 Antes de empezar, confirma en Configuración › Cuentas:
@@ -127,18 +133,22 @@ Administrador de anuncios › Crear › Configuración manual.
 | Excluir | **ROSSO · Equipo** |
 | Ubicaciones | Manual. Solo Instagram: Historias y Reels. |
 
-### Nivel anuncio (uno por noche, se renueva cada lunes)
+### Nivel anuncio (uno por semana, se renueva cada lunes)
+
+Un solo anuncio con las tres noches. Si fueran tres anuncios en el mismo conjunto, Meta mostraría el del jueves también el sábado; separarlos en tres conjuntos repartiría $125 por noche y no aprendería nada.
 
 | Campo | Valor |
 |---|---|
-| Nombre | Noche fuerte · [día] · [nombre del DJ] |
+| Nombre | Noche fuerte · semana del [fecha del jueves] |
 | Formato | Una sola imagen |
-| Pieza | La imagen 1080x1920 que genera el botón "Imagen para tu historia" en la página del DJ de esa noche (rossospeakeasy.com/dj/). |
-| Texto principal | [Día] · [DJ] en ROSSO. Reserva tu mesa. |
-| Sitio web (URL) | La liga de la página de ese DJ, agregando `&de=ads` al final. Ejemplo: `https://rossospeakeasy.com/dj/?dj=NOMBRE&de=ads` (copia la liga exacta desde la página y añade `&de=ads`). |
+| Pieza | `plan/anuncios/noche-fuerte-semana-AAAA-MM-DD.jpg` (1080x1920). Se genera cada lunes con la agenda de la semana: jueves, viernes y sábado con DJ, género y hora. |
+| Texto principal | Jueves [DJ], viernes [DJ] y sábado [DJ] en ROSSO. Puebla 329, Roma Norte. Reserva tu mesa. |
+| Sitio web (URL) | `https://rossospeakeasy.com/noches/?de=ads` |
 | Llamada a la acción | Reservar |
 
-Cada lunes, al salir la agenda: apagar los anuncios de la semana pasada y crear los nuevos con la imagen y la liga de cada noche.
+Alternativa por noche, si algún día se quiere empujar a un solo DJ: imagen `plan/anuncios/noche-fuerte-AAAA-MM-DD-slug.jpg` y liga `https://rossospeakeasy.com/dj/?n=SLUG&de=ads` (el parámetro de la página del DJ es `n`, no `dj`).
+
+Cada lunes, al salir la agenda: cambiar la imagen y el texto del anuncio por los de la nueva semana (o duplicarlo y apagar el anterior).
 
 ---
 
@@ -163,7 +173,8 @@ Si una no pasa, se apaga y su presupuesto va a la otra.
 
 | Fecha | Qué |
 |---|---|
-| Esta semana | Pasos 1 a 5 con esta hoja. El CSV del equipo de tu lado. |
-| Lunes 13 oct | Encendido de Quiz y Noche fuerte. |
-| Lunes 27 oct | Corte a dos semanas (paso 7). |
-| Semana del 3 nov | Segunda ola si pasó el corte: campaña en inglés ($1,000/mes, liga /en/speakeasy-roma-norte, texto "A speakeasy behind a kitchen.") y retorno ($500/mes, público "Visitó el sitio 30 días" excluyendo quien ya buscó mesa, texto "Tu mesa te espera", liga /reservar/). |
+| Martes 6 oct | Quiz publicada (en revisión). Noche fuerte en borrador; falta imagen, texto y botón. |
+| Jueves 8 oct | Primera noche con anuncio: ALEJAINA. Viernes HARFUSH, sábado RO LAUTREC. |
+| Lunes 12 oct | Renovar la imagen semanal de Noche fuerte con la agenda nueva. Confirmar en Administrador de eventos que llegan visitas con `de=ads`. |
+| Lunes 19 oct | Corte a dos semanas (paso 7). |
+| Semana del 26 oct | Segunda ola si pasó el corte: campaña en inglés ($1,000/mes, liga /en/speakeasy-roma-norte, texto "A speakeasy behind a kitchen.") y retorno ($500/mes, público "Visitó el sitio 30 días" excluyendo quien ya buscó mesa, texto "Tu mesa te espera", liga /reservar/). |
