@@ -109,48 +109,29 @@
   var reserva = document.getElementById("forma-reserva");
   if (reserva) {
     var rFecha = document.getElementById("r-fecha"), rHora = document.getElementById("r-hora"), rPers = document.getElementById("r-personas"), rDirecto = document.getElementById("r-directo");
-    var rRespaldo = document.getElementById("r-respaldo"), rPregunta = document.getElementById("r-pregunta"), INTENTO = "rosso_ot_intento";
     function hoyLocal() { var d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
     // la página es estática: la fecha mínima y la inicial son las de HOY en el reloj del cliente, no las del día en que se construyó
     var hoy = hoyLocal();
     rFecha.min = hoy;
     if (!rFecha.value || rFecha.value < hoy) rFecha.value = hoy;
-    function seleccion() {
-      var f = rFecha.value || hoy, h = rHora.value || "20:00", p = rPers.value || "2";
-      return "lang=" + (EN ? "en-US" : "es-MX") + "&covers=" + p + "&dateTime=" + encodeURIComponent(f + "T" + h);
-    }
-    // destino: la liga de GuestCenter (Reservation widget > Tracking). Lleva restref, así que OpenTable la cuenta como RestRef (sin comisión).
-    // Entra por /r/ como la ficha; la vieja /restref/client/ redirigía a /booking/restref/ y ahí el muro anti-bots contestaba "Access Denied".
+    // destino: la página RestRef de OpenTable, la misma que abre su widget oficial. Lleva restref, así que cuenta como reserva del restaurante (sin comisión).
+    // Va directo a /booking/: en iPhone la app de OpenTable reclama /r/ y /restref/ (universal links) pero no /booking/, y en la app la reserva contaría como de la red.
     // El canal (?de=ads, ?de=quiz...) viaja como campaña y sale en el reporte de reservas de GuestCenter.
-    function urlRestRef() {
-      return reserva.dataset.restref + "&ot_source=Restaurant%20website" + (CANAL !== "directo" ? "&ot_campaign=" + encodeURIComponent(CANAL) : "") + "&" + seleccion();
+    var campana = CANAL !== "directo" ? CANAL : "";
+    function urlRestRef(c) {
+      var f = rFecha.value || hoy, h = rHora.value || "20:00", p = rPers.value || "2";
+      return reserva.dataset.restref + "&lang=" + (EN ? "en-US" : "es-MX") + "&datetime=" + encodeURIComponent(f + "T" + h) + "&partysize=" + p +
+        "&ot_source=Restaurant%20website" + (c ? "&ot_campaign=" + encodeURIComponent(c) : "");
     }
-    // respaldo: la ficha pública siempre abre, pero OpenTable la cobra como reserva de la red
-    function urlFicha() { return reserva.dataset.ficha + "?" + seleccion() + "&otSource=Restaurant%20website"; }
-    function actualizarDirecto() { if (rDirecto) rDirecto.href = urlFicha(); }
+    // respaldo: la misma página con su propia campaña, para ver en GuestCenter cuántos entran por la liga y no por el botón
+    function actualizarDirecto() { if (rDirecto) rDirecto.href = urlRestRef(campana ? campana + "-respaldo" : "respaldo"); }
     [rFecha, rHora, rPers].forEach(function (el) { el.addEventListener("change", actualizarDirecto); el.addEventListener("input", actualizarDirecto); });
     actualizarDirecto();
-    // si regresan a esta página poco después de ir a OpenTable (botón atrás tras un "Access Denied"), el respaldo se vuelve aviso
-    function avisarRespaldo() {
-      var g = null;
-      try { g = JSON.parse(sessionStorage.getItem(INTENTO) || "null"); } catch (e) { /* sin storage */ }
-      if (!g || !g.t || Date.now() - g.t > 15 * 60e3 || !rRespaldo) return;
-      // si la página se recargó, el formulario vuelve a lo de fábrica: se repone lo que eligieron
-      if (g.f && g.f >= hoy) rFecha.value = g.f;
-      if (g.h) rHora.value = g.h;
-      if (g.p) rPers.value = g.p;
-      actualizarDirecto();
-      rRespaldo.classList.add("alerta");
-      if (rPregunta) rPregunta.textContent = tt("¿OpenTable no cargó o te mostró “Access Denied”?", "Did OpenTable not load or show “Access Denied”?");
-    }
-    avisarRespaldo();
-    window.addEventListener("pageshow", function (ev) { if (ev.persisted) avisarRespaldo(); });
     reserva.addEventListener("submit", function (ev) {
       ev.preventDefault();
       if (rFecha.value && rFecha.value < hoy) rFecha.value = hoy;
-      var url = urlRestRef();
+      var url = urlRestRef(campana);
       medir("reservar");
-      try { sessionStorage.setItem(INTENTO, JSON.stringify({ t: Date.now(), f: rFecha.value, h: rHora.value, p: rPers.value })); } catch (e) { /* sin storage */ }
       // navegación normal en la misma pestaña: window.open no abre nada en el navegador interno de Instagram/Facebook (iPhone)
       location.assign(url);
     });

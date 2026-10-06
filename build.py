@@ -391,14 +391,15 @@ def pag_reservar():
 {cine("espacio_01", t("Interior de ROSSO: bancas rojas alrededor de la barra y techo de círculos", "Inside ROSSO: red benches around the bar and a ceiling of circles"), t("32 lugares · mesas hasta 4 personas", "32 seats · tables for up to 4"), "50% 60%")}
 <section class="reserva">
   <div class="widget-caja">
-    <form class="reserva-forma" id="forma-reserva" action="{SITE['opentable_url']}" method="get" target="_blank" rel="noopener" data-restref="{SITE['opentable_restref_url']}?restref={rid}" data-ficha="{SITE['opentable_url']}">
+    <form class="reserva-forma" id="forma-reserva" action="{SITE['opentable_restref_url']}" method="get" data-restref="{SITE['opentable_restref_url']}?rid={rid}&amp;restref={rid}">
+      <input type="hidden" name="rid" value="{rid}"><input type="hidden" name="restref" value="{rid}"><input type="hidden" name="lang" value="{t('es-MX', 'en-US')}"><input type="hidden" name="ot_source" value="Restaurant website">
       <div class="campo"><label for="r-fecha">{t("Fecha", "Date")}</label><input id="r-fecha" name="fecha" type="date" required min="{hoy}" value="{hoy}"></div>
       <div class="fila">
         <div class="campo"><label for="r-hora">{t("Hora", "Time")}</label><select id="r-hora" name="hora">{horas}</select></div>
         <div class="campo"><label for="r-personas">{t("Personas", "Guests")}</label><select id="r-personas" name="personas">{personas}</select></div>
       </div>
       <button class="btn" type="submit">{t("Buscar mesa en OpenTable", "Find a table on OpenTable")}</button>
-      <p class="reserva-directo" id="r-respaldo"><span id="r-pregunta">{t("¿No se abrió?", "Didn't open?")}</span> <a id="r-directo" href="{SITE['opentable_url']}" target="_blank" rel="noopener">{t("Abre OpenTable aquí", "Open OpenTable here")}</a></p>
+      <p class="reserva-directo">{t("¿No se abrió?", "Didn't open?")} <a id="r-directo" href="{SITE['opentable_restref_url']}?rid={rid}&amp;restref={rid}&amp;lang={t('es-MX', 'en-US')}&amp;ot_source=Restaurant%20website&amp;ot_campaign=respaldo">{t("Abre OpenTable aquí", "Open OpenTable here")}</a></p>
       <p class="reserva-nota">{t(f"Se abre OpenTable con tu selección; ahí confirmas con tu tarjeta. Para más de {SITE['max_widget']} personas, escríbenos por WhatsApp.", f"OpenTable opens with your selection; you confirm there with a card. For more than {SITE['max_widget']} guests, message us on WhatsApp.")}</p>
     </form>
   </div>
