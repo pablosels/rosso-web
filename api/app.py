@@ -734,6 +734,78 @@ def _limpio(s, n=300):
     return re.sub(r"\s+", " ", str(s or "")).strip()[:n]
 
 
+def _carta_viva():
+    """La carta publicada, para anexarla a las cotizaciones. {} si no hay."""
+    try:
+        with _lock:
+            if _cache["carta"] and time.time() - _cache["t"] < 600:
+                datos = _cache["carta"]
+            else:
+                datos = leer("carta.json")
+                if datos:
+                    _cache.update(carta=datos, t=time.time())
+        return datos or {}
+    except Exception:
+        return {}
+
+
+def _bloques_carta(es):
+    """Cocina (tabla con precios) y barra (lista por seccion) desde /carta.
+
+    Sin esto el cliente compromete consumo minimo sin haber visto un solo
+    precio, que es el hallazgo mas repetido de la auditoria del 12-oct.
+    """
+    datos = _carta_viva()
+    secs = datos.get("secciones") or []
+    if not secs:
+        return []
+    cocina, barra = None, []
+    for s in secs:
+        t = (s.get("titulo") or "").strip()
+        items = list(s.get("items") or [])
+        subs = s.get("subsecciones") or []
+        if t == "Para picar":
+            cocina = items
+            continue
+        if items:
+            barra.append((t, items))
+        for sub in subs:
+            si = list(sub.get("items") or [])
+            if si:
+                barra.append((f"{t} · {sub.get('titulo') or ''}".strip(" ·"), si))
+    out = []
+    if cocina:
+        out.append({
+            "tipo": "tabla",
+            "titulo": "La cocina" if es else "The kitchen",
+            "nota": ("La carta completa de cocina de ROSSO. Todo se sirve al centro para "
+                     "compartir y cuenta para el consumo mínimo. Los precios de carta de "
+                     "este documento ya incluyen IVA y se los sostenemos para la noche de "
+                     "su evento.") if es else
+                    ("ROSSO's full kitchen menu. Everything is served to share and counts "
+                     "toward the minimum spend. Menu prices in this document include VAT "
+                     "and are held for the night of your event."),
+            "filas": [[it.get("nombre", ""), dinero(it.get("precio", 0)), False] for it in cocina],
+        })
+    if barra:
+        out.append({
+            "tipo": "lista",
+            "titulo": "La barra" if es else "The bar",
+            "nota": ("Nuestra carta con precios, disponible toda la noche. Todo se cobra a "
+                     "precio de carta y cuenta para el consumo mínimo. Si quieren una "
+                     "etiqueta fuera de esta lista, la cotizamos con 5 días de "
+                     "anticipación.") if es else
+                    ("Our menu with prices, available all evening. Everything is charged at "
+                     "menu price and counts toward the minimum spend. For a label outside "
+                     "this list, we can quote it with 5 days' notice."),
+            "columnas": [{"titulo": t,
+                          "items": [f"{it.get('nombre','')} {dinero(it.get('precio',0))}"
+                                    for it in its]}
+                         for t, its in barra],
+        })
+    return out
+
+
 def armar_cotizacion(sol, calc):
     """JSON para cotizador.py a partir de la solicitud y el calculo del tarifario."""
     fecha = sol["fecha"]
@@ -777,47 +849,197 @@ def armar_cotizacion(sol, calc):
         modalidad = "Mesa reservada — ROSSO abierto al público" if es else "Reserved table — ROSSO open to the public"
     else:
         titulo = f"{sol['motivo'] or 'Evento privado'} en ROSSO" if es else f"{sol['motivo'] or 'Private event'} at ROSSO"
+        h_ini, h_fin = calc.get("hora_inicio"), calc.get("hora_fin")
+        rango = (f"{tf.hora_bonita(h_ini)} a {tf.hora_bonita(h_fin)}"
+                 if h_ini is not None and h_fin is not None else sol["hora"])
+        fin_txt = tf.hora_bonita(h_fin) or "el cierre"
+        min_carta = dinero(calc["minimo"])
+        por_pax = dinero(calc["por_persona_minimo"])
+        sub_neto = calc["subtotal"] / 1.16
+        sub_iva = dinero(calc["subtotal"])
+
         filas = [
-            [(f"Renta exclusiva del espacio — {sol['horas']} horas" if es
-              else f"Exclusive venue rental — {sol['horas']} hours"), dinero(calc["renta"] / 1.16), False],
-            [("Consumo mínimo garantizado en barra y cocina" if es
-              else "Guaranteed minimum spend on bar and kitchen"), dinero(calc["minimo"] / 1.16), False],
+            [(f"Renta exclusiva de la casa — {rango}" if es
+              else f"Exclusive venue rental — {rango}"), dinero(calc["renta"] / 1.16), False],
+            [(f"Consumo mínimo garantizado en barra y cocina ({min_carta} de carta)" if es
+              else f"Guaranteed minimum spend on bar and kitchen ({min_carta} at menu prices)"),
+             dinero(calc["minimo"] / 1.16), False],
         ]
         if calc["horas_extra"]:
-            filas.append([(f"Hora extra × {calc['horas_extra']}" if es else f"Extra hour × {calc['horas_extra']}"),
-                          dinero(calc["horas_extra"] * calc["hora_extra"] / 1.16), False])
-        filas.append(["IVA 16%" if es else "VAT 16%", dinero(calc["subtotal"] - calc["subtotal"] / 1.16), False])
-        filas.append([("Servicio 15% sobre el total del evento, íntegro para el equipo" if es
-                       else "15% service charge on the event total, distributed in full to the service team"),
+            filas.append([(f"Hora adicional × {calc['horas_extra']}" if es
+                           else f"Additional hour × {calc['horas_extra']}"),
+                          dinero(calc["extra"] / 1.16), False])
+        # Subtotal y Subtotal con IVA: sin estos renglones el 15% de servicio
+        # es 15% de un numero que no aparece en ninguna parte del documento.
+        filas.append(["Subtotal" if es else "Subtotal", dinero(sub_neto), True])
+        filas.append(["IVA 16%" if es else "VAT 16%",
+                      dinero(calc["subtotal"] - sub_neto), False])
+        filas.append(["Subtotal con IVA" if es else "Subtotal with VAT", sub_iva, True])
+        filas.append([(f"Servicio 15% sobre {sub_iva}, íntegro para el equipo" if es
+                       else f"15% service charge on {sub_iva}, in full to the team"),
                       dinero(calc["servicio"]), False])
-        bloques = [
-            {"tipo": "tabla", "titulo": "El evento" if es else "The event",
-             "nota": (f"ROSSO cerrado al público para ustedes. Aforo: {tf.AFORO_SENTADOS} personas sentadas, "
-                      f"hasta {tf.AFORO_TOTAL} entre sentadas y de pie. La cocina cierra a las 11:00 pm.") if es else
-                     (f"ROSSO closed to the public for your party. Capacity: {tf.AFORO_SENTADOS} seated, "
-                      f"up to {tf.AFORO_TOTAL} seated and standing. The kitchen closes at 11:00 pm."),
-             "filas": filas, "total": dinero(calc["total"]) + " MXN",
-             "etiqueta_total": "TOTAL" },
-            {"tipo": "vinetas", "titulo": "Condiciones" if es else "Terms",
-             "items": [
-                 (f"Anticipo de {dinero(calc['anticipo'])} para bloquear la fecha; no reembolsable dentro de los 15 días previos." if es
-                  else f"A {dinero(calc['anticipo'])} deposit secures the date; non-refundable within 15 days of the event."),
-                 (f"Hora adicional: {dinero(calc['hora_extra'])} el local, más consumos." if es
-                  else f"Additional hour: {dinero(calc['hora_extra'])} for the venue, plus consumption."),
-                 ("No se permite el ingreso de bebidas alcohólicas ajenas a la casa." if es
-                  else "Outside alcohol is not permitted."),
-                 ("Precios en pesos mexicanos con IVA desglosado; el servicio no causa IVA. Vigencia de 10 días naturales." if es
-                  else "Prices in Mexican pesos with VAT itemized; the service charge is not subject to VAT. Valid for 10 calendar days."),
-             ]},
+
+        de_pie = calc.get("de_pie", 0)
+        aforo = ((f"Aforo de la casa: {tf.AFORO_SENTADOS} personas sentadas, hasta "
+                  f"{tf.AFORO_TOTAL} entre sentadas y de pie.") if es else
+                 (f"Capacity: {tf.AFORO_SENTADOS} seated, up to {tf.AFORO_TOTAL} "
+                  f"seated and standing."))
+        if de_pie:
+            aforo += ((f" Con {pax} invitados el evento es de pie y sentados: no hay lugar "
+                       f"sentado para los {pax} al mismo tiempo.") if es else
+                      (f" With {pax} guests the event is seated and standing: there is no "
+                       f"seat for all {pax} at once."))
+        else:
+            aforo += (f" Con {pax} invitados todos van sentados." if es
+                      else f" With {pax} guests everyone is seated.")
+
+        cocina_txt = ((f"Cocina abierta desde que inicia su evento y hasta las 11:00 pm, que es "
+                       f"cuando cierra.") if calc.get("cocina_alcanza") else
+                      (f"La cocina cierra a las 11:00 pm, antes de que termine su evento; "
+                       f"la barra sigue abierta hasta el final.")) if es else (
+                      ("The kitchen is open from the start of your event until it closes at "
+                       "11:00 pm.") if calc.get("cocina_alcanza") else
+                      ("The kitchen closes at 11:00 pm, before your event ends; the bar stays "
+                       "open until the end."))
+
+        incluye = [
+            (f"Uso exclusivo de la casa de {rango}: ROSSO no abre al público." if es
+             else f"Exclusive use of the house from {rango}: ROSSO does not open to the public."),
+            ("El salón completo de 40 m²: barra con bancos alrededor, mesas, el mobiliario de "
+             "la casa y el techo de círculos de luz." if es
+             else "The full 40 m² room: bar with stools all around, tables, the house furniture "
+                  "and the ceiling of light circles."),
+            ("Equipo completo: bartenders en barra y personal de piso atendiendo toda la noche." if es
+             else "Full team: bartenders behind the bar and floor staff all evening."),
+            ("Recepción y control de acceso en la puerta, con lista de invitados si así lo "
+             "prefieren." if es else "Reception and door control, with a guest list if you prefer."),
+            ("Sonido de la casa y cabina de DJ. Pueden usar nuestra música, su propia playlist "
+             "o traer a su DJ." if es
+             else "House sound and the DJ booth. Use our music, your own playlist, or bring your DJ."),
+            cocina_txt,
+            ("Factura con IVA desglosado. Sólo necesitamos sus datos fiscales al confirmar." if es
+             else "Invoice with VAT itemized. We only need your billing details on confirmation."),
         ]
-        modalidad = "Evento privado — exclusiva" if es else "Private event — full buyout"
+
+        # El anticipo: si la fecha esta a menos de 15 dias, la ventana de
+        # reembolso YA paso el dia que se emite la cotizacion. Decirlo.
+        dias_falta = (fecha - dt.date.today()).days
+        if dias_falta <= 15:
+            anticipo_txt = (
+                (f"Para bloquear la fecha se requiere un anticipo de {dinero(calc['anticipo'])} "
+                 f"por transferencia. Por ser una fecha a menos de 15 días, no es reembolsable "
+                 f"desde que se recibe, pero puede aplicarse a una fecha nueva sujeta a "
+                 f"disponibilidad.") if es else
+                (f"A {dinero(calc['anticipo'])} deposit by bank transfer secures the date. As the "
+                 f"event is less than 15 days away, it is non-refundable from the moment it is "
+                 f"received, but it can be applied to a new date subject to availability."))
+        else:
+            anticipo_txt = (
+                (f"Para bloquear la fecha se requiere un anticipo de {dinero(calc['anticipo'])} "
+                 f"por transferencia. Cancelando con más de 15 días se devuelve completo; dentro "
+                 f"de los 15 días no es reembolsable, pero puede aplicarse a una fecha nueva.") if es else
+                (f"A {dinero(calc['anticipo'])} deposit by bank transfer secures the date. Cancelling "
+                 f"more than 15 days ahead, it is refunded in full; within 15 days it is "
+                 f"non-refundable but can be applied to a new date."))
+
+        # La vigencia nunca puede caer DESPUES del evento.
+        vence = min(dt.date.today() + dt.timedelta(days=10),
+                    fecha - dt.timedelta(days=2))
+        if vence <= dt.date.today():
+            vence = fecha - dt.timedelta(days=1)
+        _hoy = tf.fecha_larga(dt.date.today(), sol["idioma"])
+        _ven = tf.fecha_larga(vence, sol["idioma"])
+        if es:
+            _hoy, _ven = _hoy[0].lower() + _hoy[1:], _ven[0].lower() + _ven[1:]
+        vig = (f"Cotización emitida el {_hoy}, vigente hasta el {_ven}." if es else
+               f"Proposal issued {_hoy}, valid until {_ven}.")
+
+        condiciones = [
+            ((f"ROSSO está cerrado al público durante todo su evento, de {rango}. A las "
+              f"{fin_txt} cerramos su evento, no la casa: quien quiera quedarse es bienvenido "
+              f"como cliente del bar hasta las 2:00 am, y lo que consuma se le cobra "
+              f"directamente.") if es else
+             (f"ROSSO is closed to the public for your whole event, {rango}. At {fin_txt} we "
+              f"close your event, not the house: anyone who wants to stay is welcome as a "
+              f"regular patron until 2:00 am, billed directly.")),
+            aforo,
+            ((f"El consumo mínimo se mide a precio de carta, que ya incluye IVA: {min_carta}, "
+              f"o {por_pax} por invitado. Si esa noche consumen más, se cobra lo consumido; si "
+              f"consumen menos, se cobra el mínimo.") if es else
+             (f"The minimum spend is measured at menu prices, VAT included: {min_carta}, or "
+              f"{por_pax} per guest. If you spend more, you pay what you spend; if less, the "
+              f"minimum stands.")),
+            ("El consumo mínimo aplica al grupo completo y se sostiene aunque asistan menos "
+             f"de {pax}. Si asisten más, su consumo se suma a precio de carta." if es else
+             f"The minimum applies to the group as a whole and holds even if fewer than {pax} "
+             "attend. If more come, their consumption adds on at menu price."),
+            ("Si algún invitado tiene restricción alimentaria, avísennos al confirmar: varios "
+             "platillos llevan mariscos o cerdo y podemos ajustar la selección." if es else
+             "If any guest has a dietary restriction, tell us on confirmation: several dishes "
+             "contain shellfish or pork and we can adjust the selection."),
+            ("Si necesitan micrófono, pantalla o proyección, díganos con anticipación: lo que "
+             "no tengamos en casa lo cotizamos aparte." if es else
+             "If you need a microphone, a screen or projection, tell us ahead of time: anything "
+             "we do not have in house we quote separately."),
+            ("Si traen su propio DJ, ROSSO pone la cabina y las tomas de corriente; el montaje "
+             "tiene que quedar listo antes de que inicie el evento." if es else
+             "If you bring your own DJ, ROSSO provides the booth and power outlets; setup must "
+             "be finished before the event starts."),
+            ("El 15% de servicio se calcula sobre el total del evento, renta incluida, y va "
+             "íntegro al equipo. No se espera propina adicional." if es else
+             "The 15% service charge is calculated on the event total, venue rental included, "
+             "and goes in full to the team. No additional gratuity is expected."),
+            (f"Cada hora adicional son {dinero(calc['hora_extra'])} por el espacio, IVA "
+             f"incluido, más el consumo de esa hora. Cerramos a las 2:00 am." if es else
+             f"Each additional hour is {dinero(calc['hora_extra'])} for the venue, VAT included, "
+             f"plus that hour's consumption. We close at 2:00 am."),
+            ("No se permite el ingreso de bebidas alcohólicas ajenas a la casa." if es else
+             "Outside alcohol is not permitted."),
+            ("El número final de invitados se confirma a más tardar 48 horas antes." if es else
+             "The final guest count is confirmed no later than 48 hours before."),
+            ("Facturamos con IVA desglosado. Mándennos la constancia de situación fiscal al "
+             "confirmar y, si lo requieren, el número de orden de compra." if es else
+             "We invoice with VAT itemized. Send us your tax details on confirmation and, if "
+             "you need it, a purchase order number."),
+            anticipo_txt + ((" Al recibirlo cerramos las reservaciones al público de esa noche. "
+                             "El saldo se liquida la noche del evento, antes de que inicie.") if es else
+                            (" On receipt we close public reservations for that night. The balance "
+                             "is settled on the night, before the event starts.")),
+            ("Precios en pesos mexicanos. Los de carta incluyen IVA; en el desglose del evento "
+             "va señalado aparte. El servicio no causa IVA." if es else
+             "Prices in Mexican pesos. Menu prices include VAT; in the event breakdown VAT is "
+             "itemized separately. The service charge is not subject to VAT."),
+            vig,
+        ]
+
+        bloques = [
+            {"tipo": "vinetas", "titulo": "Qué incluye la noche" if es else "What the evening includes",
+             "items": incluye},
+            {"tipo": "tabla", "titulo": "La propuesta" if es else "The proposal",
+             "nota": ((f"El consumo mínimo NO es un cargo extra: es el piso de lo que se consume "
+                       f"en barra y cocina esa noche, y todo lo que ordenen se descuenta de él. "
+                       f"Se mide a precio de carta, con IVA: {min_carta}, o {por_pax} por "
+                       f"invitado.") if es else
+                      (f"The minimum spend is NOT an extra charge: it is the floor of what gets "
+                       f"consumed at the bar and kitchen that night, and everything you order "
+                       f"comes off it. It is measured at menu prices, VAT included: {min_carta}, "
+                       f"or {por_pax} per guest.")),
+             "filas": filas, "total": dinero(calc["total"]) + " MXN",
+             "etiqueta_total": "TOTAL"},
+        ] + _bloques_carta(es) + [
+            {"tipo": "vinetas", "titulo": "Condiciones" if es else "Terms",
+             "items": condiciones},
+        ]
+        modalidad = "Evento privado — casa completa" if es else "Private event — full buyout"
     return {
         "archivo": f"ROSSO_{'Cotizacion' if es else 'Proposal'}_{fecha.isoformat()}_{re.sub(r'[^A-Za-z0-9]+', '-', sol['nombre'])[:30]}.docx",
         "idioma": sol["idioma"],
         "kicker": "Cotización de evento" if es else "Event proposal",
         "titulo": titulo,
         "subtitulo": f"{dia} · {pax} {'personas' if es else 'guests'} · {sol['hora']}",
-        "cliente": sol["nombre"], "fecha": dia, "horario": sol["hora"],
+        "cliente": sol["nombre"], "fecha": dia,
+        "horario": (f"{tf.hora_bonita(calc['hora_inicio'])} a {tf.hora_bonita(calc['hora_fin'])}"
+                    if calc.get("hora_fin") is not None else sol["hora"]),
         "duracion": f"{sol['horas']} {'horas' if es else 'hours'}",
         "invitados": f"{pax} {'personas' if es else 'guests'}", "modalidad": modalidad,
         "intro": (("Gracias por pensar en ROSSO. Somos un speakeasy en Puebla 329, Roma Norte. "
@@ -825,7 +1047,8 @@ def armar_cotizacion(sol, calc):
                   ("Thank you for thinking of ROSSO. We are a speakeasy at Puebla 329, Roma Norte. "
                    "Here is the proposal for your date; we can fine-tune any detail over WhatsApp.")),
         "bloques": bloques,
-        "cierre": (f"ROSSO · WhatsApp +52 {WHATSAPP} · @rosso.speakeasy"),
+        "cierre": (f"ROSSO · Puebla 329, Roma Norte, CDMX · hola@rossospeakeasy.com · "
+                   f"WhatsApp +52 {WHATSAPP} · @rosso.speakeasy"),
     }
 
 
@@ -848,8 +1071,14 @@ def eventos():
         return jsonify(error="la fecha ya pasó"), 400
     if personas < 5:
         return jsonify(error="para 4 personas o menos reserva directo en OpenTable"), 400
-    if personas > 80:
-        return jsonify(error="el aforo máximo de ROSSO es de 50 personas"), 400
+    # el aforo real son 50 (32 sentadas + de pie). La guarda estaba en 80 y el
+    # mensaje decia 50, asi que cualquier solicitud de 51 a 80 recibia una
+    # cotizacion para un grupo QUE NO CABE — y el propio PDF se contradecia
+    # ("Aforo: hasta 50"). Caso Madeline Medina, 60 personas (12-oct-2026).
+    if personas > tf.AFORO_TOTAL:
+        return jsonify(error=(f"el aforo máximo de ROSSO es de {tf.AFORO_TOTAL} personas "
+                              f"({tf.AFORO_SENTADOS} sentadas y el resto de pie). "
+                              "Escríbenos por WhatsApp y vemos qué se puede hacer.")), 400
     sol = {
         "recibida": dt.datetime.now().isoformat(timespec="seconds"),
         "nombre": nombre, "whatsapp": whatsapp, "email": _limpio(d.get("email"), 120),
@@ -860,7 +1089,10 @@ def eventos():
         "mensaje": _limpio(d.get("mensaje"), 1000),
     }
     modalidad = tf.decidir_modalidad(personas, sol["tipo"])
-    calc = tf.cotizar_grupo(fecha, personas) if modalidad == "grupo" else tf.cotizar_exclusiva(fecha, personas, horas)
+    # la hora SI se pasa: sin ella revisa_horario() nunca corria y el bot
+    # cotizaba eventos que terminan despues del cierre (auditoria 12-oct)
+    calc = (tf.cotizar_grupo(fecha, personas) if modalidad == "grupo"
+            else tf.cotizar_exclusiva(fecha, personas, horas, sol["hora"]))
     folio = fecha.strftime("%y%m%d") + "-" + secrets.token_hex(2).upper()
 
     # cotización en membrete: PDF para el cliente, docx editable de respaldo
@@ -903,7 +1135,13 @@ def eventos():
                    + (f" + {calc['horas_extra']} h extra" if calc["horas_extra"] else "")
                    + f" → {dinero(calc['subtotal'])} +15% = <b>{dinero(calc['total'])}</b>. "
                    f"Anticipo {dinero(calc['anticipo'])}.")
-    texto = (f"🍸 <b>Solicitud de evento desde la web</b> · folio {folio}\n"
+    # Si el bloque no cabe antes del cierre, el PDF se genera igual (Pablo puede
+    # querer ajustarlo y reenviarlo) pero el mensaje abre con el freno en vez de
+    # esconderlo entre los avisos.
+    freno = ("" if calc.get("horario_cabe", True) else
+             "🚫 <b>NO MANDAR SIN REVISAR: el horario no cabe antes del cierre.</b>\n\n")
+    texto = (freno
+             + f"🍸 <b>Solicitud de evento desde la web</b> · folio {folio}\n"
              f"<b>{nombre}</b> · WhatsApp <a href=\"https://wa.me/{whatsapp.lstrip('+')}\">{whatsapp}</a>"
              + (f" · {sol['email']}" if sol["email"] else "") + "\n"
              f"{tf.fecha_larga(fecha)} · {sol['hora']} · {horas} h · <b>{personas} personas</b> · "
