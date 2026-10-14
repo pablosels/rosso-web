@@ -749,7 +749,7 @@ def _carta_viva():
         return {}
 
 
-def _bloques_carta(es):
+def _bloques_carta(es, lejano=False):
     """Cocina (tabla con precios) y barra (lista por seccion) desde /carta.
 
     Sin esto el cliente compromete consumo minimo sin haber visto un solo
@@ -778,13 +778,23 @@ def _bloques_carta(es):
         out.append({
             "tipo": "tabla",
             "titulo": "La cocina" if es else "The kitchen",
-            "nota": ("La carta completa de cocina de ROSSO. Todo se sirve al centro para "
-                     "compartir y cuenta para el consumo mínimo. Los precios de carta de "
-                     "este documento ya incluyen IVA y se los sostenemos para la noche de "
-                     "su evento.") if es else
-                    ("ROSSO's full kitchen menu. Everything is served to share and counts "
-                     "toward the minimum spend. Menu prices in this document include VAT "
-                     "and are held for the night of your event."),
+            "nota": (((
+                "La carta completa de cocina de ROSSO. Todo se sirve al centro para "
+                "compartir y cuenta para el consumo mínimo. Los precios de carta de este "
+                "documento ya incluyen IVA y son los vigentes hoy: por tratarse de una "
+                "fecha lejana, la noche de su evento aplica la carta de esa fecha. La "
+                "renta y el consumo mínimo no cambian.") if lejano else (
+                "La carta completa de cocina de ROSSO. Todo se sirve al centro para "
+                "compartir y cuenta para el consumo mínimo. Los precios de carta de este "
+                "documento ya incluyen IVA y se los sostenemos para la noche de su "
+                "evento.")) if es else ((
+                "ROSSO's full kitchen menu. Everything is served to share and counts "
+                "toward the minimum spend. Menu prices here include VAT and are today's: "
+                "as the date is far out, the menu in force on the night applies. The "
+                "venue rental and the minimum spend do not change.") if lejano else (
+                "ROSSO's full kitchen menu. Everything is served to share and counts "
+                "toward the minimum spend. Menu prices in this document include VAT "
+                "and are held for the night of your event."))),
             "filas": [[it.get("nombre", ""), dinero(it.get("precio", 0)), False] for it in cocina],
         })
     if barra:
@@ -951,6 +961,22 @@ def armar_cotizacion(sol, calc):
         _ven = tf.fecha_larga(vence, sol["idioma"])
         if es:
             _hoy, _ven = _hoy[0].lower() + _hoy[1:], _ven[0].lower() + _ven[1:]
+        # Para fechas lejanas, la carta de hoy no se puede amarrar: ROSSO revisa
+        # precios cada anio y el evento cae del otro lado de esa revision.
+        lejano = dias_falta > 90
+        aviso_carta = fecha - dt.timedelta(days=45)
+        clausula_lejana = (
+            (f"Por tratarse de una fecha a {dias_falta} días, la renta y el consumo mínimo "
+             f"de esta propuesta quedan fijos, pero los precios de carta son los vigentes "
+             f"hoy: la noche de su evento aplica la carta de esa fecha. Si la carta cambia "
+             f"se lo avisamos a más tardar el {tf.fecha_larga(aviso_carta, 'es')[0].lower() + tf.fecha_larga(aviso_carta, 'es')[1:]}, "
+             f"y si no está de acuerdo puede cancelar con devolución completa del anticipo "
+             f"dentro de los 10 días siguientes al aviso.") if es else
+            (f"As the event is {dias_falta} days away, the venue rental and the minimum "
+             f"spend in this proposal are fixed, but menu prices are today's: the menu in "
+             f"force on the night applies. If it changes we will tell you no later than "
+             f"{tf.fecha_larga(aviso_carta, 'en')}, and if you do not agree you may cancel "
+             f"with a full refund of the deposit within 10 days of that notice."))
         vig = (f"Cotización emitida el {_hoy}, vigente hasta el {_ven}." if es else
                f"Proposal issued {_hoy}, valid until {_ven}.")
 
@@ -1011,6 +1037,8 @@ def armar_cotizacion(sol, calc):
              "itemized separately. The service charge is not subject to VAT."),
             vig,
         ]
+        if lejano:
+            condiciones.insert(-1, clausula_lejana)
 
         bloques = [
             {"tipo": "vinetas", "titulo": "Qué incluye la noche" if es else "What the evening includes",
@@ -1026,7 +1054,7 @@ def armar_cotizacion(sol, calc):
                        f"or {por_pax} per guest.")),
              "filas": filas, "total": dinero(calc["total"]) + " MXN",
              "etiqueta_total": "TOTAL"},
-        ] + _bloques_carta(es) + [
+        ] + _bloques_carta(es, lejano) + [
             {"tipo": "vinetas", "titulo": "Condiciones" if es else "Terms",
              "items": condiciones},
         ]
