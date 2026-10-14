@@ -186,6 +186,15 @@ def cotizar_exclusiva(fecha, pax, horas=5, hora=None):
     if aviso_hora:
         avisos.append(aviso_hora)
 
+    # La guarda de aforo vivia SOLO en el endpoint HTTP, asi que cualquier
+    # script que llamara al tarifario directo cotizaba grupos que no caben
+    # (asi salieron las dos de Roberta, 70 y 75 personas, el 24-sep).
+    if pax > AFORO_TOTAL:
+        avisos.append(
+            f"⚠️ {pax} personas NO CABEN: el aforo de ROSSO son {AFORO_TOTAL} "
+            f"({AFORO_SENTADOS} sentadas y el resto de pie). No mandes esta "
+            f"cotización sin resolverlo primero con el cliente.")
+
     # --- renta: plana, con descuento solo si desocupan temprano de verdad
     renta = RENTA[d]
     desc = 0.0
