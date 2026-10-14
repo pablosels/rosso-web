@@ -1036,7 +1036,11 @@ def armar_cotizacion(sol, calc):
         "idioma": sol["idioma"],
         "kicker": "Cotización de evento" if es else "Event proposal",
         "titulo": titulo,
-        "subtitulo": f"{dia} · {pax} {'personas' if es else 'guests'} · {sol['hora']}",
+        # el rango calculado, no la cadena cruda del formulario: si el cliente
+        # escribio "7:30pm" el subtitulo decia 7:30 y el cuerpo 7:00 pm
+        "subtitulo": (f"{dia} · {pax} {'personas' if es else 'guests'} · "
+                      + (f"{tf.hora_bonita(calc['hora_inicio'])} a {tf.hora_bonita(calc['hora_fin'])}"
+                         if calc.get("hora_fin") is not None else sol["hora"])),
         "cliente": sol["nombre"], "fecha": dia,
         "horario": (f"{tf.hora_bonita(calc['hora_inicio'])} a {tf.hora_bonita(calc['hora_fin'])}"
                     if calc.get("hora_fin") is not None else sol["hora"]),

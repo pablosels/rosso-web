@@ -49,7 +49,28 @@ BLOQUE_BASE = 5        # horas incluidas en la renta; arriba de eso se cobra ext
 #
 # POR ESO EL DEFAULT ES NOCHE ENTERA y la duracion no mueve el precio: lo que
 # lo mueve es la hora de salida.
-DESC_TEMPRANO = {20: 0.18, 21: 0.12, 22: 0.07}
+DESC_TEMPRANO = {20: 0.18, 21: 0.12, 22: 0.07, 23: 0.0}
+
+
+def descuento_temprano(fin_abs):
+    """Descuento sobre la renta segun la hora a la que desocupan.
+
+    Se interpola entre los anclajes en vez de usar escalones: con la tabla
+    seca, salir a las 22:00 daba 7% y salir a las 22:01 daba 0%.
+    """
+    if fin_abs is None:
+        return 0.0
+    ks = sorted(DESC_TEMPRANO)
+    if fin_abs <= ks[0]:
+        return DESC_TEMPRANO[ks[0]]
+    if fin_abs >= ks[-1]:
+        return 0.0
+    lo = max(k for k in ks if k <= fin_abs)
+    hi = min(k for k in ks if k >= fin_abs)
+    if lo == hi:
+        return DESC_TEMPRANO[lo]
+    t = (fin_abs - lo) / (hi - lo)
+    return DESC_TEMPRANO[lo] + (DESC_TEMPRANO[hi] - DESC_TEMPRANO[lo]) * t
 AFORO_SENTADOS = 32
 AFORO_TOTAL = 50
 
@@ -81,7 +102,12 @@ def redondear(x, a=100):
 
 # --- validacion de horario ----------------------------------------------
 def _hora_24(texto):
-    """'9:00 pm' / '21:00' / '9' -> 21. None si no se entiende."""
+    """'9:00 pm' -> 21.0 · '7:30 pm' -> 19.5 · '9' -> 21.0. None si no se entiende.
+
+    Devuelve horas con fraccion: los minutos SI cuentan. La version anterior
+    los tiraba, asi que un evento pedido a las 7:30 pm se cotizaba e imprimia
+    como de 7:00 pm (caso Andrea Martinez, 23-oct-2026).
+    """
     t = str(texto or "").strip().lower()
     m = re.search(r"(\d{1,2})(?::(\d{2}))?", t)
     if not m:
@@ -89,13 +115,16 @@ def _hora_24(texto):
     h = int(m.group(1))
     if h > 23:
         return None
+    mins = int(m.group(2) or 0)
+    if mins > 59:
+        mins = 0
     tarde = "pm" in t or "p.m" in t
     manana = "am" in t or "a.m" in t
     if tarde and h < 12:
         h += 12
     elif not manana and not tarde and h <= 11:
         h += 12        # un evento que dice "9:00" es 9 de la noche
-    return h
+    return h + mins / 60.0
 
 
 def revisa_horario(hora, horas):
@@ -163,12 +192,13 @@ def cotizar_exclusiva(fecha, pax, horas=5, hora=None):
     if fin is not None and cabe:
         inicio = _hora_24(hora)
         fin_abs = inicio + horas if inicio is not None else None
-        if fin_abs is not None and fin_abs in DESC_TEMPRANO:
-            desc = DESC_TEMPRANO[fin_abs]
+        desc = descuento_temprano(fin_abs)
+        if desc > 0:
             renta = redondear(renta * (1 - desc), 500)
             avisos.append(
-                f"descuento de {desc:.0%} en la renta: desocupan a las {fin_abs}:00 y "
-                f"ROSSO alcanza a reabrir. A partir de las 23:00 ya no aplica.")
+                f"descuento de {desc:.0%} en la renta: desocupan a las "
+                f"{hora_bonita(fin_abs)} y ROSSO alcanza a reabrir. A partir de "
+                f"las 11:00 pm ya no aplica.")
 
     horas_extra = max(0, horas - BLOQUE_BASE)
     extra = horas_extra * HORA_EXTRA[d]
@@ -221,10 +251,11 @@ def fecha_larga(fecha, idioma="es"):
 
 
 def hora_bonita(h24):
-    """22 -> '10:00 pm', 24 -> '12:00 am', 25 -> '1:00 am'."""
+    """22 -> '10:00 pm' · 19.5 -> '7:30 pm' · 24 -> '12:00 am' · 25 -> '1:00 am'."""
     if h24 is None:
         return None
-    h = h24 % 24
+    mins = int(round(h24 * 60)) % (24 * 60)
+    h, m = divmod(mins, 60)
     suf = "am" if h < 12 else "pm"
     hh = h % 12 or 12
-    return f"{hh}:00 {suf}"
+    return f"{hh}:{m:02d} {suf}"
