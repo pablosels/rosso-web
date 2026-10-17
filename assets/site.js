@@ -124,7 +124,13 @@
         "&ot_source=Restaurant%20website" + (c ? "&ot_campaign=" + encodeURIComponent(c) : "");
     }
     // respaldo: la misma página con su propia campaña, para ver en GuestCenter cuántos entran por la liga y no por el botón
-    function actualizarDirecto() { if (rDirecto) rDirecto.href = urlRestRef(campana ? campana + "-respaldo" : "respaldo"); }
+    // respaldo por OTRA ruta: la ficha pública /r/ (sin restref). Toda liga con restref acaba en /booking/restref/availability,
+    // y si esa página no abrió para alguien, mandarlo de nuevo ahí no sirve. Cuenta como reserva de la red, pero la reserva ocurre.
+    function urlFicha() {
+      var f = rFecha.value || hoy, h = rHora.value || "20:00", p = rPers.value || "2";
+      return (reserva.dataset.ficha || "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico") + "?covers=" + p + "&dateTime=" + encodeURIComponent(f + "T" + h) + "&lang=" + (EN ? "en-US" : "es-MX");
+    }
+    function actualizarDirecto() { if (rDirecto) rDirecto.href = urlFicha(); }
     [rFecha, rHora, rPers].forEach(function (el) { el.addEventListener("change", actualizarDirecto); el.addEventListener("input", actualizarDirecto); });
     actualizarDirecto();
     reserva.addEventListener("submit", function (ev) {
