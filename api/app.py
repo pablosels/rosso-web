@@ -1020,10 +1020,14 @@ def armar_cotizacion(sol, calc):
                f"Proposal issued {_hoy}, valid until {_ven}.")
 
         condiciones = [
-            ((f"ROSSO está cerrado al público durante todo su evento, de {rango}. A las "
-              f"{fin_txt} cerramos su evento, no la casa: quien quiera quedarse es bienvenido "
-              f"como cliente del bar hasta las 2:00 am, y lo que consuma se le cobra "
-              f"directamente.") if es else
+            (((f"ROSSO está cerrado al público durante todo su evento, de {rango}. Esa "
+               f"noche abrimos más tarde o no abrimos al público: la casa es suya hasta el "
+               f"final, y a las {fin_txt} cerramos.")
+              if calc.get("pasa_cierre") else
+              (f"ROSSO está cerrado al público durante todo su evento, de {rango}. A las "
+               f"{fin_txt} cerramos su evento, no la casa: quien quiera quedarse es bienvenido "
+               f"como cliente del bar hasta las 2:00 am, y lo que consuma se le cobra "
+               f"directamente.")) if es else
              (f"ROSSO is closed to the public for your whole event, {rango}. At {fin_txt} we "
               f"close your event, not the house: anyone who wants to stay is welcome as a "
               f"regular patron until 2:00 am, billed directly.")),
@@ -1064,7 +1068,8 @@ def armar_cotizacion(sol, calc):
              "and goes in full to the team. No additional gratuity is expected."),
             ((f"Cada hora adicional son {dinero(calc['hora_extra'])} por el espacio con IVA, "
               f"más su 15% de servicio: {dinero(round(calc['hora_extra'] * (1 + tf.SERVICIO)))} "
-              f"en total, más el consumo de esa hora. Cerramos a las 2:00 am.") if es else
+              f"en total, más el consumo de esa hora."
+              + ("" if calc.get("pasa_cierre") else " Cerramos a las 2:00 am.")) if es else
              (f"Each additional hour is {dinero(calc['hora_extra'])} for the venue with VAT, plus "
               f"its 15% service charge: {dinero(round(calc['hora_extra'] * (1 + tf.SERVICIO)))} "
               f"in all, plus that hour's consumption. We close at 2:00 am.")),

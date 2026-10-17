@@ -127,11 +127,16 @@ def _hora_24(texto):
     return h + mins / 60.0
 
 
-def revisa_horario(hora, horas):
+def revisa_horario(hora, horas, exclusiva=False):
     """Checa que el bloque quepa antes del cierre.
 
     Devuelve (cabe, hora_fin_24, aviso). hora_fin_24 es None si no se pudo
     interpretar la hora.
+
+    Con exclusiva=True NO se rechaza nada: con la casa cerrada al publico
+    ROSSO puede terminar mas tarde de las 2:00 am y mover su horario de
+    apertura (criterio de Pablo, 17-oct). Solo se avisa, para que el horario
+    al publico y el permiso se revisen antes de mandar la cotizacion.
     """
     inicio = _hora_24(hora)
     if inicio is None:
@@ -144,9 +149,16 @@ def revisa_horario(hora, horas):
     #  cualquier evento que terminara de noche: 6 pm + 5 h = 11 pm salia
     #  "NO CABE". Bug encontrado por la auditoria del 29-sep.)
     CIERRE_ABS = CIERRE + 24
-    cabe = inicio + horas <= CIERRE_ABS
-    if cabe:
+    dentro = inicio + horas <= CIERRE_ABS
+    if dentro:
         return True, fin, ""
+    if exclusiva:
+        # la casa cerrada puede correr mas tarde: se avisa, no se bloquea
+        return True, fin, (
+            f"🌙 el evento termina a las {hora_bonita(fin)}, despues del cierre "
+            f"normal de las {hora_bonita(CIERRE)}. Con la casa cerrada se puede, "
+            f"pero hay que mover el horario al publico de esa noche y confirmar "
+            f"el permiso.")
     horas_max = CIERRE_ABS - inicio
     # hora_bonita porque desde el 15-oct las horas llevan fraccion: sin esto el
     # aviso decia "termina a las 3.0:00" y "caben 4.0 h"
@@ -185,7 +197,7 @@ def cotizar_exclusiva(fecha, pax, horas=5, hora=None):
     horas = max(1, int(horas))
     avisos = []
 
-    cabe, fin, aviso_hora = revisa_horario(hora, horas)
+    cabe, fin, aviso_hora = revisa_horario(hora, horas, exclusiva=True)
     if aviso_hora:
         avisos.append(aviso_hora)
 
@@ -242,6 +254,7 @@ def cotizar_exclusiva(fecha, pax, horas=5, hora=None):
             "descuento_temprano": desc,
             "horario_cabe": cabe, "hora_inicio": _hora_24(hora), "hora_fin": fin,
             "cocina_alcanza": fin is None or (_hora_24(hora) or 0) + horas <= COCINA_CIERRA,
+            "pasa_cierre": fin is not None and (_hora_24(hora) or 0) + horas > CIERRE + 24,
             "de_pie": max(0, pax - AFORO_SENTADOS),
             "avisos": avisos}
 
