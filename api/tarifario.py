@@ -148,9 +148,12 @@ def revisa_horario(hora, horas):
     if cabe:
         return True, fin, ""
     horas_max = CIERRE_ABS - inicio
-    aviso = (f"⚠️ el bloque termina a las {fin}:00 y ROSSO cierra a las "
-             f"{CIERRE}:00 am. Desde las {inicio}:00 caben {horas_max} h. "
-             f"Ajusta la hora de inicio o revisa el permiso ANTES de mandarla.")
+    # hora_bonita porque desde el 15-oct las horas llevan fraccion: sin esto el
+    # aviso decia "termina a las 3.0:00" y "caben 4.0 h"
+    aviso = (f"⚠️ el bloque termina a las {hora_bonita(fin)} y ROSSO cierra a las "
+             f"{hora_bonita(CIERRE)}. Desde las {hora_bonita(inicio)} caben "
+             f"{horas_max:g} h. Ajusta la hora de inicio o revisa el permiso "
+             f"ANTES de mandarla.")
     return False, fin, aviso
 
 

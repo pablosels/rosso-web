@@ -970,6 +970,9 @@ def armar_cotizacion(sol, calc):
         # pedirle el 88% de su compromiso.
         base_anticipo = total_anfitrion if invitados_pagan else calc["total"]
         anticipo = tf.redondear(base_anticipo * 0.5, 500)
+        # /eventos lo necesita para el aviso a Pablo, y solo lo sabe armar
+        # esta funcion: depende de quien paga la barra.
+        calc["anticipo"] = anticipo
         if dias_falta <= 15:
             anticipo_txt = (
                 (f"Para bloquear la fecha se requiere un anticipo de {dinero(anticipo)} "
@@ -1273,7 +1276,7 @@ def eventos():
                    f"<b>{dinero(calc['minimo'])}</b>"
                    + (f" + {calc['horas_extra']} h extra" if calc["horas_extra"] else "")
                    + f" → {dinero(calc['subtotal'])} +15% = <b>{dinero(calc['total'])}</b>. "
-                   f"Anticipo {dinero(anticipo)}.")
+                   f"Anticipo {dinero(calc['anticipo'])}.")
     # Si el bloque no cabe antes del cierre, el PDF se genera igual (Pablo puede
     # querer ajustarlo y reenviarlo) pero el mensaje abre con el freno en vez de
     # esconderlo entre los avisos.
