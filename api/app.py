@@ -816,6 +816,67 @@ def _bloques_carta(es, lejano=False):
     return out
 
 
+def _otras_del_dia(folio, fecha):
+    """Solicitudes que ya existen para esa fecha. [] si no hay o si falla.
+
+    El folio es YYMMDD-XXXX, asi que las del mismo dia comparten prefijo y
+    listar es una sola llamada al bucket.
+    """
+    if not BUCKET:
+        return []
+    try:
+        pref = f"{PREFIJO}eventos/{fecha.strftime('%y%m%d')}-"
+        otras = []
+        for blob in _bucket().list_blobs(prefix=pref):
+            if not blob.name.endswith(".json"):
+                continue
+            if blob.name.endswith(f"{folio}.json"):
+                continue
+            try:
+                d = json.loads(blob.download_as_text())
+            except Exception:
+                continue
+            if "prueba" in (d.get("nombre") or "").lower():
+                continue
+            otras.append(d)
+        return otras
+    except Exception as e:
+        print("no pude revisar fechas duplicadas:", e)
+        return []
+
+
+def _confirmado_en(fecha):
+    """Lo que ya se cerro para esa fecha, si algo. None si la noche esta libre."""
+    try:
+        ag = leer("eventos/_confirmados.json") or {}
+        return (ag.get(fecha.isoformat()) or None)
+    except Exception:
+        return None
+
+
+def _aviso_fecha(folio, fecha, sol):
+    """Encabezado para el Telegram de Pablo cuando la noche ya tiene dueno o
+    competencia. Cadena vacia si la fecha esta limpia."""
+    cerrado = _confirmado_en(fecha)
+    otras = _otras_del_dia(folio, fecha)
+    if not cerrado and not otras:
+        return ""
+    lineas = []
+    if cerrado:
+        lineas.append(f"🚫 <b>ESTA NOCHE YA ESTÁ CERRADA</b>: {cerrado.get('nombre','?')}"
+                      + (f" · {cerrado.get('nota')}" if cerrado.get("nota") else ""))
+    if otras:
+        lineas.append(f"⚠️ <b>Esta fecha ya tiene {len(otras)} solicitud"
+                      f"{'es' if len(otras) > 1 else ''} más:</b>")
+        for o in otras[:5]:
+            c = o.get("calculo") or {}
+            lineas.append(f"   · {o.get('nombre','?')} · {o.get('personas','?')} pax · "
+                          f"{o.get('hora','?')} · {o.get('horas','?')} h · "
+                          f"{dinero(c.get('total', 0))} · folio {o.get('folio','?')}")
+        lineas.append(f"   Revisa si se traslapan antes de mandar las dos.")
+    return "\n".join(lineas) + "\n\n"
+
+
 def armar_cotizacion(sol, calc):
     """JSON para cotizador.py a partir de la solicitud y el calculo del tarifario."""
     fecha = sol["fecha"]
@@ -1287,6 +1348,9 @@ def eventos():
     # esconderlo entre los avisos.
     freno = ("" if calc.get("horario_cabe", True) else
              "🚫 <b>NO MANDAR SIN REVISAR: el horario no cabe antes del cierre.</b>\n\n")
+    # cuatro noches se vendieron dos veces sin que nada avisara (24-sep, 22-oct,
+    # 3-nov y 14-nov): esto revisa el bucket y la agenda de cerrados.
+    freno = _aviso_fecha(folio, fecha, sol) + freno
     texto = (freno
              + f"🍸 <b>Solicitud de evento desde la web</b> · folio {folio}\n"
              f"<b>{nombre}</b> · WhatsApp <a href=\"https://wa.me/{whatsapp.lstrip('+')}\">{whatsapp}</a>"
