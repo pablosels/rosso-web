@@ -391,6 +391,10 @@ def pag_reservar():
 {cine("espacio_01", t("Interior de ROSSO: bancas rojas alrededor de la barra y techo de círculos", "Inside ROSSO: red benches around the bar and a ceiling of circles"), t("32 lugares · mesas hasta 4 personas", "32 seats · tables for up to 4"), "50% 60%")}
 <section class="reserva">
   <div class="widget-caja">
+    <div class="reserva-regreso" id="r-regreso" hidden>
+      <strong>{t("¿OpenTable no cargó?", "OpenTable didn't load?")}</strong> {t("Pasa a veces en el navegador de Instagram. Abre por esta otra ruta, con tu misma selección:", "It happens sometimes inside Instagram's browser. Use this other route, with your same selection:")}
+      <a class="btn" href="{SITE['opentable_url']}" rel="noopener">{t("Reservar por aquí", "Book here")}</a>
+    </div>
     <form class="reserva-forma" id="forma-reserva" action="{SITE['opentable_restref_url']}" method="get" data-restref="{SITE['opentable_restref_url']}?rid={rid}&amp;restref={rid}" data-ficha="{SITE['opentable_url']}">
       <input type="hidden" name="rid" value="{rid}"><input type="hidden" name="restref" value="{rid}"><input type="hidden" name="lang" value="{t('es-MX', 'en-US')}"><input type="hidden" name="ot_source" value="Restaurant website">
       <div class="campo"><label for="r-fecha">{t("Fecha", "Date")}</label><input id="r-fecha" name="fecha" type="date" required min="{hoy}" value="{hoy}"></div>

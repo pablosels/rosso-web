@@ -130,13 +130,30 @@
       var f = rFecha.value || hoy, h = rHora.value || "20:00", p = rPers.value || "2";
       return (reserva.dataset.ficha || "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico") + "?covers=" + p + "&dateTime=" + encodeURIComponent(f + "T" + h) + "&lang=" + (EN ? "en-US" : "es-MX");
     }
-    function actualizarDirecto() { if (rDirecto) rDirecto.href = urlFicha(); }
+    var rRegreso = document.getElementById("r-regreso");
+    function actualizarDirecto() {
+      if (rDirecto) rDirecto.href = urlFicha();
+      var a = rRegreso && rRegreso.querySelector("a"); if (a) a.href = urlFicha();
+    }
+    // si ya pulsó el botón hace poco y está de vuelta, OpenTable no le cargó: recupera su selección y ofrece la otra ruta
+    try {
+      var intento = JSON.parse(sessionStorage.getItem("rosso_ot_intento") || "null");
+      if (intento && Date.now() - intento.t < 20 * 60 * 1000 && rRegreso) {
+        if (intento.f && intento.f >= hoy) rFecha.value = intento.f;
+        if (intento.h) rHora.value = intento.h;
+        if (intento.p) rPers.value = intento.p;
+        rRegreso.hidden = false;
+        setTimeout(function () { rRegreso.scrollIntoView({ behavior: "smooth", block: "center" }); }, 300);
+        if (window.ROSSO_medir) window.ROSSO_medir("opentable");
+      }
+    } catch (e) { /* sin storage */ }
     [rFecha, rHora, rPers].forEach(function (el) { el.addEventListener("change", actualizarDirecto); el.addEventListener("input", actualizarDirecto); });
     actualizarDirecto();
     reserva.addEventListener("submit", function (ev) {
       ev.preventDefault();
       if (rFecha.value && rFecha.value < hoy) rFecha.value = hoy;
       var url = urlRestRef(campana);
+      try { sessionStorage.setItem("rosso_ot_intento", JSON.stringify({ t: Date.now(), f: rFecha.value, h: rHora.value, p: rPers.value })); } catch (e) { /* sin storage */ }
       medir("reservar");
       // navegación normal en la misma pestaña: window.open no abre nada en el navegador interno de Instagram/Facebook (iPhone)
       location.assign(url);

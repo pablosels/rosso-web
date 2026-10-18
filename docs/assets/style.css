@@ -397,3 +397,7 @@ figure{margin:0}
 .q-foto{margin:0;aspect-ratio:4/5;overflow:hidden;background:#000}
 .q-foto img{width:100%;height:100%;object-fit:cover;display:block}
 @media(max-width:899px){.quiz-resultado.con-foto{grid-template-columns:1fr}.q-foto{max-width:420px}}
+
+/* reservar: aviso cuando regresan porque OpenTable no cargó */
+.reserva-regreso{background:var(--carmin);color:#E5E8E8;padding:1rem 1.1rem;margin:0 0 1rem;font-size:.95rem;line-height:1.45}
+.reserva-regreso .btn{display:block;margin-top:.8rem;background:#E5E8E8;color:#282323}
