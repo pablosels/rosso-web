@@ -1,5 +1,5 @@
 {
-  "_nota": "Quiz '¿Qué cóctel eres?'. Cada respuesta suma puntos a rasgos; cada cóctel tiene sus rasgos. Gana el de más puntos. Si en la última pregunta eligen sin alcohol, solo compiten los sin alcohol.",
+  "_nota": "Quiz '¿Qué cóctel eres?'. Tres preguntas (Vista, Oído, Gusto) desde el 22-oct-2026; Tacto y Olfato quedan en preguntas_reserva por si se vuelven a usar. Cada respuesta suma puntos a rasgos; cada cóctel tiene sus rasgos. Gana el de más puntos. Si en la última pregunta eligen sin alcohol, solo compiten los sin alcohol.",
   "preguntas": [
     {
       "sentido": {
@@ -89,98 +89,6 @@
             "profundo",
             "amargo",
             "tostado"
-          ]
-        }
-      ]
-    },
-    {
-      "sentido": {
-        "es": "Tacto",
-        "en": "Touch"
-      },
-      "es": "El primer trago toca tus labios. ¿Cómo se siente?",
-      "en": "The first sip touches your lips. How does it feel?",
-      "opciones": [
-        {
-          "es": "Terciopelo",
-          "en": "Velvet",
-          "rasgos": [
-            "aterciopelado",
-            "sedoso",
-            "untuoso"
-          ]
-        },
-        {
-          "es": "Burbujas",
-          "en": "Bubbles",
-          "rasgos": [
-            "burbujeante",
-            "ligero",
-            "fresco"
-          ]
-        },
-        {
-          "es": "Cristal frío, limpio y seco",
-          "en": "Cold glass, clean and dry",
-          "rasgos": [
-            "seco",
-            "herbal",
-            "vibrante"
-          ]
-        },
-        {
-          "es": "Con cuerpo, que pese",
-          "en": "Full-bodied, with weight",
-          "rasgos": [
-            "untuoso",
-            "intenso",
-            "profundo"
-          ]
-        }
-      ]
-    },
-    {
-      "sentido": {
-        "es": "Olfato",
-        "en": "Smell"
-      },
-      "es": "Acercas la copa. ¿A qué huele?",
-      "en": "You bring the glass closer. What does it smell like?",
-      "opciones": [
-        {
-          "es": "Fruta madura y flores",
-          "en": "Ripe fruit and flowers",
-          "rasgos": [
-            "frutal",
-            "floral",
-            "dulce"
-          ]
-        },
-        {
-          "es": "Cítricos recién cortados",
-          "en": "Freshly cut citrus",
-          "rasgos": [
-            "citrico",
-            "acido",
-            "fresco"
-          ]
-        },
-        {
-          "es": "Café, cacao, algo tostado",
-          "en": "Coffee, cocoa, something toasted",
-          "rasgos": [
-            "tostado",
-            "amargo",
-            "aterciopelado"
-          ]
-        },
-        {
-          "es": "Especias, humo y un poco de chile",
-          "en": "Spice, smoke and a little chile",
-          "rasgos": [
-            "especiado",
-            "picante",
-            "intenso"
           ]
         }
       ]
@@ -566,6 +474,100 @@
         "notas": "Light, floral, sparkling.",
         "porque": "Bubbles, peach and lavender: the first round of the night, no-alcohol edition. Light and floral, to toast with the whole bench like everyone else."
       }
+    }
+  ],
+  "preguntas_reserva": [
+    {
+      "sentido": {
+        "es": "Tacto",
+        "en": "Touch"
+      },
+      "es": "El primer trago toca tus labios. ¿Cómo se siente?",
+      "en": "The first sip touches your lips. How does it feel?",
+      "opciones": [
+        {
+          "es": "Terciopelo",
+          "en": "Velvet",
+          "rasgos": [
+            "aterciopelado",
+            "sedoso",
+            "untuoso"
+          ]
+        },
+        {
+          "es": "Burbujas",
+          "en": "Bubbles",
+          "rasgos": [
+            "burbujeante",
+            "ligero",
+            "fresco"
+          ]
+        },
+        {
+          "es": "Cristal frío, limpio y seco",
+          "en": "Cold glass, clean and dry",
+          "rasgos": [
+            "seco",
+            "herbal",
+            "vibrante"
+          ]
+        },
+        {
+          "es": "Con cuerpo, que pese",
+          "en": "Full-bodied, with weight",
+          "rasgos": [
+            "untuoso",
+            "intenso",
+            "profundo"
+          ]
+        }
+      ]
+    },
+    {
+      "sentido": {
+        "es": "Olfato",
+        "en": "Smell"
+      },
+      "es": "Acercas la copa. ¿A qué huele?",
+      "en": "You bring the glass closer. What does it smell like?",
+      "opciones": [
+        {
+          "es": "Fruta madura y flores",
+          "en": "Ripe fruit and flowers",
+          "rasgos": [
+            "frutal",
+            "floral",
+            "dulce"
+          ]
+        },
+        {
+          "es": "Cítricos recién cortados",
+          "en": "Freshly cut citrus",
+          "rasgos": [
+            "citrico",
+            "acido",
+            "fresco"
+          ]
+        },
+        {
+          "es": "Café, cacao, algo tostado",
+          "en": "Coffee, cocoa, something toasted",
+          "rasgos": [
+            "tostado",
+            "amargo",
+            "aterciopelado"
+          ]
+        },
+        {
+          "es": "Especias, humo y un poco de chile",
+          "en": "Spice, smoke and a little chile",
+          "rasgos": [
+            "especiado",
+            "picante",
+            "intenso"
+          ]
+        }
+      ]
     }
   ]
 }

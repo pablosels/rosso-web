@@ -60,7 +60,7 @@ f2 = fuente("ARIALNB.TTF", 44)
 f3 = fuente("ARIALN.TTF", 40)
 centrado("¿QUÉ CÓCTEL", 1390, f1, 4)
 centrado("ERES?", 1515, f1, 4)
-centrado("CINCO PREGUNTAS. UN TRAGO CON TU NOMBRE.", 1670, f2, 3)
+centrado("TRES PREGUNTAS. UN TRAGO CON TU NOMBRE.", 1670, f2, 3)
 centrado("rossospeakeasy.com/ads", 1740, f3, 1, (200, 200, 200))
 
 out = R / "plan" / "anuncios" / "quiz-cortina-1080x1920.jpg"

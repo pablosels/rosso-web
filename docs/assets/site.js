@@ -557,6 +557,7 @@
     var o = D.preguntas[i].opciones[+b.dataset.k];
     o.rasgos.forEach(function (r) { puntos[r] = (puntos[r] || 0) + 1; });
     if (o.sin_alcohol) sinAlcohol = true;
+    if (i === 0 && window.ROSSO_medir) window.ROSSO_medir("quiz_inicio");   // contestó la primera: para ver dónde se van
     i++;
     if (i < D.preguntas.length) pregunta(); else resultado(mejor());
   });
@@ -578,6 +579,7 @@
   function resultado(c) {
     barra.style.width = "100%";
     caja.hidden = true;
+    var fijo = document.getElementById("q-fijo"); if (fijo) fijo.hidden = true;   // el resultado trae su propio botón
     document.getElementById("q-nombre").textContent = c.nombre;
     document.getElementById("q-notas").textContent = c.notas;
     document.getElementById("q-ingredientes").textContent = c.ingredientes;

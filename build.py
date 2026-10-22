@@ -1008,13 +1008,14 @@ def pag_quiz():
 <section class="encabezado">
   <div class="etiqueta">{t("El quiz", "The quiz")}</div>
   <h1>{t("¿Qué cóctel eres?", "Which cocktail are you?")}</h1>
-  <p class="nota">{t("ROSSO explora el placer a través de los sentidos. Cinco sentidos, cinco preguntas: te decimos cuál de los cócteles de la casa eres, y por qué.", "ROSSO explores pleasure through the senses. Five senses, five questions: we tell you which house cocktail you are, and why.")}</p>
+  <p class="nota">{t("ROSSO explora el placer a través de los sentidos. Tres preguntas y te decimos cuál de los cócteles de la casa eres, y por qué.", "ROSSO explores pleasure through the senses. Three questions and we tell you which house cocktail you are, and why.")}</p>
 </section>
 <section class="quiz" id="quiz">
   <div class="quiz-progreso" aria-hidden="true"><span id="q-barra"></span></div>
   <div id="q-caja" class="quiz-caja">
     <p class="nota">{t("Cargando…", "Loading…")}</p>
   </div>
+  <div class="q-fijo" id="q-fijo"><a class="btn" href="{B}/reservar/">{t("Reservar mesa", "Book a table")}</a></div>
   <div id="q-resultado" class="quiz-resultado" hidden data-fotos="{' '.join(sorted(p.stem for p in (RAIZ / 'assets' / 'fotos' / 'cocteles').glob('*.jpg') if not p.stem.endswith('-m')))}">
     <figure class="q-foto" id="q-foto" hidden><img alt="" loading="lazy"></figure>
     <div class="q-texto">
@@ -1035,7 +1036,7 @@ def pag_quiz():
 <script id="q-datos" type="application/json">{json.dumps(datos, ensure_ascii=False)}</script>
 """
     return pagina(t("¿Qué cóctel eres? · ROSSO", "Which cocktail are you? · ROSSO"), cuerpo, "/quiz/",
-                  t("Cinco preguntas y te decimos cuál cóctel de la casa de ROSSO eres.", "Five questions and we tell you which ROSSO house cocktail you are."), clase="pag-quiz")
+                  t("Tres preguntas y te decimos cuál cóctel de la casa de ROSSO eres.", "Three questions and we tell you which ROSSO house cocktail you are."), clase="pag-quiz")
 
 
 # ---------------------------------------------------------------- páginas para búsqueda
