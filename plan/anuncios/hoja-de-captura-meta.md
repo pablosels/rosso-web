@@ -28,7 +28,7 @@ Antes de empezar, confirma en Configuración › Cuentas:
 - Criterio 1 (costo por visita ≤ $6): las dos pasan de sobra.
 - Criterio 2 (10 de cada 100 buscan mesa): Meta no atribuye ningún evento Schedule ni Contact a los anuncios, aunque el píxel sí los registra (478 Schedule y 43 Contact en cuatro semanas, todos los canales). Mide este criterio con el resumen de los lunes en Telegram (canal "ads"), no con Meta.
 - Los eventos diarios del píxel pasaron de ~120 a ~270 desde que arrancaron los anuncios.
-- Noche fuerte no corre esta semana: terminó con su fecha de fin. Para renovarla: duplicar el conjunto con fechas nuevas, correr el generador y subir la imagen.
+- Renovación del 22 de octubre: conjunto duplicado "Base 25-40 radio 5 km mie-sab 16-21h (22 oct - 31 oct)", $750 del 22 oct al 3 nov, mismo horario y público; anuncio "Noche fuerte - semana 22-24 oct" (JIMENO, PABLO MIYA, UNEG) con imagen `plan/anuncios/noche-fuerte-semana-2026-10-22.jpg`. Queda en borrador hasta que se publique.
 
 ---
 
