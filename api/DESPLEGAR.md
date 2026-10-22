@@ -19,11 +19,24 @@ cd C:\Users\minis\Downloads\rosso-web\api
 gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas
 ```
 
-Antes de correrlo conviene ver que hay vivo:
+Antes de correrlo conviene ver que hay vivo (sólo los nombres: con `env` a secas la terminal imprime
+también los valores, entre ellos REFRESH_KEY, que abre la liquidación con los nombres y códigos de los compradores):
 
 ```powershell
-gcloud run services describe rosso-web-api --region us-central1 --project motor-facturas --format="value(spec.template.spec.containers[0].env)"
+gcloud run services describe rosso-web-api --region us-central1 --project motor-facturas --format="value(spec.template.spec.containers[0].env[].name)"
 ```
+
+Y antes de cada deploy, desde `rosso-web`:
+
+```powershell
+git status --short api/          # vacío: todo lo que sube está en git (si no, commit primero)
+python -I -m py_compile (Get-ChildItem api\*.py).FullName
+Select-String -Path api\*.py,api\*.json -Pattern '^(<<<<<<<|>>>>>>>)'   # nada: sin marcas de conflicto
+```
+
+Desplegar SIEMPRE desde esta carpeta, nunca desde una copia limpia del repo (export, clone, worktree): le faltan los
+archivos privados que están en `.gitignore` y viajan en la imagen (`boletos_tratos.json`). Y nada de `git stash`,
+`reset` ni `pull --rebase` aquí mientras haya trabajo sin commit: es la carpeta desde la que se despliega.
 
 ## Primer despliegue o reconstruir el servicio desde cero
 
@@ -35,10 +48,11 @@ ninguno.
 cd C:\Users\minis\Downloads\rosso-web\api
 if (-not (Test-Path .refresh_key)) { python -c "import secrets;print(secrets.token_urlsafe(24))" | Out-File -Encoding ascii -NoNewline .refresh_key }
 $KEY = (Get-Content .refresh_key -Raw).Trim()
-gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest,GMAIL_APP_PASSWORD=gmail-app-rosso:latest,CANJE_PIN=rosso-canje-pin:latest" --set-env-vars "^|^BUCKET=motor-facturas-respaldos|REFRESH_KEY=$KEY|AGENDA_SHEET_ID=19r4AcTUgtYO2SL8dxvSgQxTF2oeGOJOOgk2xFJjd6NY|METRICAS_SHEET_ID=15fGLQztLHOZpXmS2Az0WsUgZS1vrbIz47VMwQwTHtrg|REGALO_SHEET_ID=1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM|CLIENTES_SHEET_ID=1GkCp6s-f8VV0bKhIl8MjYnAE_Klo2XIGv2cBQ3Rs4g0|DESCRIPCIONES_SHEET_ID=1Z-0yeDD-nMJnR0hvnSKyh6Adu2TmI7GER38TzerZzwY|VINILOS_SHEET_ID=1Cu9DkIA_yHkblMxnoW3_WtZ0NgGtErRhs4HF9gqYdcA|VISITAS_SHEET_ID=1bjMJKcMpXk2aG-qGx8wnYpbXWgK08hGX_6L8vzP4l24|DJS_SHEET_ID=1Bzi-5GKlEWhwo0L0MXBRNP_X6jMi9-ZFJywEjK5Ky-U|FECHAS_LITERAL=1|GMAIL_USER=pabloseldner87@gmail.com|ALLOWED_ORIGINS=https://rossospeakeasy.com,http://rossospeakeasy.com,https://www.rossospeakeasy.com,http://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8765"
+gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas --service-account motor-facturas-job@motor-facturas.iam.gserviceaccount.com --allow-unauthenticated --memory 512Mi --cpu 1 --timeout 600 --max-instances 2 --set-secrets "TELEGRAM_TOKEN_ROSSO=telegram-token-rosso:latest,TELEGRAM_CHAT_ID_ROSSO=telegram-chat-id-rosso:latest,WANSOFT_SUB=wansoft-rosso-sub:latest,WANSOFT_PWD=wansoft-rosso-pwd:latest,GMAIL_APP_PASSWORD=gmail-app-rosso:latest,CANJE_PIN=rosso-canje-pin:N,STRIPE_KEY=stripe-key-rosso:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-rosso:latest,PINES_BARRA=rosso-pines-barra:latest" --set-env-vars "^|^BUCKET=motor-facturas-respaldos|BOLETOS_BUCKET=rosso-boletos-motor-facturas|REFRESH_KEY=$KEY|AGENDA_SHEET_ID=19r4AcTUgtYO2SL8dxvSgQxTF2oeGOJOOgk2xFJjd6NY|METRICAS_SHEET_ID=15fGLQztLHOZpXmS2Az0WsUgZS1vrbIz47VMwQwTHtrg|REGALO_SHEET_ID=1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM|CLIENTES_SHEET_ID=1GkCp6s-f8VV0bKhIl8MjYnAE_Klo2XIGv2cBQ3Rs4g0|DESCRIPCIONES_SHEET_ID=1Z-0yeDD-nMJnR0hvnSKyh6Adu2TmI7GER38TzerZzwY|VINILOS_SHEET_ID=1Cu9DkIA_yHkblMxnoW3_WtZ0NgGtErRhs4HF9gqYdcA|VISITAS_SHEET_ID=1bjMJKcMpXk2aG-qGx8wnYpbXWgK08hGX_6L8vzP4l24|DJS_SHEET_ID=1Bzi-5GKlEWhwo0L0MXBRNP_X6jMi9-ZFJywEjK5Ky-U|FECHAS_LITERAL=1|GMAIL_USER=pabloseldner87@gmail.com|ALLOWED_ORIGINS=https://rossospeakeasy.com,http://rossospeakeasy.com,https://www.rossospeakeasy.com,http://www.rossospeakeasy.com,https://pablosels.github.io,http://localhost:8765"
 ```
 
-(El `^|^` al inicio cambia el separador a `|` porque ALLOWED_ORIGINS lleva comas.)
+(El `^|^` al inicio cambia el separador a `|` porque ALLOWED_ORIGINS lleva comas. `CANJE_PIN` va con la versión
+fija que esté en uso, ver "PIN de barra"; sin `STRIPE_KEY` la venta de boletos se queda en "abre muy pronto" sin avisar.)
 
 **Este repo es público: aquí nunca van valores secretos**, solo nombres de secretos
 de Secret Manager. Los IDs de hojas de arriba no dan acceso por sí solos porque las
@@ -110,7 +124,7 @@ aunque venda poco. Cambiarlo requiere redeploy (va dentro de la imagen).
 La API ya sabe cobrar; solo faltan dos secretos de Stripe (los mismos sirven para los boletos, ver abajo). Pablo, en el panel de Stripe (cuenta ROSSO SPEAKEASY, modo real; en inglés: Developers > API keys y Developers > Webhooks, o directo dashboard.stripe.com/apikeys y dashboard.stripe.com/webhooks):
 
 1. **Llave restringida**: "Create restricted key". Nombre `rosso-web`. Permisos: *Checkout Sessions* = Write; todo lo demás None. Copiar la clave `rk_live_...`.
-2. **Webhook**: "Add destination". Evento: `checkout.session.completed`. Formato del payload: **Snapshot** (no "Thin": los eventos thin no traen la sesión). Tipo: Webhook endpoint. URL `https://rosso-web-api-703407013960.us-central1.run.app/stripe/webhook`. Copiar el "Signing secret" `whsec_...`.
+2. **Webhook**: "Add destination". Eventos: `checkout.session.completed` y `charge.refunded` (los reembolsos de boletos se ajustan solos con este). Formato del payload: **Snapshot** (no "Thin": los eventos thin no traen la sesión). Tipo: Webhook endpoint. URL `https://rosso-web-api-703407013960.us-central1.run.app/stripe/webhook`. Copiar el "Signing secret" `whsec_...`.
 
 Luego, en PowerShell, el script que pide cada valor en una ventana (no en la terminal), prueba la clave creando y expirando una sesión de $10 que nadie paga, y la guarda:
 
@@ -118,7 +132,9 @@ Luego, en PowerShell, el script que pide cada valor en una ventana (no en la ter
 powershell -ExecutionPolicy Bypass -File "C:\Users\minis\Downloads\rosso-web\api\stripe-secretos.ps1"
 ```
 
-Todas las llamadas a Stripe de los boletos van con `Stripe-Version: 2026-09-30.endive` (variable `STRIPE_VERSION` para cambiarla). En esa versión `payment_method_types` ya no existe en Checkout: da 400. Por eso boletos.py usa `allowed_payment_method_types[0]=card`. regalo.py no fija versión ni método (usa los del panel).
+Todas las llamadas a Stripe de los boletos van con `Stripe-Version: 2026-09-30.endive` (variable `STRIPE_VERSION` para cambiarla). En esa versión `payment_method_types` ya no existe en Checkout: da 400. Por eso boletos.py usa `allowed_payment_method_types[0]=card`. regalo.py no fija versión ni método (usa los del panel): antes de activar el menú de Regalo, fijarlos igual que en boletos.
+
+Las tarjetas de regalo NO se ajustan con los reembolsos: si reembolsas una en Stripe, ponla anulada a mano en la hoja Tarjetas ROSSO.
 
 Después: `content/site.json` → `"regalo_activo": true`, `python build.py`, commit y push (aparece "Regalo" en el menú).
 
@@ -127,14 +143,18 @@ Páginas: `/regalo/` compra · `/regalo/gracias/?s=cs_...` código · `/regalo/t
 
 ## Boletos de shows (`boletos.py`, 21-oct-2026)
 
-Venta de boletos con lugar por sesión. Primer show: Carla Gibert, 25-nov-2026. Páginas: `/boletos/<slug>/` (compra, es y en),
+Venta de boletos con lugar por sesión. Primer show: CARLA, domingo 15-nov-2026, 7 y 9 pm (congelamiento de deploys desde
+el sábado 14-nov a las 18:00 hasta el lunes 16-nov; OpenTable bloqueado el 15-nov). Páginas: `/boletos/<slug>/` (compra, es y en),
 `/boletos/gracias/` (código) y `/boletos/puerta/` (lista de puerta con PIN, sólo español).
 
 - **Catálogo**: `api/boletos.json` (público). Lo leen el API y `build.py`. `visible`: `no` (nada), `oculto` (se vende y existe la
-  página, sin ligas ni sitemap: para el ensayo), `si` (página, aviso en portada y en /noches/, sitemap). `venta_abre` (hora CDMX) y
-  `cierra_min_antes` (minutos antes de cada sesión en que cierra la venta en línea).
+  página, sin ligas ni sitemap: para el ensayo), `si` (cartel grande en la portada, cinta arriba en todo el sitio, aviso en /noches/,
+  sitemap; ese domingo no se asigna vinilo). `venta_abre` (hora CDMX) y `cierra_min_antes` (minutos antes de cada sesión en que
+  cierra la venta en línea). `gancho` y `cartel` (es/en): la línea chica y el texto del cartel de la portada.
 - **Trato con la artista**: `api/boletos_tratos.json`. Está en `.gitignore` (el repo es público) pero NO en `.gcloudignore`: viaja en
-  la imagen. Si falta, la liquidación lo dice y no calcula el pago a la artista.
+  la imagen. Copia en el bucket por si la imagen sale sin él: `gcloud storage cp api\boletos_tratos.json
+  gs://rosso-boletos-motor-facturas/boletos/tratos.json` (repetirlo cada vez que cambie). Si no está en ninguno, la liquidación lo dice
+  y no calcula el pago a la artista. Nunca escribir el trato en el repo, ni en las pruebas.
 - **Libro de cupo**: un JSON por sesión en `gs://$BOLETOS_BUCKET/boletos/<slug>/<sesion>.json`, escrito con `if_generation_match`
   (atómico entre las dos instancias). Bucket propio, con versiones y SIN regla de borrado: `motor-facturas-respaldos` borra todo a los 60 días.
 - Comprar: primero se crea la sesión de Stripe y luego, en una sola escritura, el apartado (20 min). Al vencer, el apartado se resuelve
@@ -155,8 +175,9 @@ Opcionales: `PUERTA_PIN` (secreto propio para la puerta, 6 dígitos o más; el P
 borra los fallos del freno) y `BOLETOS_SHEET_ID` (una hoja aparte,
 "Boletos ROSSO", compartida como Editor con la cuenta de servicio: espejo de ventas, nunca la verdad). Siempre `--update-*`, nunca `--set-*`.
 
-**Antes de desplegar**, la otra sesión despliega desde la misma carpeta: comparar con lo vivo
-(`gcloud storage ls -l gs://run-sources-motor-facturas-us-central1/services/rosso-web-api/`, el zip más nuevo contra `api/`).
+**Antes de desplegar**, otras sesiones despliegan desde la misma carpeta: comparar con lo vivo
+(`gcloud storage ls -l gs://run-sources-motor-facturas-us-central1/services/rosso-web-api/`, el zip más nuevo contra `api/`) y hacer
+las revisiones de arriba (git status vacío, py_compile, sin marcas de conflicto).
 
 ### Publicar un show
 
@@ -169,9 +190,15 @@ borra los fallos del freno) y `BOLETOS_SHEET_ID` (una hoja aparte,
 ### La noche del show
 
 - Celular de puerta con datos móviles (no el WiFi de la barra: 10 PIN malos en la barra bloquean esa IP 15 min).
-- Antes de abrir puertas: "Mandar lista a Telegram" (respaldo si se cae la conexión).
-- Cero deploys desde el día anterior a las 18:00 hasta el día siguiente. Anotar la revisión buena; si algo se rompe:
-  `gcloud run services update-traffic rosso-web-api --region us-central1 --project motor-facturas --to-revisions=<REVISION>=100`.
+- "Mandar lista a Telegram" DOS veces: al abrir puertas de la primera sesión y otra vez al abrir las de la segunda (sigue vendiendo
+  en línea hasta una hora antes). Le llega a Pablo: reenviársela al celular de puerta. Es el respaldo si se cae la conexión.
+- Cero deploys desde el día anterior a las 18:00 hasta el día siguiente. Eso incluye `pines-barra.ps1`, `stripe-secretos.ps1` y
+  rotar `CANJE_PIN`: cada uno crea una revisión nueva. La revisión buena es la última después de TODO cambio de secretos; anotarla
+  (`gcloud run services describe rosso-web-api --region us-central1 --project motor-facturas --format="value(status.latestReadyRevisionName)"`).
+  Si algo se rompe: `gcloud run services update-traffic rosso-web-api --region us-central1 --project motor-facturas --to-revisions=<REVISION>=100`.
+  Ojo: una revisión anterior a `PINES_BARRA` no conoce los PINes personales (dan "PIN incorrecto" y cuentan en el freno).
+  Para regresar a lo normal (si no, todo update posterior crea revisiones con 0% de tráfico):
+  `gcloud run services update-traffic rosso-web-api --region us-central1 --project motor-facturas --to-latest`.
 - OpenTable no sabe del show: bloquear esa noche a mano en GuestCenter.
 - Al final: "Mandar liquidación a Telegram" (texto + CSV, sólo le llega a Pablo). Neto = (bruto − comisión acordada) / 1.16; a la
   artista fijo + porcentaje del neto, bruto antes de la retención de ISR.
@@ -180,12 +207,16 @@ borra los fallos del freno) y `BOLETOS_SHEET_ID` (una hoja aparte,
 
 **Reembolsos: se hacen en Stripe y el boleto se ajusta solo** (evento `charge.refunded` en el webhook, ver abajo). Completo: la
 compra se anula. De boletos completos (1 de 2): se le quitan esos boletos. Un monto que no cuadra con boletos completos sólo se avisa.
-Si el evento llega antes que el pago, el pago se registra ya anulado. Lo de antes de suscribir el evento se anula a mano en la puerta
+Si el evento llega antes que el pago, queda una marca y al registrarse el pago se le aplica (anulado o con menos boletos). Lo de antes de suscribir el evento se anula a mano en la puerta
 ("Más" > "Anular"). Cambios de sesión ("Pasar a…"), a nombre de otra persona ("A nombre de…") y ventas en puerta o cortesías, desde
 la misma página. Las confirmaciones de la puerta son un cuadro de la propia página (no ventanitas del teléfono).
 
-**Suscribir el evento de reembolsos** (una vez): dashboard.stripe.com/webhooks > el destino `rosso-web` > "Edit destination" >
-agregar `charge.refunded` (mismo destino, mismo secreto; no crear otro).
+**Suscribir el evento de reembolsos** (una vez): dashboard.stripe.com/webhooks > el destino cuya URL termina en `/stripe/webhook`
+(el nombre lo puso Stripe) > "Edit destination" > agregar `charge.refunded` (mismo destino, mismo secreto; no crear otro: un destino
+nuevo tiene otro `whsec_` y sus eventos darían "firma inválida").
+
+**Liquidación**: los reembolsos ya vienen descontados. No anular en la puerta una compra que ya ajustó un reembolso parcial: se
+borraría el boleto que sí está pagado. "Stripe real estimada" se calcula sobre lo cobrado, porque Stripe no devuelve su comisión.
 
 ### PINes de barra personales (`PINES_BARRA`)
 
@@ -225,7 +256,8 @@ gcloud run services update rosso-web-api --region us-central1 --project motor-fa
 gcloud secrets versions disable ANTERIOR --secret rosso-canje-pin --project motor-facturas
 ```
 
-`N` es el número que imprime `versions add`; `ANTERIOR` es el que estaba en uso.
+`N` es el número que imprime `versions add`; `ANTERIOR` es el que estaba en uso. No deshabilitar `ANTERIOR` en
+la semana de un show: con la versión deshabilitada, las revisiones viejas ya no arrancan y no sirven para regresar.
 Avisar a la barra el PIN nuevo antes de abrir: el viejo deja de servir en cuanto
 termina el `update`.
 

@@ -5,9 +5,11 @@ La portada y el título salen solos de Spotify (oEmbed público, sin llave) a pa
 del álbum. Caché de 10 minutos. Filas cuyo artista empiece con "Ejemplo" se ignoran.
 """
 import datetime as dt
+import json
 import os
 import re
 import time
+from pathlib import Path
 
 import google.auth
 import requests
@@ -17,6 +19,18 @@ SHEET_ID = os.environ.get("VINILOS_SHEET_ID", "")
 _sesion = None
 _cache = {"t": 0, "filas": []}
 _oembed = {}
+
+
+def _dias_de_show():
+    """Fechas con show de boletos (boletos.json): ese domingo no hay vinilo y la cola no cae ahí."""
+    try:
+        datos = json.loads((Path(__file__).parent / "boletos.json").read_text(encoding="utf-8"))
+        return {s["fecha"] for s in datos.get("shows", []) if s.get("visible", "no") != "no"}
+    except Exception:   # noqa: BLE001 — sin catálogo, los domingos siguen como siempre
+        return set()
+
+
+DIAS_DE_SHOW = _dias_de_show()
 
 
 def _session():
@@ -131,7 +145,7 @@ def filas(hoy=None):
             continue
         fecha = _fecha(d.get("fecha"), hoy)
         (con_fecha if fecha else cola).append((fecha, d))
-    ocupados = {f.isoformat() for f, _ in con_fecha}
+    ocupados = {f.isoformat() for f, _ in con_fecha} | DIAS_DE_SHOW
     dom = proximo_domingo(hoy)
     for _, d in cola:                       # sin fecha: siguiente domingo libre, en el orden de la hoja
         while dom.isoformat() in ocupados:
@@ -173,4 +187,6 @@ def actual(hoy=None):
 def falta_domingo(hoy=None):
     hoy = hoy or dt.date.today()
     dom = proximo_domingo(hoy)
+    if dom.isoformat() in DIAS_DE_SHOW:   # domingo de show: no hay disco que capturar
+        return False
     return not any(x["fecha"] == dom.isoformat() for x in filas(hoy))

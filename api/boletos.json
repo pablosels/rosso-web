@@ -5,7 +5,7 @@
       "slug": "carla",
       "artista": "CARLA",
       "fecha": "2026-11-15",
-      "visible": "oculto",
+      "visible": "si",
       "venta_abre": "",
       "precio": 650,
       "max_por_compra": 4,
@@ -20,12 +20,16 @@
       "es": {
         "titulo": "CARLA en ROSSO",
         "descripcion": "CARLA en vivo en ROSSO, Roma Norte: «absurd», su nuevo proyecto experimental, en un cuarto de 30 lugares. Domingo 15 de noviembre, dos sesiones.",
+        "gancho": "STEP BY TOUR",
+        "cartel": "La artista española presenta «absurd», su nuevo proyecto, en vivo desde la cabina de ROSSO: pop experimental, rap melódico y electrónica. Dos sesiones de una hora y, al terminar, DJ.",
         "texto": "Cantante, compositora, productora y directora española, CARLA se mueve entre el pop experimental, el rap melódico y la música electrónica. De paso por la Ciudad de México con el STEP BY TOUR, presenta «absurd», su nuevo proyecto: sintetizadores y voz en vivo desde la cabina de ROSSO, en un cuarto de treinta lugares. Dos sesiones de una hora; al terminar, la noche sigue con DJ.",
         "politica": "Tu boleto es para la sesión que elegiste. No hay reembolsos, pero puedes pasar tu boleto a otra persona: avísanos por WhatsApp a nombre de quién. Si el show se cancela, te devolvemos todo."
       },
       "en": {
         "titulo": "CARLA at ROSSO",
         "descripcion": "CARLA live at ROSSO, Roma Norte: «absurd», her new experimental project, in a 30-seat room. Sunday, November 15, two sets.",
+        "gancho": "STEP BY TOUR",
+        "cartel": "The Spanish artist presents «absurd», her new project, live from ROSSO's booth: experimental pop, melodic rap and electronics. Two one-hour sets, then a DJ.",
         "texto": "Spanish singer, songwriter, producer and director, CARLA moves between experimental pop, melodic rap and electronic music. Passing through Mexico City on the STEP BY TOUR, she presents «absurd», her new project: live synths and voice from ROSSO's booth, in a thirty-seat room. Two one-hour sets; afterwards the night carries on with a DJ.",
         "politica": "Your ticket is for the set you chose. No refunds, but you can pass your ticket to someone else: message us on WhatsApp with their name. If the show is cancelled, you get a full refund."
       }

@@ -8,7 +8,7 @@
 #      Nombre: rosso-web. Permiso: Checkout Sessions = Write. Todo lo demás: None.
 #      Copia la clave que empieza con rk_live_
 #   2. dashboard.stripe.com/webhooks > "Add destination".
-#      Evento: checkout.session.completed. Formato del payload: Snapshot (NO Thin).
+#      Eventos: checkout.session.completed y charge.refunded. Formato del payload: Snapshot (NO Thin).
 #      URL: https://rosso-web-api-703407013960.us-central1.run.app/stripe/webhook
 #      Copia el "Signing secret", que empieza con whsec_
 #
@@ -119,6 +119,13 @@ Write-Host "Actualizando el API para que use las llaves..."
     --update-secrets "STRIPE_KEY=${S_LLAVE}:latest,STRIPE_WEBHOOK_SECRET=${S_HOOK}:latest" | Out-Null
 if ($LASTEXITCODE -ne 0) { Write-Host "El API no tomó las llaves (gcloud falló). Avísale a Claude."; exit 1 }
 Write-Host "   $SERVICIO actualizado"
+$trafico = & gcloud run services describe $SERVICIO --region $REGION --project $PROYECTO --format="value(status.traffic[0].latestRevision)"
+if ("$trafico" -notmatch 'True') {
+    Write-Host "OJO: el tráfico está fijo en una revisión vieja (¿hubo rollback?). Las llaves nuevas no aplican hasta mandar el tráfico a la última:"
+    Write-Host "   gcloud run services update-traffic $SERVICIO --region $REGION --project $PROYECTO --to-latest"
+    Write-Host "Las llaves quedaron guardadas, pero el sitio sigue con las anteriores. Avísale a Claude."
+    exit 1
+}
 
 Write-Host ""
 Write-Host "Listo. Stripe quedó conectado al sitio."

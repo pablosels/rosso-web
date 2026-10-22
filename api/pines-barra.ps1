@@ -1,4 +1,4 @@
-﻿﻿# PINs personales para el equipo de barra: uno por persona, con el mismo poder que el PIN de barra
+﻿# PINs personales para el equipo de barra: uno por persona, con el mismo poder que el PIN de barra
 # (puerta de los shows, canje de tarjetas de regalo y Sello ROSSO). Los avisos de la puerta dicen
 # quién hizo qué, y se puede dar de baja a alguien sin cambiarle el PIN a nadie más. OJO: dar de baja
 # un PIN personal no sirve si esa persona también sabe el PIN GENERAL de barra; cuando todos tengan el

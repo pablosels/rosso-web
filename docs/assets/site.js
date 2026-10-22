@@ -3,7 +3,12 @@
   var API = document.body.dataset.api || "";
   var EN = document.documentElement.lang === "en";
   function tt(es, en) { return EN ? en : es; }
-  window.ROSSO_EN = EN; window.ROSSO_tt = tt;
+  // la fecha de hoy en la CDMX (AAAA-MM-DD): un celular con hora de España ya va en el día siguiente
+  function hoyCDMX() {
+    try { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); }
+    catch (e) { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  }
+  window.ROSSO_EN = EN; window.ROSSO_tt = tt; window.ROSSO_hoyCDMX = hoyCDMX;
   var TITULOS_EN = { "Cócteles de la casa": "House cocktails", "Clásicos": "Classics", "Sin alcohol": "Non-alcoholic", "Domingos": "Sundays", "Destilados": "Spirits", "Cerveza": "Beer", "Para picar": "Snacks", "Ginebra": "Gin", "Ron": "Rum", "Licores y vermut": "Liqueurs & vermouth", "Otros": "Others" };
   function titulo(x) { return EN && TITULOS_EN[x] ? TITULOS_EN[x] : x; }
 
@@ -413,7 +418,7 @@
   function pinta(html) { caja.innerHTML = html; caja.hidden = false; }
   var reservaHoy = '<a class="enlace" href="' + B + '/reservar/?fecha=' + hoy + '">' + tt("Reservar hoy", "Book tonight") + "</a>";
   // noche de show con boleto (build.py pone la fecha): eso es lo de hoy, no el vinilo ni el DJ
-  if (caja.dataset.showFecha === hoy) {
+  if (caja.dataset.showFecha === window.ROSSO_hoyCDMX()) {
     pinta('<span class="k">' + tt("Hoy", "Today") + '</span><span class="t"><strong>' + esc(caja.dataset.showTxt) + "</strong></span>" +
           '<a class="enlace" href="' + esc(caja.dataset.showUrl) + '">' + tt("Boletos", "Tickets") + "</a>");
     return;
@@ -907,7 +912,7 @@
 
   // ---------------- aviso del show (cinta de arriba, cartel de portada y noches): una consulta por show
   // la cinta y el cartel salen del build: pasado el show se quitan aunque nadie haya vuelto a armar el sitio
-  var hoyShow = (function () { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); })();
+  var hoyShow = window.ROSSO_hoyCDMX();
   [].forEach.call(document.querySelectorAll("[data-show-hasta]"), function (el) { if (hoyShow > el.getAttribute("data-show-hasta")) el.parentNode.removeChild(el); });
   var porShow = {};
   [].forEach.call(document.querySelectorAll("[data-show]"), function (el) {

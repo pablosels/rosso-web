@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Pruebas del módulo de boletos con Stripe simulado y libro en archivos locales (93 casos).
+"""Pruebas del módulo de boletos con Stripe simulado y libro en archivos locales.
 Uso: python -I herramientas/prueba_boletos.py api"""
 import datetime as dt
 import hashlib
@@ -11,6 +11,8 @@ import tempfile
 import threading
 import time
 import urllib.parse
+
+import requests
 
 API_DIR = os.path.abspath(sys.argv[1])
 TMP = tempfile.mkdtemp(prefix="boletos_")
@@ -32,7 +34,7 @@ assert appmod.boletos_mod is bo, "boletos no se montó"
 # las pruebas usan su propio show y su propio trato: no dependen de lo que diga el catálogo real
 import copy   # noqa: E402
 SHOW_PRUEBA = {
-    "slug": "carla-gibert", "artista": "Carla Gibert", "fecha": "2026-11-25", "visible": "oculto", "venta_abre": "",
+    "slug": "show-prueba", "artista": "Artista Prueba", "fecha": "2026-11-25", "visible": "oculto", "venta_abre": "",
     "precio": 650, "max_por_compra": 4, "cortesias_max": 4, "duracion_min": 45, "cierra_min_antes": 60,
     "sesiones": [{"id": "21", "hora": "21:00", "puertas": "20:30", "cupo": 30, "es": "9:00 pm", "en": "9:00 pm"},
                  {"id": "23", "hora": "23:00", "puertas": "22:30", "cupo": 30, "es": "11:00 pm", "en": "11:00 pm"}],
@@ -40,8 +42,10 @@ SHOW_PRUEBA = {
     "en": {"titulo": "Test", "descripcion": "Test", "texto": "Test"},
 }
 bo.SHOWS.clear()
-bo.SHOWS["carla-gibert"] = copy.deepcopy(SHOW_PRUEBA)
-bo._trato = lambda slug: {"fijo": 10000, "porcentaje": 0.5, "comision_web": 0.05, "comision_clip": 0.0261}
+bo.SHOWS["show-prueba"] = copy.deepcopy(SHOW_PRUEBA)
+# trato inventado: el real vive fuera del repo (que es público) y no debe aparecer aquí
+TRATO = {"fijo": 1000, "porcentaje": 0.3, "comision_web": 0.04, "comision_clip": 0.03}
+bo._trato = lambda slug: dict(TRATO)
 TG = []
 bo._telegram = lambda texto, **kw: (TG.append(texto), True)[1]
 
@@ -119,20 +123,20 @@ def completado(s):
 
 
 def checkout(**kw):
-    d = {"show": "carla-gibert", "sesion": "21", "cantidad": 2, "nombre": "Ana López", "email": "ana@correo.com", "idioma": "es"}
+    d = {"show": "show-prueba", "sesion": "21", "cantidad": 2, "nombre": "Ana López", "email": "ana@correo.com", "idioma": "es"}
     d.update(kw)
     return C.post("/boletos/checkout", json=d, headers=dict(ORIGEN, **{"X-Forwarded-For": kw.pop("ip", "1.2.3.4")}) if False else ORIGEN,
                   environ_base={"REMOTE_ADDR": d.pop("ip", "1.2.3.4")})
 
 
 def puerta(ruta, **kw):
-    d = {"show": "carla-gibert", "pin": "445566"}
+    d = {"show": "show-prueba", "pin": "445566"}
     d.update(kw)
     return C.post("/boletos/puerta/" + ruta, json=d, headers=ORIGEN, environ_base={"REMOTE_ADDR": "9.9.9.9"})
 
 
 def led(sid="21"):
-    return bo._leer("carla-gibert", sid)
+    return bo._leer("show-prueba", sid)
 
 
 OK, FALLAS = [], []
@@ -152,23 +156,23 @@ def reiniciar():
     bo._ultima_reconciliacion.clear()
     RELOJ["t"] = time.time()
     RELOJ["local"] = dt.datetime(2026, 11, 1, 12, 0)
-    bo.SHOWS["carla-gibert"] = copy.deepcopy(SHOW_PRUEBA)
+    bo.SHOWS["show-prueba"] = copy.deepcopy(SHOW_PRUEBA)
 
 
 # ======================================================================
 reiniciar()
 print("\n[catálogo y config]")
-bo.SHOWS["carla-gibert"]["visible"] = "no"
-r = C.get("/boletos/show/carla-gibert")
+bo.SHOWS["show-prueba"]["visible"] = "no"
+r = C.get("/boletos/show/show-prueba")
 prueba("show no visible da 404", r.status_code == 404, r.status_code)
-bo.SHOWS["carla-gibert"]["visible"] = "oculto"
-r = C.get("/boletos/show/carla-gibert")
+bo.SHOWS["show-prueba"]["visible"] = "oculto"
+r = C.get("/boletos/show/show-prueba")
 j = r.get_json()
 prueba("show oculto responde activo", r.status_code == 200 and j["activo"], j)
 prueba("dos sesiones abiertas con 30", [(x["estado"], x["quedan"]) for x in j["sesiones"]] == [("abierta", 30), ("abierta", 30)], j)
 
 print("\n[entrada]")
-r = C.post("/boletos/checkout", json={"show": "carla-gibert"}, headers={})
+r = C.post("/boletos/checkout", json={"show": "show-prueba"}, headers={})
 prueba("sin Origin: 403", r.status_code == 403, r.status_code)
 r = C.post("/boletos/checkout", data="{}", headers=dict(ORIGEN, **{"Content-Type": "text/plain"}))
 prueba("text/plain: 415", r.status_code == 415, r.status_code)
@@ -190,13 +194,13 @@ j = r.get_json()
 prueba("checkout ok con url", r.status_code == 200 and j["url"].startswith("https://checkout.stripe.com"), j)
 cs = list(SES)[-1]
 datos = SES[cs]["_datos"]
-prueba("success_url lleva b, f y el placeholder", "boletos/gracias/?b=carla-gibert&f=21&s={CHECKOUT_SESSION_ID}" in datos["success_url"], datos["success_url"])
+prueba("success_url lleva b, f y el placeholder", "boletos/gracias/?b=show-prueba&f=21&s={CHECKOUT_SESSION_ID}" in datos["success_url"], datos["success_url"])
 prueba("código en el nombre del item", SES[cs]["metadata"]["codigo"] in datos["line_items[0][price_data][product_data][name]"])
 prueba("receipt_email", datos["payment_intent_data[receipt_email]"] == "ana@correo.com")
 prueba("monto del servidor", SES[cs]["amount_total"] == 130000, SES[cs]["amount_total"])
 L = led()
 prueba("apartado con cs", len(L["apartados"]) == 1 and list(L["apartados"].values())[0]["cs"] == cs, L["apartados"])
-j = C.get("/boletos/show/carla-gibert").get_json()
+j = C.get("/boletos/show/show-prueba").get_json()
 prueba("quedan 28 y en_pago 2 (tras caché)", True)
 time.sleep(0)
 bo_cache_vacia = True
@@ -211,7 +215,7 @@ prueba("Telegram de venta", any("2 boletos" in t for t in TG), TG)
 n_tg = len(TG)
 r = completado(s)
 prueba("webhook repetido no duplica", len(led()["compras"]) == 1 and len(TG) == n_tg, (len(led()["compras"]), TG[n_tg:]))
-r = C.get(f"/boletos/estado?b=carla-gibert&f=21&s={cs}")
+r = C.get(f"/boletos/estado?b=show-prueba&f=21&s={cs}")
 j = r.get_json()
 prueba("estado listo con código", j["listo"] and j["compra"]["codigo"] == SES[cs]["metadata"]["codigo"], j)
 prueba("compra avisada", led()["compras"][cs]["avisado"], led()["compras"][cs])
@@ -220,9 +224,9 @@ print("\n[sin webhook: la página de gracias registra]")
 r = checkout(email="beto@correo.com", nombre="Beto", cantidad=1)
 cs2 = list(SES)[-1]
 pagar(cs2, "beto@correo.com", "Beto")
-r = C.get(f"/boletos/estado?b=carla-gibert&f=21&s={cs2}")
+r = C.get(f"/boletos/estado?b=show-prueba&f=21&s={cs2}")
 prueba("sin v=1 no pregunta a Stripe", r.get_json()["listo"] is False, r.get_json())
-r = C.get(f"/boletos/estado?b=carla-gibert&f=21&s={cs2}&v=1")
+r = C.get(f"/boletos/estado?b=show-prueba&f=21&s={cs2}&v=1")
 prueba("con v=1 registra", r.get_json()["listo"] is True, r.get_json())
 prueba("aviso dice que no fue por webhook", any("pagina de gracias" in t for t in TG), TG[-1:])
 r = completado(SES[cs2])
@@ -232,14 +236,14 @@ print("\n[cancelar]")
 r = checkout(email="caro@correo.com", nombre="Caro", cantidad=3)
 cs3 = list(SES)[-1]
 hold3 = SES[cs3]["metadata"]["hold"]
-r = C.post("/boletos/cancelar", json={"show": "carla-gibert", "sesion": "21", "hold": hold3}, headers=ORIGEN)
+r = C.post("/boletos/cancelar", json={"show": "show-prueba", "sesion": "21", "hold": hold3}, headers=ORIGEN)
 prueba("cancelar suelta", r.get_json().get("soltado") is True and hold3 not in led()["apartados"], r.get_json())
 prueba("sesión expirada en Stripe", SES[cs3]["status"] == "expired")
 r = checkout(email="dani@correo.com", nombre="Dani", cantidad=1)
 cs4 = list(SES)[-1]
 hold4 = SES[cs4]["metadata"]["hold"]
 pagar(cs4, "dani@correo.com", "Dani")
-r = C.post("/boletos/cancelar", json={"show": "carla-gibert", "sesion": "21", "hold": hold4}, headers=ORIGEN)
+r = C.post("/boletos/cancelar", json={"show": "show-prueba", "sesion": "21", "hold": hold4}, headers=ORIGEN)
 j = r.get_json()
 prueba("cancelar algo ya pagado lo registra y NO suelta", j.get("pagado") is True and cs4 in led()["compras"], j)
 
@@ -265,7 +269,7 @@ for i in range(15):
 r = checkout(email="tarde@correo.com", nombre="Tarde", cantidad=1)
 j = r.get_json()
 prueba("sesión llena: 409", r.status_code == 409, (r.status_code, j))
-j = C.get("/boletos/show/carla-gibert").get_json()
+j = C.get("/boletos/show/show-prueba").get_json()
 prueba("estado agotada", j["sesiones"][0]["estado"] == "agotada" and j["sesiones"][0]["quedan"] == 0, j["sesiones"][0])
 r = checkout(sesion="23", email="otra@correo.com", nombre="Otra", cantidad=4, ip="5.5.5.5")
 prueba("la otra sesión sigue vendiendo", r.status_code == 200, r.get_json())
@@ -283,7 +287,7 @@ resultados = []
 
 
 def comprar(i):
-    rr = C.post("/boletos/checkout", json={"show": "carla-gibert", "sesion": "21", "cantidad": 1, "nombre": f"P {i}",
+    rr = C.post("/boletos/checkout", json={"show": "show-prueba", "sesion": "21", "cantidad": 1, "nombre": f"P {i}",
                                            "email": f"p{i}@correo.com"}, headers=ORIGEN, environ_base={"REMOTE_ADDR": f"20.0.{i}.1"})
     resultados.append(rr.status_code)
 
@@ -315,7 +319,7 @@ r = puerta("lista")
 prueba("PIN de puerta abre", r.status_code == 200 and r.get_json()["sesiones"][0]["vendidos"] == 2, r.get_json())
 r = puerta("lista", pin="12345678")
 prueba("PIN de barra también abre", r.status_code == 200)
-r = C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": "445566"}, headers={"Origin": "https://malo.com"})
+r = C.post("/boletos/puerta/lista", json={"show": "show-prueba", "pin": "445566"}, headers={"Origin": "https://malo.com"})
 prueba("puerta desde otro origen: 403", r.status_code == 403)
 r = puerta("entrada", sesion="21", codigo=cod, n=1, op="op-1")
 r2 = puerta("entrada", sesion="21", codigo=cod, n=1, op="op-1")
@@ -333,7 +337,7 @@ prueba("venta en puerta idempotente", r.status_code == 200 and len(ventas) == 1 
 prueba("un solo Telegram por la venta", sum(1 for t in TG[n_tg:] if "Venta en puerta" in t) == 1, TG[n_tg:])
 r = puerta("venta", sesion="21", cantidad=-3, tipo="puerta", metodo="efectivo", op="v-2")
 prueba("cantidad negativa: 400", r.status_code == 400)
-r = puerta("venta", sesion="21", cantidad=3, tipo="cortesia", op="c-1", pidio="Carla")
+r = puerta("venta", sesion="21", cantidad=3, tipo="cortesia", op="c-1", pidio="Ana")
 r2 = puerta("venta", sesion="23", cantidad=2, tipo="cortesia", op="c-2")
 prueba("tope de cortesías (4) entre sesiones", r.status_code == 200 and r2.status_code == 409, (r.get_json(), r2.get_json()))
 r = puerta("cupo", campo="cortesias_max", cupo=6)
@@ -348,7 +352,7 @@ prueba("mover idempotente", r.status_code == 200 and len(movidas) == 1 and not a
 r = puerta("anular", sesion="23", codigo=cod, motivo="reembolso", op="a-1")
 prueba("anular", r.status_code == 200 and movidas and [c for c in led("23")["compras"].values() if c["codigo"] == cod][0]["estado"] == "anulada", r.get_json())
 r = puerta("cupo", sesion="21", cupo=34)
-j = C.get("/boletos/show/carla-gibert")
+j = C.get("/boletos/show/show-prueba")
 prueba("cupo ajustado", r.status_code == 200, r.get_json())
 r = puerta("pausa", pausada=True)
 bo_cache = None
@@ -363,15 +367,15 @@ prueba("soltar pagos en curso", r.get_json().get("sueltos") == 1 and SES[cs_z]["
 print("\n[liquidación]")
 r = checkout(sesion="23", email="web@correo.com", nombre="Wendy", cantidad=2, ip="6.6.6.6")
 completado(pagar(list(SES)[-1], "web@correo.com", "Wendy"))
-r = C.get("/boletos/liquidacion?show=carla-gibert", headers={"X-Refresh-Key": "llave-prueba"})
+r = C.get("/boletos/liquidacion?show=show-prueba", headers={"X-Refresh-Key": "llave-prueba"})
 liq = r.get_json()
 t = liq["totales"]
-esperado_neto = (1300 - 65) / 1.16 + 1300 / 1.16
-prueba("neto = web con 5% + efectivo", abs(t["neto"] - esperado_neto) < 0.02, (t, esperado_neto))
-prueba("pago artista = 10,000 + 50%", liq["trato"] and abs(liq["trato"]["pago_artista"] - (10000 + esperado_neto / 2)) < 0.02, liq["trato"])
+esperado_neto = (1300 - 1300 * TRATO["comision_web"]) / 1.16 + 1300 / 1.16
+prueba("neto = web con su comisión + efectivo", abs(t["neto"] - esperado_neto) < 0.02, (t, esperado_neto))
+prueba("pago artista = fijo + porcentaje del neto", liq["trato"] and abs(liq["trato"]["pago_artista"] - (TRATO["fijo"] + esperado_neto * TRATO["porcentaje"])) < 0.02, liq["trato"])
 prueba("cortesías no cuentan dinero", t["cortesias"] == 5 and t["boletos"] == 4, t)
 prueba("efectivo esperado", t["efectivo"] == 1300, t)
-r = C.get("/boletos/liquidacion?show=carla-gibert")
+r = C.get("/boletos/liquidacion?show=show-prueba")
 prueba("liquidación sin llave: 401", r.status_code == 401)
 r = puerta("telegram", que="liquidacion")
 prueba("liquidación a Telegram", r.status_code == 200 and "Liquidación" in TG[-1], r.get_json())
@@ -397,7 +401,7 @@ prueba("firma mala 400", r.status_code == 400)
 
 print("\n[sobreventa: pago que llega después de soltar el lugar]")
 reiniciar()
-bo.SHOWS["carla-gibert"]["sesiones"][0]["cupo"] = 2
+bo.SHOWS["show-prueba"]["sesiones"][0]["cupo"] = 2
 r = checkout(email="a1@correo.com", nombre="A1", cantidad=2)
 csA = list(SES)[-1]
 s_vieja = dict(SES[csA])
@@ -410,7 +414,7 @@ completado(pagar(csB))
 s_vieja.update(status="complete", payment_status="paid", customer_details={"email": "a1@correo.com", "name": "A1"})
 completado(s_vieja)
 prueba("se registra igual y avisa SOBREVENTA", csA in led()["compras"] and any("SOBREVENTA" in t for t in TG), TG[-1:])
-bo.SHOWS["carla-gibert"]["sesiones"][0]["cupo"] = 30
+bo.SHOWS["show-prueba"]["sesiones"][0]["cupo"] = 30
 
 print("\n[ventana de venta]")
 reiniciar()
@@ -420,7 +424,7 @@ prueba("a menos de 60 min: cerrada en línea", r.status_code == 409 and r.get_js
 r = checkout(sesion="23")
 prueba("la de las 11 aún vende a las 8:01", r.status_code == 200, r.get_json())
 RELOJ["local"] = dt.datetime(2026, 11, 1, 12, 0)
-bo.SHOWS["carla-gibert"]["venta_abre"] = "2026-11-02T12:00"
+bo.SHOWS["show-prueba"]["venta_abre"] = "2026-11-02T12:00"
 r = checkout(email="pronto@correo.com")
 prueba("antes de venta_abre: por_abrir", r.status_code == 409 and r.get_json().get("estado") == "por_abrir", r.get_json())
 
@@ -468,10 +472,10 @@ vivas23 = [c for c in led("23")["compras"].values() if c["codigo"] == cod and c.
 vivas21 = [c for c in led("21")["compras"].values() if c["codigo"] == cod and c.get("estado", "ok") == "ok"]
 prueba("mover: primer intento avisa que quedó a medias", r1.status_code == 503, r1.get_json())
 prueba("mover: el reintento no duplica", r2.status_code == 200 and len(vivas23) == 1 and not vivas21, (r2.get_json(), len(vivas23), len(vivas21)))
-r = C.get(f"/boletos/estado?b=carla-gibert&f=21&s={cs}")
+r = C.get(f"/boletos/estado?b=show-prueba&f=21&s={cs}")
 prueba("gracias de una compra movida enseña la sesión nueva", r.get_json()["compra"]["sesion"]["id"] == "23", r.get_json())
 puerta("anular", sesion="23", codigo=cod, op="an-1")
-r = C.get(f"/boletos/estado?b=carla-gibert&f=21&s={cs}")
+r = C.get(f"/boletos/estado?b=show-prueba&f=21&s={cs}")
 prueba("gracias de una compra anulada lo dice", r.get_json()["compra"]["estado"] == "anulada", r.get_json())
 
 # 3. topes dentro de la escritura atómica: 8 a la vez desde la misma IP
@@ -488,7 +492,7 @@ def stripe_lento(*a, **k):
 bo._stripe = stripe_lento
 res_ip = []
 hilos = [threading.Thread(target=lambda i=i: res_ip.append(C.post("/boletos/checkout", json={
-    "show": "carla-gibert", "sesion": "21", "cantidad": 4, "nombre": "Bot", "email": f"bot{i}@correo.com"},
+    "show": "show-prueba", "sesion": "21", "cantidad": 4, "nombre": "Bot", "email": f"bot{i}@correo.com"},
     headers=ORIGEN, environ_base={"REMOTE_ADDR": "66.66.66.66"}).status_code)) for i in range(8)]
 [h.start() for h in hilos]
 [h.join() for h in hilos]
@@ -515,9 +519,9 @@ prueba("cortesía repetida: mismo código, no 409", r1.status_code == 200 and r2
 reiniciar()
 ip_atacante = {"REMOTE_ADDR": "77.77.77.77"}
 for i in range(9):
-    C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": f"0000000{i}"}, headers=ORIGEN, environ_base=ip_atacante)
-C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": "445566"}, headers=ORIGEN, environ_base=ip_atacante)
-r = C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": "00000009"}, headers=ORIGEN, environ_base=ip_atacante)
+    C.post("/boletos/puerta/lista", json={"show": "show-prueba", "pin": f"0000000{i}"}, headers=ORIGEN, environ_base=ip_atacante)
+C.post("/boletos/puerta/lista", json={"show": "show-prueba", "pin": "445566"}, headers=ORIGEN, environ_base=ip_atacante)
+r = C.post("/boletos/puerta/lista", json={"show": "show-prueba", "pin": "00000009"}, headers=ORIGEN, environ_base=ip_atacante)
 prueba("9 malos + PIN de puerta + 1 malo = bloqueado", r.status_code == 429, r.status_code)
 appmod.freno_pin._fallos.clear(); appmod.freno_pin._bloqueos.clear()
 
@@ -534,10 +538,10 @@ s = pagar(cs)
 s_rota = json.loads(json.dumps(s))
 s_rota["metadata"]["sesion"] = "99"
 webhook({"type": "checkout.session.completed", "data": {"object": s_rota}})
-r = C.post("/boletos/huerfana", json={"cs": cs, "show": "carla-gibert", "sesion": "21"}, headers={"X-Refresh-Key": "llave-prueba"})
+r = C.post("/boletos/huerfana", json={"cs": cs, "show": "show-prueba", "sesion": "21"}, headers={"X-Refresh-Key": "llave-prueba"})
 c = led()["compras"].get(cs) or {}
 prueba("huérfana: se registra con el código del recibo", r.status_code == 200 and c.get("codigo") == s["metadata"]["codigo"] and c.get("metodo") == "stripe", (r.get_json(), c))
-r = C.post("/boletos/huerfana", json={"cs": cs, "show": "carla-gibert", "sesion": "21"})
+r = C.post("/boletos/huerfana", json={"cs": cs, "show": "show-prueba", "sesion": "21"})
 prueba("huérfana sin llave: 401", r.status_code == 401)
 
 # 9. venta_abre con zona horaria se rechaza al cargar
@@ -562,7 +566,7 @@ checkout()
 cs = list(SES)[-1]
 s = pagar(cs)
 n0 = sum(1 for t in TG if "boleto" in t and "🎟" in t)
-hilos = [threading.Thread(target=lambda: completado(s)), threading.Thread(target=lambda: C.get(f"/boletos/estado?b=carla-gibert&f=21&s={cs}&v=1"))]
+hilos = [threading.Thread(target=lambda: completado(s)), threading.Thread(target=lambda: C.get(f"/boletos/estado?b=show-prueba&f=21&s={cs}&v=1"))]
 [h.start() for h in hilos]
 [h.join() for h in hilos]
 n1 = sum(1 for t in TG if "🎟" in t)
@@ -588,7 +592,7 @@ prueba("reembolso completo: anulada y aviso", r.status_code == 200 and c["estado
 n = len(TG)
 webhook({"type": "charge.refunded", "data": {"object": cargo}})
 prueba("reembolso repetido: sin aviso doble", len(TG) == n, TG[n:])
-j = C.get("/boletos/show/carla-gibert").get_json()
+j = C.get("/boletos/show/show-prueba").get_json()
 prueba("el lugar quedó libre", j["sesiones"][0]["quedan"] == 30, j["sesiones"][0])
 
 # parcial de boletos completos -> se quitan esos boletos
@@ -604,7 +608,7 @@ prueba("reembolso de 1 de 2: le queda 1 y $650", c["estado"] == "ok" and c["cant
 n = len(TG)
 webhook({"type": "charge.refunded", "data": {"object": parcial}})
 prueba("el mismo parcial otra vez no quita más", led()["compras"][cs]["cantidad"] == 1 and len(TG) == n, (led()["compras"][cs]["cantidad"], TG[n:]))
-liq = C.get("/boletos/liquidacion?show=carla-gibert", headers={"X-Refresh-Key": "llave-prueba"}).get_json()
+liq = C.get("/boletos/liquidacion?show=show-prueba", headers={"X-Refresh-Key": "llave-prueba"}).get_json()
 prueba("la liquidación cuenta 1 boleto de $650", liq["totales"]["boletos"] == 1 and liq["totales"]["bruto"] == 650, liq["totales"])
 webhook({"type": "charge.refunded", "data": {"object": dict(parcial, amount_refunded=130000)}})
 prueba("después el resto: anulada", led()["compras"][cs]["estado"] == "anulada", led()["compras"][cs]["estado"])
@@ -617,6 +621,9 @@ completado(pagar(cs))
 pi = led()["compras"][cs]["pi"]
 webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 130000, "amount_refunded": 30000}}})
 prueba("reembolso de $300: no toca la compra y avisa", led()["compras"][cs]["cantidad"] == 2 and any("no cuadra" in t for t in TG), TG[-1:])
+n = len(TG)
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 130000, "amount_refunded": 30000}}})
+prueba("el mismo monto que no cuadra otra vez: sin aviso doble", len(TG) == n and led()["compras"][cs]["cantidad"] == 2, TG[n:])
 
 # reembolso que llega antes que el pago -> se registra ya anulada
 reiniciar()
@@ -663,6 +670,174 @@ prueba("viva en dos sesiones: el reembolso anula las dos", not vivas, vivas)
 r = puerta("mover", sesion="21", destino="23", codigo=cod)
 prueba("«Pasar a» no revive una copia anulada", r.status_code in (404, 409) and not [c for c in led("23")["compras"].values() if c["codigo"] == cod and c.get("estado", "ok") == "ok"], r.get_json())
 
+# reembolsos fuera de orden: uno viejo (acumulado menor) que llega tarde no regresa boletos
+reiniciar()
+checkout(cantidad=3)
+cs = list(SES)[-1]
+completado(pagar(cs))
+pi = led()["compras"][cs]["pi"]
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 195000, "amount_refunded": 65000}}})
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 195000, "amount_refunded": 130000}}})
+prueba("segundo parcial: dice cuántos ahora y cuántos en total", any("le quité 1 boleto(s) ahora (2 en total)" in t for t in TG), TG[-1:])
+n = len(TG)
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 195000, "amount_refunded": 65000}}})
+c = led()["compras"][cs]
+prueba("el reembolso viejo que llega tarde no regresa boletos", c["cantidad"] == 1 and c["bruto"] == 650 and len(TG) == n, (c["cantidad"], c["bruto"], TG[n:]))
+liq = C.get("/boletos/liquidacion?show=show-prueba", headers={"X-Refresh-Key": "llave-prueba"}).get_json()
+prueba("Stripe estimada sobre lo cobrado, no sobre lo que quedó", abs(liq["totales"]["stripe_estimada"] - (1950 * 0.036 + 3) * 1.16) < 0.02, liq["totales"])
+
+# marca de reembolso + el pago entra por la reconciliación (no por el webhook) -> se aplica igual
+reiniciar()
+checkout(cantidad=2)
+cs = list(SES)[-1]
+s = pagar(cs)
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": s["payment_intent"], "amount": 130000, "amount_refunded": 130000,
+                                                        "metadata": {"tipo": "boleto", "codigo": s["metadata"]["codigo"]}}}})
+RELOJ["t"] += 21 * 60
+puerta("lista")
+prueba("marca + reconciliación: queda anulada", led()["compras"][cs]["estado"] == "anulada", led()["compras"][cs].get("estado"))
+n = len(TG)
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": s["payment_intent"], "amount": 130000, "amount_refunded": 130000,
+                                                        "metadata": {"tipo": "boleto", "codigo": s["metadata"]["codigo"]}}}})
+completado(s)
+prueba("el reintento del webhook no la revive ni avisa doble", led()["compras"][cs]["estado"] == "anulada" and not any("antes que su pago" in t for t in TG[n:]), TG[n:])
+
+# "no cuadra" viejo que llega tarde: un solo aviso
+reiniciar()
+checkout(cantidad=2)
+cs = list(SES)[-1]
+completado(pagar(cs))
+pi = led()["compras"][cs]["pi"]
+for monto in (95000, 30000, 95000):
+    webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 130000, "amount_refunded": monto}}})
+prueba("no cuadra: el viejo y el repetido no vuelven a avisar", sum("no cuadra" in t for t in TG) == 1, [t for t in TG if "no cuadra" in t])
+
+# la puerta pasa la compra de sesión justo mientras llega el reembolso: se ajusta la copia
+reiniciar()
+checkout(cantidad=1)
+cs = list(SES)[-1]
+completado(pagar(cs))
+pi, cod = led()["compras"][cs]["pi"], led()["compras"][cs]["codigo"]
+buscar_original = bo._compras_de_pi
+
+
+def buscar_y_mover(pi_):
+    r_ = buscar_original(pi_)
+    bo._compras_de_pi = buscar_original
+    puerta("mover", sesion="21", destino="23", codigo=cod)
+    return r_
+
+
+bo._compras_de_pi = buscar_y_mover
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 65000, "amount_refunded": 65000}}})
+bo._compras_de_pi = buscar_original
+copia = [c for c in led("23")["compras"].values() if c["codigo"] == cod]
+prueba("reembolso mientras la puerta la pasa: se anula la copia", copia and copia[0]["estado"] == "anulada" and any("anulé" in t for t in TG), (copia, TG[-2:]))
+
+# el reembolso llega mientras la puerta la está pasando (después de leerla): la copia se iguala
+for devuelto_, esperado in ((130000, "anulada"), (65000, 1)):
+    reiniciar()
+    checkout(cantidad=2)
+    cs = list(SES)[-1]
+    completado(pagar(cs))
+    pi, cod = led()["compras"][cs]["pi"], led()["compras"][cs]["codigo"]
+    cupo_original = bo._cupo
+
+    def cupo_y_reembolso(*a, **kw):
+        bo._cupo = cupo_original
+        bo.reembolso({"payment_intent": pi, "amount": 130000, "amount_refunded": devuelto_, "metadata": {"tipo": "boleto"}})
+        return cupo_original(*a, **kw)
+
+    bo._cupo = cupo_y_reembolso
+    r = puerta("mover", sesion="21", destino="23", codigo=cod)
+    bo._cupo = cupo_original
+    copia = [c for c in led("23")["compras"].values() if c["codigo"] == cod][0]
+    if esperado == "anulada":
+        vivas = [c for x in ("21", "23") for c in led(x)["compras"].values() if c["codigo"] == cod and c.get("estado", "ok") == "ok"]
+        prueba("reembolso completo mientras se pasa: la copia también queda anulada", r.status_code == 409 and not vivas, (r.status_code, vivas))
+    else:
+        prueba("reembolso parcial mientras se pasa: la copia queda con 1", r.status_code == 200 and copia.get("estado", "ok") == "ok" and copia["cantidad"] == 1, (r.status_code, copia))
+
+# carrera: el pago se registra mientras llega el reembolso (leyó reembolsos.json antes de la marca)
+reiniciar()
+checkout(cantidad=2)
+cs = list(SES)[-1]
+s = pagar(cs)
+previo_original = bo._reembolso_previo
+bo._reembolso_previo = lambda pi: None          # el registro no ve la marca: todavía no existía
+completado(s)
+bo._reembolso_previo = previo_original
+marcar_original = bo._marcar_reembolso
+llamadas_compras = {"n": 0}
+compras_original = bo._compras_de_pi
+
+
+def compras_tarde(pi):                          # la primera búsqueda no la ve; la segunda (tras la marca), sí
+    llamadas_compras["n"] += 1
+    return ([], False) if llamadas_compras["n"] == 1 else compras_original(pi)
+
+
+bo._compras_de_pi = compras_tarde
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": s["payment_intent"], "amount": 130000, "amount_refunded": 130000,
+                                                        "metadata": {"tipo": "boleto", "codigo": s["metadata"]["codigo"]}}}})
+bo._compras_de_pi = compras_original
+prueba("carrera marca/registro: la segunda vuelta la anula", led()["compras"][cs]["estado"] == "anulada", led()["compras"][cs].get("estado"))
+
+# la comisión de Stripe se cuenta una vez por pago aunque esté en dos sesiones
+reiniciar()
+checkout(cantidad=1)
+cs = list(SES)[-1]
+completado(pagar(cs))
+cod = led()["compras"][cs]["codigo"]
+fallar = {"n": 1}
+bo._mutar_sesion = mutar_que_falla
+puerta("mover", sesion="21", destino="23", codigo=cod)   # viva en las dos
+bo._mutar_sesion = original
+liq = C.get("/boletos/liquidacion?show=show-prueba", headers={"X-Refresh-Key": "llave-prueba"}).get_json()
+prueba("Stripe estimada una vez por pago", abs(liq["totales"]["stripe_estimada"] - (650 * 0.036 + 3) * 1.16) < 0.02, liq["totales"])
+
+# marca de un parcial: el aviso no promete anularla
+reiniciar()
+checkout(cantidad=2)
+cs = list(SES)[-1]
+s = pagar(cs)
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": s["payment_intent"], "amount": 130000, "amount_refunded": 65000,
+                                                        "metadata": {"tipo": "boleto", "codigo": s["metadata"]["codigo"]}}}})
+prueba("marca de parcial: dice que quita boletos", "le quito los boletos" in TG[-1], TG[-1:])
+completado(s)
+prueba("al registrarse, le queda 1", led()["compras"][cs]["cantidad"] == 1 and led()["compras"][cs]["estado"] == "ok", led()["compras"][cs])
+
+# textos con 1 lugar
+prueba("queda 1 lugar (singular)", bo._quedan_txt(1) == "queda 1 lugar" and bo._quedan_txt(3) == "quedan 3 lugares" and bo._quedan_txt(-2) == "quedan 0 lugares")
+
+# firma de Stripe: varias v1 (rotación del secreto) y basura en t
+payload = b'{"x":1}'
+t_ok = str(int(time.time()))
+buena = hmac.new(b"whsec_prueba", f"{t_ok}.".encode() + payload, hashlib.sha256).hexdigest()
+prueba("firma: la buena primero y otra después", regalo_mod.verificar_firma(payload, f"t={t_ok},v1={buena},v1={'0' * 64}"))
+prueba("firma: otra primero y la buena después", regalo_mod.verificar_firma(payload, f"t={t_ok},v1={'0' * 64},v1={buena}"))
+prueba("firma: ninguna buena", not regalo_mod.verificar_firma(payload, f"t={t_ok},v1={'0' * 64}"))
+prueba("firma: t no numérico no truena", not regalo_mod.verificar_firma(payload, f"t=abc,v1={buena}"))
+prueba("firma: t con dígitos no ASCII no truena", not regalo_mod.verificar_firma(payload, f"t=²,v1={buena}") and not regalo_mod.verificar_firma(payload, "t=" + "9" * 5000 + f",v1={buena}"))
+prueba("firma: v1 con acentos no truena", not regalo_mod.verificar_firma(payload, f"t={t_ok},v1=ñandú"))
+r = C.post("/stripe/webhook", data=payload, headers={"Stripe-Signature": "t=abc,v1=x", "Content-Type": "application/json"})
+prueba("webhook con firma basura: 400, no 500", r.status_code == 400, r.status_code)
+
+# miel: el campo se llama distinto en la página, pero el API recibe empresa_web
+r = checkout(empresa_web="algo")
+prueba("miel llena: no se cobra", r.status_code == 400, r.status_code)
+
+# Stripe caído al crear el pago: avisa una vez, no en cada intento
+reiniciar()
+bo._falla_stripe[0] = 0.0
+antes_stripe = bo._stripe
+bo._stripe = lambda *a, **k: (_ for _ in ()).throw(requests.ConnectionError("sin red"))
+r1 = checkout(cantidad=1)
+r2 = checkout(cantidad=1, email="otra@correo.com")
+bo._stripe = antes_stripe
+avisos = [t for t in TG if "Stripe no dejó crear un pago" in t]
+prueba("Stripe caído: 502 y un solo aviso", r1.status_code == 502 and r2.status_code == 502 and len(avisos) == 1, (r1.status_code, r2.status_code, len(avisos)))
+
 # PINes del equipo
 reiniciar()
 regalo_mod.PINES_EQUIPO.clear()
@@ -680,9 +855,9 @@ prueba("con el PIN general lo dice", "con el PIN general" in TG[-1], TG[-1:])
 appmod.freno_pin._fallos.clear(); appmod.freno_pin._bloqueos.clear()
 ip_b = {"REMOTE_ADDR": "88.88.88.88"}
 for i in range(9):
-    C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": f"0000000{i}"}, headers=ORIGEN, environ_base=ip_b)
-C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": "11223344"}, headers=ORIGEN, environ_base=ip_b)
-r = C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": "00000009"}, headers=ORIGEN, environ_base=ip_b)
+    C.post("/boletos/puerta/lista", json={"show": "show-prueba", "pin": f"0000000{i}"}, headers=ORIGEN, environ_base=ip_b)
+C.post("/boletos/puerta/lista", json={"show": "show-prueba", "pin": "11223344"}, headers=ORIGEN, environ_base=ip_b)
+r = C.post("/boletos/puerta/lista", json={"show": "show-prueba", "pin": "00000009"}, headers=ORIGEN, environ_base=ip_b)
 prueba("un PIN personal no borra los fallos (no sirve para adivinar)", r.status_code == 429, r.status_code)
 appmod.freno_pin._fallos.clear(); appmod.freno_pin._bloqueos.clear()
 r = C.post("/regalo/canjear", json={"codigo": "ROSSO-XXXX-XXXX", "monto": 1, "pin": "11223344"}, headers=ORIGEN)

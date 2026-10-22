@@ -3,7 +3,12 @@
   var API = document.body.dataset.api || "";
   var EN = document.documentElement.lang === "en";
   function tt(es, en) { return EN ? en : es; }
-  window.ROSSO_EN = EN; window.ROSSO_tt = tt;
+  // la fecha de hoy en la CDMX (AAAA-MM-DD): un celular con hora de España ya va en el día siguiente
+  function hoyCDMX() {
+    try { return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Mexico_City", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date()); }
+    catch (e) { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  }
+  window.ROSSO_EN = EN; window.ROSSO_tt = tt; window.ROSSO_hoyCDMX = hoyCDMX;
   var TITULOS_EN = { "Cócteles de la casa": "House cocktails", "Clásicos": "Classics", "Sin alcohol": "Non-alcoholic", "Domingos": "Sundays", "Destilados": "Spirits", "Cerveza": "Beer", "Para picar": "Snacks", "Ginebra": "Gin", "Ron": "Rum", "Licores y vermut": "Liqueurs & vermouth", "Otros": "Others" };
   function titulo(x) { return EN && TITULOS_EN[x] ? TITULOS_EN[x] : x; }
 
@@ -36,6 +41,8 @@
   } catch (e) { medir("visita"); }
   var ruta = location.pathname.replace(/^\/en/, "");
   ["carta", "noches", "club", "producciones", "regalo", "boletos"].forEach(function (p) {
+    // "boletos" es la visita a la página de un show: la puerta (se recarga toda la noche) y gracias no cuentan
+    if (p === "boletos" && /^\/boletos\/(puerta|gracias)\//.test(ruta)) return;
     if (ruta.indexOf("/" + p) === 0) medir(p === "producciones" ? "produccion" : p);
   });
   document.addEventListener("click", function (ev) {
@@ -410,6 +417,12 @@
   var hoy = hoyISO(), dow = new Date().getDay();   // 0 domingo, 1 lunes
   function pinta(html) { caja.innerHTML = html; caja.hidden = false; }
   var reservaHoy = '<a class="enlace" href="' + B + '/reservar/?fecha=' + hoy + '">' + tt("Reservar hoy", "Book tonight") + "</a>";
+  // noche de show con boleto (build.py pone la fecha): eso es lo de hoy, no el vinilo ni el DJ
+  if (caja.dataset.showFecha === window.ROSSO_hoyCDMX()) {
+    pinta('<span class="k">' + tt("Hoy", "Today") + '</span><span class="t"><strong>' + esc(caja.dataset.showTxt) + "</strong></span>" +
+          '<a class="enlace" href="' + esc(caja.dataset.showUrl) + '">' + tt("Boletos", "Tickets") + "</a>");
+    return;
+  }
   if (dow === 1) { pinta('<span class="k">' + tt("Hoy", "Today") + '</span><span class="t">' + tt("Lunes cerrado. Nos vemos mañana desde las 6 pm.", "Closed on Mondays. See you tomorrow from 6 pm.") + "</span>"); return; }
   if (dow === 0) {
     fetch(API + "/vinilo", { mode: "cors" }).then(function (r) { return r.json(); }).then(function (d) {
@@ -744,7 +757,7 @@
     var T = {
       correo: "Check your email address.", nombre: "We need your name (it is the one we look up at the door).",
       cantidad: "You can buy 1 to " + (j.max || 4) + " tickets per purchase.", sesion: "Pick a set.", show: "That show does not exist.",
-      quedan: "Only " + j.quedan + " seats left in this set.", agotada: "This set is sold out.",
+      quedan: "Only " + j.quedan + (j.quedan === 1 ? " seat" : " seats") + " left in this set.", agotada: "This set is sold out.",
       en_pago: "No seats right now; some payments are in progress, try again in 20 minutes.",
       tope: "There are other payments in progress from your connection; finish them or wait a few minutes.",
       carrera: "The last seats were just taken; try fewer tickets or try again in a few minutes.",
@@ -760,7 +773,7 @@
     for (var i = 0; i < orden.length; i++) for (var k = 0; k < sesiones.length; k++) if (sesiones[k].estado === orden[i]) return orden[i];
     return "";
   }
-  function nota(x) { return x.estado === "abierta" ? (EN ? x.quedan + " left" : "Quedan " + x.quedan) : (ESTADOS[x.estado] || ""); }
+  function nota(x) { return x.estado === "abierta" ? (EN ? x.quedan + " left" : (x.quedan === 1 ? "Queda 1" : "Quedan " + x.quedan)) : (ESTADOS[x.estado] || ""); }
 
   // ---------------- página del show
   var forma = $("forma-boletos"), datosEl = $("b-datos");
@@ -803,7 +816,8 @@
       }).catch(function () { /* se queda lo que dice la página */ });
     };
     forma.addEventListener("change", function () { etiqueta(); if (info) pagar.disabled = !sel() || !!pagar.dataset.ocupado; });
-    etiqueta(); cargar(); setInterval(function () { if (!document.hidden && !pagar.dataset.ocupado) cargar(); }, 60000);
+    // el botón sale deshabilitado en el HTML: sin este script el formulario no se manda solo (con los datos en la URL)
+    etiqueta(); pagar.disabled = false; cargar(); setInterval(function () { if (!document.hidden && !pagar.dataset.ocupado) cargar(); }, 60000);
     // volvió con "atrás" desde Stripe y el navegador restauró la página tal cual
     window.addEventListener("pageshow", function (e) { if (e.persisted) { delete pagar.dataset.ocupado; pagar.disabled = false; aviso(""); cargar(); } });
 
@@ -821,7 +835,7 @@
     forma.addEventListener("submit", function (ev) {
       ev.preventDefault();
       var d = { show: D.slug, sesion: sel(), cantidad: cuantos(), nombre: forma.nombre.value.trim(), email: forma.email.value.trim(),
-                whatsapp: forma.whatsapp.value.trim(), canal: canal(), idioma: EN ? "en" : "es", empresa_web: forma.empresa_web.value };
+                whatsapp: forma.whatsapp.value.trim(), canal: canal(), idioma: EN ? "en" : "es", empresa_web: (forma.elements.b_x9 || {}).value || "" };
       if (!d.sesion) { aviso(tt("Elige la sesión.", "Pick a set."), "error"); return; }
       if (d.nombre.length < 2 || !d.email) { aviso(tt("Nos faltan tu nombre y tu correo.", "We need your name and email."), "error"); return; }
       if (!API) { aviso(tt("El pago todavía no está conectado; escríbenos por WhatsApp.", "Payment is not connected yet; message us on WhatsApp."), "error"); return; }
@@ -896,15 +910,24 @@
     else { titulo.textContent = tt("Falta el número de pago.", "Payment reference missing."); notaG.textContent = tt("Abre esta página desde la liga a la que te regresó Stripe.", "Open this page from the link Stripe sent you back to."); }
   }
 
-  // ---------------- aviso del show en portada y noches
-  if (API) [].forEach.call(document.querySelectorAll("[data-show]"), function (el) {
+  // ---------------- aviso del show (cinta de arriba, cartel de portada y noches): una consulta por show
+  // la cinta y el cartel salen del build: pasado el show se quitan aunque nadie haya vuelto a armar el sitio
+  var hoyShow = window.ROSSO_hoyCDMX();
+  [].forEach.call(document.querySelectorAll("[data-show-hasta]"), function (el) { if (hoyShow > el.getAttribute("data-show-hasta")) el.parentNode.removeChild(el); });
+  var porShow = {};
+  [].forEach.call(document.querySelectorAll("[data-show]"), function (el) {
     var span = el.querySelector("[data-show-cupo]");
-    if (!span) return;
-    fetch(API + "/boletos/show/" + encodeURIComponent(el.getAttribute("data-show")), { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+    if (span) (porShow[el.getAttribute("data-show")] = porShow[el.getAttribute("data-show")] || []).push(span);
+  });
+  if (API) Object.keys(porShow).forEach(function (slug) {
+    fetch(API + "/boletos/show/" + encodeURIComponent(slug), { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
       if (!j || !j.activo) return;
-      var quedan = 0, abiertas = 0;
+      var quedan = 0, abiertas = 0, texto = "";
       j.sesiones.forEach(function (x) { if (x.estado === "abierta") { abiertas++; quedan += x.quedan; } });
-      span.textContent = abiertas ? (EN ? " · " + quedan + " seats left" : " · quedan " + quedan + " lugares") : " · " + (ESTADOS[prioridad(j.sesiones)] || tt("Agotado", "Sold out"));
+      // cuántos quedan sólo cuando ya son pocos; "quedan 58" no ayuda a vender
+      if (!abiertas) texto = " · " + (ESTADOS[prioridad(j.sesiones)] || tt("Agotado", "Sold out"));
+      else if (quedan <= 20) texto = EN ? " · " + quedan + (quedan === 1 ? " seat left" : " seats left") : (quedan === 1 ? " · queda 1 lugar" : " · quedan " + quedan + " lugares");
+      porShow[slug].forEach(function (span) { span.textContent = texto; });
     }).catch(function () { /* nada */ });
   });
 
@@ -944,11 +967,11 @@
         datos = r.j; ultima = new Date(); pintar();
       }).catch(function (e) { if (e.message !== "pin") sinConexion(); });
     };
-    var actual = function () {   // la sesión que está por empezar o en curso
-      if (!datos) return null;
-      var ahora = Date.now(), mejor = datos.sesiones[0];
-      datos.sesiones.forEach(function (x) { if (new Date(x.inicio).getTime() + 50 * 60000 > ahora && new Date(mejor.inicio).getTime() + 50 * 60000 <= ahora) mejor = x; });
-      return mejor;
+    var actual = function () {   // la primera sesión que no lleva 50 min; ya pasadas todas, la última (no la primera)
+      if (!datos || !datos.sesiones.length) return null;
+      var ahora = Date.now(), mejor = null;
+      datos.sesiones.forEach(function (x) { if (!mejor && new Date(x.inicio).getTime() + 50 * 60000 > ahora) mejor = x; });
+      return mejor || datos.sesiones[datos.sesiones.length - 1];
     };
     // cuadro dentro de la página en vez de confirm()/prompt(): en el celular «Cancelar» se leía como
     // «cancelar el boleto», y hay navegadores que ni los muestran. Regresa true, el texto escrito o null.

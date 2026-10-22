@@ -125,15 +125,17 @@ def crear_sesion(monto, de, para, mensaje, email, canal="directo"):
 
 
 def verificar_firma(payload: bytes, header: str, tolerancia=300):
-    """Firma Stripe-Signature: t=..., v1=... (HMAC-SHA256 del 't.payload')."""
-    partes = dict(p.split("=", 1) for p in header.split(",") if "=" in p)
-    t, v1 = partes.get("t"), partes.get("v1")
-    if not t or not v1:
+    """Firma Stripe-Signature: t=..., v1=... (HMAC-SHA256 del 't.payload'). Al rotar el secreto en
+    Stripe llegan varias v1 (una por secreto vivo): basta con que una coincida."""
+    pares = [p.split("=", 1) for p in (header or "").split(",") if "=" in p]
+    t = next((v.strip() for k, v in pares if k.strip() == "t"), "")
+    firmas = [v.strip() for k, v in pares if k.strip() == "v1"]
+    if not (t.isascii() and t.isdigit() and len(t) <= 12) or not firmas:   # "²" es isdigit() pero int() truena
         return False
     if abs(time.time() - int(t)) > tolerancia:
         return False
     esperado = hmac.new(WEBHOOK_SECRET.encode(), f"{t}.".encode() + payload, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(esperado, v1)
+    return any(hmac.compare_digest(esperado.encode(), f.encode()) for f in firmas)   # bytes: no truena con basura
 
 
 def registrar_pago(sesion: dict):

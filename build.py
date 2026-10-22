@@ -691,7 +691,7 @@ def bloque_shows():
     out = ""
     for s in shows_anunciados():
         horas = t(" y ", " and ").join(x[L] for x in s["sesiones"])
-        out += (f'<div class="hoy show-aviso" data-show="{e(s["slug"])}"><span class="k">Show</span>'
+        out += (f'<div class="hoy show-aviso" data-show="{e(s["slug"])}" data-show-hasta="{e(s["fecha"])}"><span class="k">Show</span>'
                 f'<span class="t"><strong>{e(s["artista"])}</strong> · {e(fecha_larga(s["fecha"]))} · {e(horas)} · '
                 f'${s["precio"]:,}<span class="show-cupo" data-show-cupo></span></span>'
                 f'<a class="enlace" href="{B}/boletos/{e(s["slug"])}/">{t("Boletos", "Tickets")}</a></div>')
