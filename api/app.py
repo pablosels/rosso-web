@@ -138,8 +138,10 @@ def revisar_pin(pin, ruta):
     ip = freno_mod.clave_ip(request.headers.get("X-Forwarded-For"), request.remote_addr)
     espera = freno_pin.espera(ip)
     if not espera:
-        if regalo_mod.pin_correcto(pin):
-            freno_pin.acierto(ip)
+        quien = regalo_mod.quien_pin(pin)   # "barra" (el general) o el nombre de un bartender
+        if quien:
+            if quien == "barra":   # sólo el general borra los fallos: con uno personal se podrían adivinar los demás
+                freno_pin.acierto(ip)
             return None
         # un PIN vacío nunca atina: no cuenta como intento
         if not str(pin or "").strip() or not freno_pin.fallo(ip, ruta):
@@ -510,6 +512,9 @@ def stripe_webhook():
             return jsonify(error="no se pudo leer la sesión en Stripe"), 503   # que Stripe reintente
     ses = ses or {}
     que = (ses.get("metadata") or {}).get("tipo")
+    if tipo == "charge.refunded" and boletos_mod:
+        boletos_mod.reembolso(ses)   # si el cargo era de un boleto, la compra se anula sola
+        return jsonify(ok=True)
     if que == "boleto":
         if not boletos_mod:
             return jsonify(error="boletos no cargó"), 500   # que Stripe reintente cuando se arregle

@@ -572,6 +572,127 @@ prueba("webhook y gracias a la vez: un solo Telegram", n1 - n0 == 1, TG[-3:])
 r = checkout(email="malo")
 prueba("error con código", r.get_json().get("codigo") == "correo", r.get_json())
 
+print("\n[reembolsos y PINes del equipo]")
+import regalo as regalo_mod   # noqa: E402
+
+# reembolso completo en Stripe -> la compra se anula sola
+reiniciar()
+checkout(cantidad=2)
+cs = list(SES)[-1]
+completado(pagar(cs))
+pi = led()["compras"][cs]["pi"]
+cargo = {"id": "ch_1", "object": "charge", "payment_intent": pi, "amount": 130000, "amount_refunded": 130000, "refunded": True, "metadata": {}}
+r = webhook({"type": "charge.refunded", "data": {"object": cargo}})
+c = led()["compras"][cs]
+prueba("reembolso completo: anulada y aviso", r.status_code == 200 and c["estado"] == "anulada" and any("Reembolso en Stripe: anulé" in t for t in TG), (c.get("estado"), TG[-1:]))
+n = len(TG)
+webhook({"type": "charge.refunded", "data": {"object": cargo}})
+prueba("reembolso repetido: sin aviso doble", len(TG) == n, TG[n:])
+j = C.get("/boletos/show/carla-gibert").get_json()
+prueba("el lugar quedó libre", j["sesiones"][0]["quedan"] == 30, j["sesiones"][0])
+
+# parcial de boletos completos -> se quitan esos boletos
+reiniciar()
+checkout(cantidad=2)
+cs = list(SES)[-1]
+completado(pagar(cs))
+pi = led()["compras"][cs]["pi"]
+parcial = {"payment_intent": pi, "amount": 130000, "amount_refunded": 65000}
+webhook({"type": "charge.refunded", "data": {"object": parcial}})
+c = led()["compras"][cs]
+prueba("reembolso de 1 de 2: le queda 1 y $650", c["estado"] == "ok" and c["cantidad"] == 1 and c["bruto"] == 650 and any("le quité 1" in t for t in TG), (c, TG[-1:]))
+n = len(TG)
+webhook({"type": "charge.refunded", "data": {"object": parcial}})
+prueba("el mismo parcial otra vez no quita más", led()["compras"][cs]["cantidad"] == 1 and len(TG) == n, (led()["compras"][cs]["cantidad"], TG[n:]))
+liq = C.get("/boletos/liquidacion?show=carla-gibert", headers={"X-Refresh-Key": "llave-prueba"}).get_json()
+prueba("la liquidación cuenta 1 boleto de $650", liq["totales"]["boletos"] == 1 and liq["totales"]["bruto"] == 650, liq["totales"])
+webhook({"type": "charge.refunded", "data": {"object": dict(parcial, amount_refunded=130000)}})
+prueba("después el resto: anulada", led()["compras"][cs]["estado"] == "anulada", led()["compras"][cs]["estado"])
+
+# un monto que no cuadra con boletos completos -> sólo aviso
+reiniciar()
+checkout(cantidad=2)
+cs = list(SES)[-1]
+completado(pagar(cs))
+pi = led()["compras"][cs]["pi"]
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 130000, "amount_refunded": 30000}}})
+prueba("reembolso de $300: no toca la compra y avisa", led()["compras"][cs]["cantidad"] == 2 and any("no cuadra" in t for t in TG), TG[-1:])
+
+# reembolso que llega antes que el pago -> se registra ya anulada
+reiniciar()
+checkout(cantidad=1)
+cs = list(SES)[-1]
+s = pagar(cs)
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": s["payment_intent"], "amount": 65000, "amount_refunded": 65000,
+                                                        "metadata": {"tipo": "boleto", "codigo": s["metadata"]["codigo"]}}}})
+prueba("reembolso antes del pago: queda la marca", any("antes que su pago" in t for t in TG), TG[-1:])
+completado(s)
+prueba("al registrarse el pago, queda anulada", led()["compras"][cs]["estado"] == "anulada", led()["compras"][cs]["estado"])
+
+# un cargo que no es de boletos no hace nada
+n = len(TG)
+r = webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": "pi_otro", "amount": 50000, "amount_refunded": 50000}}})
+prueba("reembolso ajeno: 200 y nada", r.status_code == 200 and len(TG) == n)
+
+# reembolso de una compra que se pasó de sesión: se anula la copia viva
+reiniciar()
+checkout(cantidad=1)
+cs = list(SES)[-1]
+completado(pagar(cs))
+cod = led()["compras"][cs]["codigo"]
+pi = led()["compras"][cs]["pi"]
+puerta("mover", sesion="21", destino="23", codigo=cod)
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 65000, "amount_refunded": 65000}}})
+copia = [c for c in led("23")["compras"].values() if c["codigo"] == cod][0]
+prueba("reembolso de una compra movida anula la copia", copia["estado"] == "anulada", copia.get("estado"))
+
+# una compra que quedó viva en dos sesiones (mover a medias): el reembolso anula las dos y no se revive
+reiniciar()
+checkout(cantidad=1)
+cs = list(SES)[-1]
+completado(pagar(cs))
+cod = led()["compras"][cs]["codigo"]
+pi = led()["compras"][cs]["pi"]
+fallar = {"n": 1}
+bo._mutar_sesion = mutar_que_falla
+puerta("mover", sesion="21", destino="23", codigo=cod)
+bo._mutar_sesion = original
+webhook({"type": "charge.refunded", "data": {"object": {"payment_intent": pi, "amount": 65000, "amount_refunded": 65000}}})
+vivas = [c for x in ("21", "23") for c in led(x)["compras"].values() if c["codigo"] == cod and c.get("estado", "ok") == "ok"]
+prueba("viva en dos sesiones: el reembolso anula las dos", not vivas, vivas)
+r = puerta("mover", sesion="21", destino="23", codigo=cod)
+prueba("«Pasar a» no revive una copia anulada", r.status_code in (404, 409) and not [c for c in led("23")["compras"].values() if c["codigo"] == cod and c.get("estado", "ok") == "ok"], r.get_json())
+
+# PINes del equipo
+reiniciar()
+regalo_mod.PINES_EQUIPO.clear()
+regalo_mod.PINES_EQUIPO.update({"Ana": "11223344"})
+prueba("quien_pin: barra", regalo_mod.quien_pin("12345678") == "barra")
+prueba("quien_pin: Ana", regalo_mod.quien_pin("11223344") == "Ana")
+prueba("quien_pin: nadie", regalo_mod.quien_pin("99999999") is None and not regalo_mod.pin_correcto(""))
+r = puerta("lista", pin="11223344")
+prueba("Ana abre la puerta con su PIN", r.status_code == 200, r.status_code)
+r = puerta("venta", pin="11223344", sesion="21", cantidad=1, tipo="puerta", metodo="efectivo", op="ana-1", entran=True)
+prueba("el aviso dice quién vendió", r.status_code == 200 and "por Ana" in TG[-1], TG[-1:])
+prueba("la venta guarda quién", [c for c in led()["compras"].values() if c["canal"] == "puerta"][0].get("por") == "Ana")
+r = puerta("venta", sesion="21", cantidad=1, tipo="puerta", metodo="efectivo", op="barra-1", entran=True, pin="12345678")
+prueba("con el PIN general lo dice", "con el PIN general" in TG[-1], TG[-1:])
+appmod.freno_pin._fallos.clear(); appmod.freno_pin._bloqueos.clear()
+ip_b = {"REMOTE_ADDR": "88.88.88.88"}
+for i in range(9):
+    C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": f"0000000{i}"}, headers=ORIGEN, environ_base=ip_b)
+C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": "11223344"}, headers=ORIGEN, environ_base=ip_b)
+r = C.post("/boletos/puerta/lista", json={"show": "carla-gibert", "pin": "00000009"}, headers=ORIGEN, environ_base=ip_b)
+prueba("un PIN personal no borra los fallos (no sirve para adivinar)", r.status_code == 429, r.status_code)
+appmod.freno_pin._fallos.clear(); appmod.freno_pin._bloqueos.clear()
+r = C.post("/regalo/canjear", json={"codigo": "ROSSO-XXXX-XXXX", "monto": 1, "pin": "11223344"}, headers=ORIGEN)
+prueba("el PIN personal también entra al canje (pasa el PIN, falla por el código)", r.status_code != 403, (r.status_code, r.get_json()))
+regalo_mod.PINES_EQUIPO.clear()
+r = puerta("lista", pin="11223344")
+prueba("PIN dado de baja ya no entra", r.status_code == 403, r.status_code)
+prueba("PINES_BARRA mal formado se ignora", regalo_mod._pines_equipo("no es json") == {} and regalo_mod._pines_equipo('{"X": "12"}') == {})
+appmod.freno_pin._fallos.clear(); appmod.freno_pin._bloqueos.clear()
+
 print(f"\n{len(OK)} bien, {len(FALLAS)} mal")
 if FALLAS:
     print("FALLARON:", FALLAS)

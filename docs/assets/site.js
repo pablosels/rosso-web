@@ -934,6 +934,33 @@
       datos.sesiones.forEach(function (x) { if (new Date(x.inicio).getTime() + 50 * 60000 > ahora && new Date(mejor.inicio).getTime() + 50 * 60000 <= ahora) mejor = x; });
       return mejor;
     };
+    // cuadro dentro de la página en vez de confirm()/prompt(): en el celular «Cancelar» se leía como
+    // «cancelar el boleto», y hay navegadores que ni los muestran. Regresa true, el texto escrito o null.
+    var pendiente = null;   // el cierre del cuadro abierto: si se abre otro, el anterior se resuelve como "No"
+    var dialogo = function (o) {
+      if (pendiente) pendiente(null);
+      return new Promise(function (listo) {
+        var caja = $("p-dialogo"), campo = $("p-dialogo-campo"), si = $("p-dialogo-si"), no = $("p-dialogo-no");
+        var antes = document.activeElement;
+        $("p-dialogo-texto").textContent = o.texto;
+        $("p-dialogo-campo-caja").hidden = !o.campo;
+        if (o.campo) { campo.value = o.campo.valor == null ? "" : o.campo.valor; campo.placeholder = o.campo.placeholder || ""; campo.inputMode = o.campo.numero ? "numeric" : "text"; }
+        si.textContent = o.si || "Sí"; si.className = "btn" + (o.peligro ? " peligro-lleno" : "");
+        no.textContent = o.no || "No";
+        var cerrar = function (v) {
+          caja.hidden = true; si.onclick = no.onclick = null; pendiente = null;
+          panel.inert = fp.inert = false;   // el fondo vuelve a responder
+          if (antes && document.contains(antes) && antes.focus) antes.focus();
+          listo(v);
+        };
+        si.onclick = function () { cerrar(o.campo ? campo.value.trim() : true); };
+        no.onclick = function () { cerrar(null); };
+        pendiente = cerrar;
+        panel.inert = fp.inert = true;   // mientras el cuadro está abierto, nada de atrás se alcanza con Tab o las flechas del iPhone
+        caja.hidden = false;
+        if (o.campo) campo.focus(); else si.focus();
+      });
+    };
     var boton = function (texto, fn, clase) { var b = document.createElement("button"); b.type = "button"; b.className = "btn btn-linea " + (clase || ""); b.textContent = texto; b.onclick = fn; return b; };
     var txt = function (tag, clase, texto) { var el = document.createElement(tag); if (clase) el.className = clase; el.textContent = texto; return el; };
 
@@ -956,17 +983,21 @@
           + (x.en_pago ? " · " + x.en_pago + " en pago en línea (vencen " + x.apartados.map(function (a) { return a.vence; }).join(", ") + ")" : "") + " · puertas " + hora12(x.puertas)));
         var acc = document.createElement("div"); acc.className = "puerta-acciones";
         if (x.en_pago) acc.appendChild(boton("Soltar pagos en curso", function () {
-          if (!confirm("Esto cancela en Stripe los pagos en línea que estén a medias en " + x.etiqueta + " y libera esos lugares. ¿Seguro?")) return;
-          aviso("Soltando…");
-          llamar("/boletos/puerta/soltar", { sesion: x.id }).then(function (r) {
-            resultado(r, "Soltados: " + (r.j.sueltos || 0) + (r.j.pagados ? " · ya estaban pagados: " + r.j.pagados : "") + (r.j.abiertos ? " · siguen abiertos: " + r.j.abiertos : ""));
-          }).catch(sinRed);
+          dialogo({ texto: "Esto cancela en Stripe los pagos en línea que estén a medias en " + x.etiqueta + " y libera esos lugares.", si: "Sí, soltarlos", no: "No", peligro: true }).then(function (ok) {
+            if (!ok) return;
+            aviso("Soltando…");
+            llamar("/boletos/puerta/soltar", { sesion: x.id }).then(function (r) {
+              resultado(r, "Soltados: " + (r.j.sueltos || 0) + (r.j.pagados ? " · ya estaban pagados: " + r.j.pagados : "") + (r.j.abiertos ? " · siguen abiertos: " + r.j.abiertos : ""));
+            }).catch(sinRed);
+          });
         }));
         acc.appendChild(boton("Cambiar cupo", function () {
-          var n = parseInt(prompt("Cupo de " + x.etiqueta + " (ahora " + x.cupo + "):", x.cupo), 10);
-          if (!n || n === x.cupo) return;
-          aviso("Cambiando cupo…");
-          llamar("/boletos/puerta/cupo", { sesion: x.id, cupo: n }).then(function (r) { resultado(r, "Cupo de " + x.etiqueta + ": " + n); }).catch(sinRed);
+          dialogo({ texto: "Cupo de " + x.etiqueta + " (ahora " + x.cupo + "):", campo: { valor: x.cupo, numero: true }, si: "Guardar", no: "Cancelar" }).then(function (v) {
+            var n = parseInt(v, 10);
+            if (!n || n === x.cupo) return;
+            aviso("Cambiando cupo…");
+            llamar("/boletos/puerta/cupo", { sesion: x.id, cupo: n }).then(function (r) { resultado(r, "Cupo de " + x.etiqueta + ": " + n); }).catch(sinRed);
+          });
         }));
         caja.appendChild(acc);
         var lista = document.createElement("div"); lista.className = "sello-lista";
@@ -1008,25 +1039,30 @@
       mas.appendChild(txt("summary", "", "Más"));
       var cajaMas = document.createElement("div"); cajaMas.className = "puerta-acciones";
       cajaMas.appendChild(boton("A nombre de…", function () {
-        var n = prompt("¿A nombre de quién queda " + c.codigo + "?", c.a_nombre_de || "");
-        if (n === null) return;
-        aviso("Guardando…");
-        llamar("/boletos/puerta/nombre", { sesion: x.id, codigo: c.codigo, nombre: n }).then(function (r) { resultado(r, "Listo: " + c.codigo + " a nombre de " + n + "."); }).catch(sinRed);
+        dialogo({ texto: "¿A nombre de quién queda " + c.codigo + "?", campo: { valor: c.a_nombre_de || "", placeholder: "Nombre" }, si: "Guardar", no: "Cancelar" }).then(function (n) {
+          if (n === null) return;
+          aviso("Guardando…");
+          llamar("/boletos/puerta/nombre", { sesion: x.id, codigo: c.codigo, nombre: n }).then(function (r) { resultado(r, "Listo: " + c.codigo + " a nombre de " + n + "."); }).catch(sinRed);
+        });
       }));
       datos.sesiones.forEach(function (y) {
         if (y.id === x.id) return;
         cajaMas.appendChild(boton("Pasar a " + y.etiqueta, function () {
-          if (!confirm("¿Pasar " + c.codigo + " (" + c.nombre + ", " + c.cantidad + ") a " + y.etiqueta + "?")) return;
-          aviso("Moviendo…"); delete abiertos[c.codigo];
-          llamar("/boletos/puerta/mover", { sesion: x.id, destino: y.id, codigo: c.codigo }).then(function (r) { resultado(r, c.codigo + " pasó a " + y.etiqueta + "."); }).catch(sinRed);
+          dialogo({ texto: "¿Pasar " + c.codigo + " (" + c.nombre + ", " + c.cantidad + ") a la sesión de las " + y.etiqueta + "?", si: "Sí, pasarlo", no: "No" }).then(function (ok) {
+            if (!ok) return;
+            aviso("Moviendo…"); delete abiertos[c.codigo];
+            llamar("/boletos/puerta/mover", { sesion: x.id, destino: y.id, codigo: c.codigo }).then(function (r) { resultado(r, c.codigo + " pasó a " + y.etiqueta + "."); }).catch(sinRed);
+          });
         }));
       });
       cajaMas.appendChild(boton("Anular", function () {
-        if (!confirm("¿Anular " + c.codigo + " (" + c.nombre + ", " + c.cantidad + ")? Libera los lugares y deja de contar en la liquidación." + (c.canal === "web" ? " Si es por reembolso, el reembolso se hace en Stripe." : ""))) return;
-        var motivo = prompt("Motivo (opcional). Cancelar = no anular:", "");
-        if (motivo === null) return;
-        aviso("Anulando…"); delete abiertos[c.codigo];
-        llamar("/boletos/puerta/anular", { sesion: x.id, codigo: c.codigo, motivo: motivo, op: nuevaOp() }).then(function (r) { resultado(r, c.codigo + " anulado."); }).catch(sinRed);
+        dialogo({ texto: "¿Anular " + c.codigo + " (" + c.nombre + ", " + c.cantidad + ")? Libera los lugares y deja de contar en la liquidación."
+                    + (c.canal === "web" ? " El dinero se devuelve aparte, en Stripe." : ""),
+                  campo: { placeholder: "Motivo (opcional)" }, si: "Sí, anular", no: "No, dejarlo", peligro: true }).then(function (motivo) {
+          if (motivo === null) return;
+          aviso("Anulando…"); delete abiertos[c.codigo];
+          llamar("/boletos/puerta/anular", { sesion: x.id, codigo: c.codigo, motivo: motivo, op: nuevaOp() }).then(function (r) { resultado(r, c.codigo + " anulado."); }).catch(sinRed);
+        });
       }, "peligro"));
       mas.appendChild(cajaMas);
       der.appendChild(mas);
@@ -1067,13 +1103,16 @@
       var d = { sesion: fv.sesion.value, cantidad: parseInt(fv.cantidad.value, 10), tipo: fv.tipo.value, metodo: fv.metodo.value,
                 nombre: fv.nombre.value.trim(), pidio: fv.pidio.value.trim(), entran: entran.checked, op: nuevaOp() };
       var desc = d.cantidad + (d.tipo === "cortesia" ? " cortesía(s)" : " en " + d.metodo + " (" + pesos(datos.precio * d.cantidad) + ")");
-      if (!confirm("¿Registrar " + desc + " para " + (fv.sesion.options[fv.sesion.selectedIndex] || {}).text + "?" + (d.entran ? " Quedan marcados como adentro." : ""))) return;
-      registrar.disabled = true; aviso("Registrando…");
-      llamar("/boletos/puerta/venta", d).then(function (r) {
-        registrar.disabled = false;
-        if (!r.ok) { aviso(r.j.error || "No se pudo.", "error"); return; }
-        aviso("Registrado: " + r.j.codigo + " · " + desc + ".", "ok"); fv.nombre.value = ""; fv.pidio.value = ""; cargar();
-      }).catch(function (e) { registrar.disabled = false; sinRed(e); });
+      registrar.disabled = true;
+      dialogo({ texto: "¿Registrar " + desc + " para la sesión de las " + (fv.sesion.options[fv.sesion.selectedIndex] || {}).text + "?" + (d.entran ? " Quedan marcados como adentro." : ""), si: "Sí, registrar", no: "No" }).then(function (ok) {
+        if (!ok) { registrar.disabled = false; return; }
+        aviso("Registrando…");
+        llamar("/boletos/puerta/venta", d).then(function (r) {
+          registrar.disabled = false;
+          if (!r.ok) { aviso(r.j.error || "No se pudo.", "error"); return; }
+          aviso("Registrado: " + r.j.codigo + " · " + desc + ".", "ok"); fv.nombre.value = ""; fv.pidio.value = ""; cargar();
+        }).catch(function (e) { registrar.disabled = false; sinRed(e); });
+      });
     });
 
     [].forEach.call(document.querySelectorAll(".pag-puerta [data-accion]"), function (b) {
@@ -1081,14 +1120,18 @@
         var a = b.getAttribute("data-accion");
         if (a === "pausa") {
           var pausar = !datos.pausada;
-          if (!confirm(pausar ? "¿Pausar la venta en línea? La página dirá que está en pausa." : "¿Reanudar la venta en línea?")) return;
-          aviso(pausar ? "Pausando…" : "Reanudando…");
-          llamar("/boletos/puerta/pausa", { pausada: pausar }).then(function (r) { resultado(r, pausar ? "Venta en pausa." : "Venta reanudada."); }).catch(sinRed);
+          dialogo({ texto: pausar ? "¿Pausar la venta en línea? La página dirá que está en pausa." : "¿Reanudar la venta en línea?", si: pausar ? "Sí, pausar" : "Sí, reanudar", no: "No" }).then(function (ok) {
+            if (!ok) return;
+            aviso(pausar ? "Pausando…" : "Reanudando…");
+            llamar("/boletos/puerta/pausa", { pausada: pausar }).then(function (r) { resultado(r, pausar ? "Venta en pausa." : "Venta reanudada."); }).catch(sinRed);
+          });
         } else if (a === "cortesias") {
-          var n = parseInt(prompt("Tope de cortesías del show (ahora " + datos.cortesias_max + "):", datos.cortesias_max), 10);
-          if (isNaN(n)) return;
-          aviso("Cambiando tope…");
-          llamar("/boletos/puerta/cupo", { campo: "cortesias_max", cupo: n }).then(function (r) { resultado(r, "Tope de cortesías: " + n); }).catch(sinRed);
+          dialogo({ texto: "Tope de cortesías del show (ahora " + datos.cortesias_max + "):", campo: { valor: datos.cortesias_max, numero: true }, si: "Guardar", no: "Cancelar" }).then(function (v) {
+            var n = parseInt(v, 10);
+            if (v === null || isNaN(n)) return;
+            aviso("Cambiando tope…");
+            llamar("/boletos/puerta/cupo", { campo: "cortesias_max", cupo: n }).then(function (r) { resultado(r, "Tope de cortesías: " + n); }).catch(sinRed);
+          });
         } else {
           aviso("Mandando…");
           llamar("/boletos/puerta/telegram", { que: a }).then(function (r) { aviso(r.ok ? "Mandado al Telegram de Pablo." : (r.j.error || "No se pudo."), r.ok ? "ok" : "error"); }).catch(sinRed);

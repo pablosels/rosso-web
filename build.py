@@ -776,6 +776,13 @@ def pag_boletos_puerta():
       <p class="nota mini">El cupo y los pagos en curso se cambian en cada sesión. La liquidación sólo le llega a Pablo.</p>
     </details>
   </div>
+  <div class="dialogo" id="p-dialogo" role="dialog" aria-modal="true" aria-labelledby="p-dialogo-texto" hidden>
+    <div class="dialogo-caja">
+      <p id="p-dialogo-texto"></p>
+      <div class="campo" id="p-dialogo-campo-caja" hidden><input id="p-dialogo-campo" autocomplete="off" maxlength="80"></div>
+      <div class="puerta-acciones"><button class="btn" type="button" id="p-dialogo-si">Sí</button><button class="btn btn-linea" type="button" id="p-dialogo-no">No</button></div>
+    </div>
+  </div>
   <p class="forma-msg" id="forma-msg" role="status"></p>
 </section>
 """

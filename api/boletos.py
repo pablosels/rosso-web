@@ -601,6 +601,10 @@ def _registrar(s, via):
     compra, nuevo, sobreventa = _mutar_sesion(show["slug"], ses["id"], lambda led: _aplicar_pago(led, s, cupo, via, tok))
     if nuevo or (not compra.get("avisado") and _reclamar_aviso(show["slug"], ses["id"], s["id"])):
         _avisar_compra(show, ses, compra, sobreventa, via)
+    previo = _reembolso_previo(s.get("payment_intent")) if nuevo else None
+    if previo:   # el reembolso llegó antes que el pago: se aplica ya
+        reembolso({"payment_intent": s.get("payment_intent"), "amount": int(s.get("amount_total") or 0),
+                   "amount_refunded": previo["devuelto"], "metadata": {"tipo": "boleto"}})
     return compra
 
 
@@ -633,6 +637,116 @@ def webhook(tipo, s):
     except Exception as e:   # noqa: BLE001 — un pago no se puede perder en silencio
         print("boletos webhook error:", repr(e))
         _huerfana(s, f"{type(e).__name__}: {e}")
+
+
+def reembolso(cargo):
+    """charge.refunded. amount_refunded es lo devuelto ACUMULADO del cargo, así que un evento repetido
+    no cambia nada. Si el cargo es de un boleto:
+    - devolución completa: la compra se anula (lugar libre, fuera de la liquidación);
+    - devolución de boletos completos (p. ej. 1 de 2): se le quitan esos boletos a la compra;
+    - un monto que no cuadra con boletos completos: sólo se avisa;
+    - si la compra todavía no estaba registrada (el reembolso llegó antes que el pago): queda una
+      marca y la compra se registra ya anulada."""
+    pi = cargo.get("payment_intent") or ""
+    devuelto = int(cargo.get("amount_refunded") or 0)
+    if not pi or not devuelto:
+        return
+    try:
+        vivas, ya_anulada = [], False
+        for slug, show in SHOWS.items():
+            for ses in show["sesiones"]:
+                for llave, c in _leer(slug, ses["id"])["compras"].items():
+                    if c.get("pi") != pi:
+                        continue
+                    # una compra que se pasó de sesión a medias puede seguir viva en las dos: se tocan todas
+                    if c.get("estado", "ok") == "ok":
+                        vivas.append((show, ses, llave))
+                    elif c.get("estado") == "anulada":
+                        ya_anulada = True
+        if not vivas:
+            if not ya_anulada and (cargo.get("metadata") or {}).get("tipo") == "boleto":
+                _marcar_reembolso(pi, cargo)
+            return
+        tok = secrets.token_hex(6)
+        total_cargo = int(cargo.get("amount") or 0)
+        for show, ses, llave in vivas:
+            r = _mutar_sesion(show["slug"], ses["id"],
+                              lambda led, llave=llave: _aplicar_reembolso(led, llave, devuelto, total_cargo, tok))
+            if not r:
+                continue
+            que, k = r
+            donde = f"{_tg(show['artista'])} {_tg(ses.get('es'))}"
+            if que == "anulada":
+                _aviso(f"↩️ Reembolso en Stripe: anulé {_tg(k['codigo'])} · {donde}: {k['cantidad']} · {_tg(k['nombre'])}. "
+                       f"El lugar quedó libre y ya no cuenta en la liquidación.")
+                _hoja(show, ses, k, "anulada (reembolso)")
+            elif que == "parcial":
+                quito = int(k["cantidad_original"]) - int(k["cantidad"])
+                _aviso(f"↩️ Reembolso parcial en Stripe: a {_tg(k['codigo'])} ({_tg(k['nombre'])}) · {donde} le quité "
+                       f"{quito} boleto(s); le quedan {k['cantidad']}. Esos lugares quedaron libres y ya no cuentan.")
+                _hoja(show, ses, k, f"reembolso parcial: quedan {k['cantidad']}")
+            else:
+                _aviso(f"↩️ Reembolso de {_pesos(devuelto / 100)} en Stripe a {_tg(k['codigo'])} ({_tg(k['nombre'])}) · {donde} "
+                       f"que no cuadra con boletos completos. No toqué la compra: pídele a Claude que la ajuste.")
+    except TRANSITORIOS:
+        raise
+    except Exception as e:   # noqa: BLE001
+        print("boletos reembolso error:", repr(e))
+        _aviso(f"⚠️ Hubo un reembolso en Stripe ({_tg(pi)}) y no pude ajustar el boleto: {_tg(e)}. Anúlalo en la puerta.")
+
+
+def _aplicar_reembolso(led, llave, devuelto, total_cargo, tok):
+    """Función pura sobre el libro. Regresa (cambió, (qué, compra)) o (cambió, None) si no hay nada que avisar."""
+    k = led["compras"].get(llave)
+    if not k:
+        return False, None
+    if k.get("reembolso_tok") == tok:   # la escribió esta solicitud y se perdió la respuesta: se avisa igual
+        return False, ("anulada" if k.get("estado") == "anulada" else "parcial", dict(k))
+    if k.get("estado", "ok") != "ok":
+        return False, None
+    original = int(k.get("cantidad_original", k["cantidad"]))
+    bruto_original = float(k.get("bruto_original", k.get("bruto", 0)))
+    unitario = round(bruto_original * 100 / original) if original else 0   # en centavos, el precio que pagó
+    if devuelto >= total_cargo or not unitario or devuelto >= unitario * original:
+        k.update(estado="anulada", motivo="reembolso en Stripe", anulada=_ahora_local().isoformat(), anulo="stripe",
+                 reembolso_tok=tok)
+        return True, ("anulada", dict(k))
+    if devuelto % unitario:
+        return False, ("no_cuadra", dict(k))
+    if int(k.get("reembolsado_cent", 0)) == devuelto:   # el mismo reembolso otra vez
+        return False, None
+    k["cantidad_original"] = original
+    k["bruto_original"] = bruto_original
+    k["cantidad"] = original - devuelto // unitario
+    k["bruto"] = round(bruto_original - devuelto / 100, 2)
+    k["entraron"] = min(int(k.get("entraron", 0)), k["cantidad"])
+    k["reembolsado_cent"] = devuelto
+    k["reembolso_tok"] = tok
+    return True, ("parcial", dict(k))
+
+
+def _marcar_reembolso(pi, cargo):
+    """El reembolso llegó antes que el registro del pago: se guarda para registrarla ya anulada."""
+    md = cargo.get("metadata") or {}
+    marca = {"devuelto": int(cargo.get("amount_refunded") or 0), "monto": int(cargo.get("amount") or 0),
+             "codigo": md.get("codigo", ""), "cuando": _ahora_local().isoformat()}
+
+    def fn(d):
+        d.setdefault("reembolsos", {})
+        if d["reembolsos"].get(pi) == marca:
+            return False, None
+        d["reembolsos"][pi] = marca
+        return True, None
+    _mutar(f"{PREFIJO}reembolsos.json", fn)
+    _aviso(f"↩️ Llegó un reembolso de {_pesos(marca['devuelto'] / 100)} del boleto {_tg(marca['codigo'])} antes que su "
+           f"pago. Cuando el pago se registre, queda anulado solo.")
+
+
+def _reembolso_previo(pi):
+    if not pi:
+        return None
+    datos, _ = _almacen().leer(f"{PREFIJO}reembolsos.json")
+    return ((datos or {}).get("reembolsos") or {}).get(pi)
 
 
 def _soltar_por_cs(s):
@@ -980,7 +1094,16 @@ def _textos_lista(show):
 # ------------------------------------------------------------------ rutas
 def montar(app, telegram, freno, origenes, refresh_key):
     """Registra las rutas /boletos/* en la app de Flask."""
-    from flask import jsonify, request
+    from flask import g, jsonify, request
+
+    def por():
+        """Quién lo hizo, en los avisos: " · por Ana", o " · con el PIN general" para que nada quede sin rastro."""
+        quien = getattr(g, "quien", "")
+        if quien == "barra":
+            return " · con el PIN general"
+        if quien == "puerta":
+            return " · con el PIN de puerta"
+        return f" · por {_tg(quien)}" if quien else ""
     global _telegram
     _telegram = telegram
     _cache = {}
@@ -1013,16 +1136,20 @@ def montar(app, telegram, freno, origenes, refresh_key):
 
     def pin_puerta(pin, ruta):
         """Como revisar_pin de app.py, pero también acepta el PIN de puerta. Mismo freno por IP.
-        Sólo el PIN de BARRA borra los fallos de la IP: si el de puerta los borrara, quien sólo tiene
-        el de puerta podría adivinar el de barra sin límite (9 intentos, PIN de puerta, repetir)."""
+        Sólo el PIN GENERAL de barra borra los fallos de la IP: si el de puerta o uno personal los borrara,
+        quien lo tiene podría adivinar los demás sin límite (9 intentos, su PIN, repetir)."""
         ip = freno_mod.clave_ip(request.headers.get("X-Forwarded-For"), request.remote_addr)
         espera = freno.espera(ip)
         if not espera:
             p = str(pin or "")
-            if regalo_mod.pin_correcto(p):
-                freno.acierto(ip)
+            quien = regalo_mod.quien_pin(p)   # "barra" o el nombre del bartender
+            if quien:
+                if quien == "barra":   # sólo el general borra los fallos: con uno personal se podría adivinar sin freno
+                    freno.acierto(ip)
+                g.quien = quien
                 return None
             if PUERTA_PIN and hmac.compare_digest(p.encode(), PUERTA_PIN.encode()):
+                g.quien = "puerta"
                 return None
             if not p.strip() or not freno.fallo(ip, ruta):
                 return error("PIN incorrecto", 403)
@@ -1367,7 +1494,8 @@ def montar(app, telegram, freno, origenes, refresh_key):
             compra = {"codigo": codigo, "cantidad": cantidad, "entraron": cantidad if d.get("entran") else 0,
                       "nombre": nombre, "email": "", "whatsapp": "", "canal": tipo, "metodo": metodo,
                       "bruto": 0 if tipo == "cortesia" else int(show["precio"]) * cantidad, "op": op,
-                      "creado": _ahora_local().isoformat(), "estado": "ok", "pidio": pidio}
+                      "creado": _ahora_local().isoformat(), "estado": "ok", "pidio": pidio,
+                      "por": getattr(g, "quien", "")}
             led["compras"]["p-" + op] = compra
             r = {"codigo": codigo, "compra": compra}
             _anotar_op(led, op, r, tok)
@@ -1379,7 +1507,7 @@ def montar(app, telegram, freno, origenes, refresh_key):
         if not r.get("repetida"):
             _aviso(f"🚪 {'Cortesía' if tipo == 'cortesia' else 'Venta en puerta'} · {_tg(show['artista'])} {_tg(ses.get('es'))}: "
                    f"{cantidad} · {_tg(k['nombre'])}" + (f" · {_tg(metodo)} {_pesos(k['bruto'])}" if tipo == "puerta" else "")
-                   + (f" · la pidió {_tg(pidio)}" if pidio else ""))
+                   + (f" · la pidió {_tg(pidio)}" if pidio else "") + por())
             _hoja(show, ses, k, "cortesía" if tipo == "cortesia" else "venta en puerta")
         return jsonify(ok=True, codigo=r["codigo"])
 
@@ -1402,6 +1530,7 @@ def montar(app, telegram, freno, origenes, refresh_key):
             k["estado"] = "anulada"
             k["motivo"] = motivo
             k["anulada"] = _ahora_local().isoformat()
+            k["anulo"] = getattr(g, "quien", "")
             r = {"codigo": codigo, "compra": dict(k)}
             _anotar_op(led, op, r, tok)
             return True, r
@@ -1413,6 +1542,7 @@ def montar(app, telegram, freno, origenes, refresh_key):
         k = r["compra"]
         _aviso(f"✖️ Anulado {_tg(codigo)} · {_tg(show['artista'])} {_tg(ses.get('es'))}: {k['cantidad']} · {_tg(k['nombre'])}"
                + (f" · {_tg(motivo)}" if motivo else "")
+               + por()
                + ("\nEs una compra web: si no la has reembolsado en Stripe, hazlo allá." if k["canal"] == "web" else ""))
         _hoja(show, ses, k, "anulada")
         return jsonify(ok=True)
@@ -1434,6 +1564,9 @@ def montar(app, telegram, freno, origenes, refresh_key):
         llave_copia = "m-" + llave_origen   # la misma compra siempre da la misma copia: reintentar no duplica
 
         def poner(led):
+            previa = led["compras"].get(llave_copia)
+            if previa and previa.get("estado", "ok") != "ok":   # esa copia se anuló (p. ej. reembolso): no se revive
+                return False, {"error": "esa compra se anuló en la otra sesión; no se puede pasar"}
             if any(x["codigo"] == codigo and x.get("estado", "ok") == "ok" for x in led["compras"].values()):
                 return False, {}              # ya está en el destino (un intento anterior): sólo falta quitarla del origen
             if int(k["cantidad"]) > _cuentas(led, cupo_dest)["quedan"]:
@@ -1456,7 +1589,7 @@ def montar(app, telegram, freno, origenes, refresh_key):
         except TRANSITORIOS:
             return error("quedó en las dos sesiones por un error de conexión: vuelve a tocar «Pasar a» para terminar", 503)
         if quitado:
-            _aviso(f"↔️ {_tg(codigo)} ({_tg(k['nombre'])}, {k['cantidad']}) pasó de {_tg(ses.get('es'))} a {_tg(destino.get('es'))}")
+            _aviso(f"↔️ {_tg(codigo)} ({_tg(k['nombre'])}, {k['cantidad']}) pasó de {_tg(ses.get('es'))} a {_tg(destino.get('es'))}" + por())
         return jsonify(ok=True)
 
     @app.post("/boletos/puerta/nombre")
@@ -1517,7 +1650,7 @@ def montar(app, telegram, freno, origenes, refresh_key):
             return True, None
         _mutar_control(show["slug"], fn)
         _cache.pop(show["slug"], None)
-        _aviso(f"{'⏸ Pausé' if pausada else '▶️ Reanudé'} la venta en línea de {_tg(show['artista'])} (desde la puerta)")
+        _aviso(f"{'⏸ Pausé' if pausada else '▶️ Reanudé'} la venta en línea de {_tg(show['artista'])} (desde la puerta){por()}")
         return jsonify(ok=True, pausada=pausada)
 
     @app.post("/boletos/puerta/cupo")
@@ -1547,7 +1680,7 @@ def montar(app, telegram, freno, origenes, refresh_key):
         _mutar_control(show["slug"], fn)
         _cache.pop(show["slug"], None)
         que = "tope de cortesías" if campo == "cortesias_max" else f"cupo {ses.get('es')}"
-        _aviso(f"✏️ {_tg(show['artista'])}: {_tg(que)} {antes.get('v')} → {n} (desde la puerta)")
+        _aviso(f"✏️ {_tg(show['artista'])}: {_tg(que)} {antes.get('v')} → {n} (desde la puerta){por()}")
         return jsonify(ok=True)
 
     @app.post("/boletos/puerta/telegram")

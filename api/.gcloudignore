@@ -6,3 +6,4 @@ __pycache__/
 *.docx
 !plantilla/*.docx
 *.ps1
+.pines_barra.json

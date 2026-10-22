@@ -12,6 +12,7 @@ Todo se guarda en la hoja; no hay base de datos aparte.
 import datetime as dt
 import hashlib
 import hmac
+import json
 import os
 import re
 import secrets
@@ -169,10 +170,37 @@ def publica(d):
             "fecha_compra": d["fecha_compra"]}
 
 
+def _pines_equipo(texto):
+    """PINES_BARRA: {"Nombre": "PIN", ...} (secreto rosso-pines-barra). Un PIN por bartender, con
+    el mismo poder que el de barra; así se puede dar de baja a uno sin cambiar el de todos."""
+    if not texto:
+        return {}
+    try:
+        datos = json.loads(texto)
+    except ValueError:
+        print("PINES_BARRA no es JSON; se ignora")
+        return {}
+    return {str(n)[:30]: str(p) for n, p in (datos or {}).items() if str(p).isdigit() and len(str(p)) >= 6}
+
+
+PINES_EQUIPO = _pines_equipo(os.environ.get("PINES_BARRA", ""))
+
+
+def quien_pin(pin):
+    """"barra" si es el PIN general, el nombre si es el PIN de alguien del equipo, None si no.
+    Compara en tiempo constante y en bytes (compare_digest truena con texto que no sea ASCII),
+    y siempre recorre todos los PINes para no revelar cuál se acercó."""
+    p = str(pin or "").encode()
+    quien = "barra" if CANJE_PIN and hmac.compare_digest(p, CANJE_PIN.encode()) else None
+    for nombre, valor in PINES_EQUIPO.items():
+        if hmac.compare_digest(p, valor.encode()) and not quien:
+            quien = nombre
+    return quien
+
+
 def pin_correcto(pin):
-    """PIN de barra, comparado en tiempo constante (no revela cuántos dígitos se atinaron).
-    Se compara en bytes: compare_digest truena con texto que no sea ASCII."""
-    return bool(CANJE_PIN) and hmac.compare_digest(str(pin or "").encode(), CANJE_PIN.encode())
+    """PIN de barra o de alguien del equipo."""
+    return quien_pin(pin) is not None
 
 
 def canjear(codigo, monto, pin):

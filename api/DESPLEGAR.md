@@ -178,8 +178,27 @@ borra los fallos del freno) y `BOLETOS_SHEET_ID` (una hoja aparte,
 
 ### Reembolsos y cambios
 
-Un reembolso se hace en Stripe y el código se **anula** en la puerta ("Más" > "Anular"): libera el lugar y deja de contar. Cambios
-de sesión ("Pasar a…"), a nombre de otra persona ("A nombre de…") y ventas en puerta o cortesías, desde la misma página.
+**Reembolsos: se hacen en Stripe y el boleto se ajusta solo** (evento `charge.refunded` en el webhook, ver abajo). Completo: la
+compra se anula. De boletos completos (1 de 2): se le quitan esos boletos. Un monto que no cuadra con boletos completos sólo se avisa.
+Si el evento llega antes que el pago, el pago se registra ya anulado. Lo de antes de suscribir el evento se anula a mano en la puerta
+("Más" > "Anular"). Cambios de sesión ("Pasar a…"), a nombre de otra persona ("A nombre de…") y ventas en puerta o cortesías, desde
+la misma página. Las confirmaciones de la puerta son un cuadro de la propia página (no ventanitas del teléfono).
+
+**Suscribir el evento de reembolsos** (una vez): dashboard.stripe.com/webhooks > el destino `rosso-web` > "Edit destination" >
+agregar `charge.refunded` (mismo destino, mismo secreto; no crear otro).
+
+### PINes de barra personales (`PINES_BARRA`)
+
+Un PIN por bartender, con el mismo poder que el PIN general (puerta, canje y Sello). Los avisos de la puerta dicen quién lo hizo
+(o "con el PIN general"). Se crean, cambian o quitan con:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File "C:\Users\minis\Downloads\rosso-web\api\pines-barra.ps1"
+```
+
+Los PINes salen en una ventana (nunca en la terminal) y quedan en `api\.pines_barra.json` (fuera del repo y de la imagen); el API
+los lee del secreto `rosso-pines-barra`. Un PIN personal NO borra los intentos fallidos del freno (sólo el general). Dar de baja a
+alguien no sirve si sabe el PIN general: cuando todos tengan el suyo, rotar `CANJE_PIN` (abajo) y que sólo lo tenga Pablo.
 
 **Pago huérfano** (Telegram "Pago de boleto SIN registrar": el show o la sesión ya no estaban en el catálogo): NO se mete como
 venta en puerta (saldría con otro código y otra comisión). Se registra con su mismo código:

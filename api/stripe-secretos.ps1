@@ -33,16 +33,20 @@ function Guardar-Secreto($nombre, $valor) {
     $tmp = [IO.Path]::GetTempFileName()
     try {
         [IO.File]::WriteAllText($tmp, $valor)
-        $existe = & gcloud secrets list --project $PROYECTO --filter="name~^$nombre$" --format="value(name)"
+        # el filtro de gcloud compara contra el nombre completo (projects/…/secrets/…): se compara el nombre corto
+        $existe = @(& gcloud secrets list --project $PROYECTO --format="value(name.basename())") -contains $nombre
         if ($existe) {
             & gcloud secrets versions add $nombre --data-file="$tmp" --project $PROYECTO | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "no pude agregar la versión nueva de $nombre" }
             Write-Host "   ${nombre}: version nueva agregada"
         } else {
             & gcloud secrets create $nombre --data-file="$tmp" --project $PROYECTO | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw "no pude crear $nombre" }
             Write-Host "   ${nombre}: creado"
         }
         & gcloud secrets add-iam-policy-binding $nombre --member="serviceAccount:$CUENTA" `
             --role="roles/secretmanager.secretAccessor" --project $PROYECTO | Out-Null
+        if ($LASTEXITCODE -ne 0) { throw "no pude dar permiso sobre $nombre" }
     } finally {
         Remove-Item $tmp -Force -ErrorAction SilentlyContinue
     }
@@ -113,6 +117,7 @@ $llave = $null; $hook = $null
 Write-Host "Actualizando el API para que use las llaves..."
 & gcloud run services update $SERVICIO --region $REGION --project $PROYECTO `
     --update-secrets "STRIPE_KEY=${S_LLAVE}:latest,STRIPE_WEBHOOK_SECRET=${S_HOOK}:latest" | Out-Null
+if ($LASTEXITCODE -ne 0) { Write-Host "El API no tomó las llaves (gcloud falló). Avísale a Claude."; exit 1 }
 Write-Host "   $SERVICIO actualizado"
 
 Write-Host ""
