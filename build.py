@@ -162,6 +162,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
 </head>
 <body class="{clase}" data-api="{e(SITE['api'])}" data-base="{B}">
 <a class="salto" href="#contenido">{t("Ir al contenido", "Skip to content")}</a>
+{cinta_show(ruta) if con_pixel else ""}
 <header class="cabecera">
   <a class="marca" href="{B}/" aria-label="ROSSO, {t('inicio', 'home')}"><img src="{A}/assets/rosso-wordmark-letras.svg" alt="ROSSO" width="1280" height="252"></a>
   <button class="menu-btn" aria-expanded="false" aria-controls="nav">{t("Menú", "Menu")}</button>
@@ -283,10 +284,10 @@ def pag_inicio():
     <div class="ficha-l">PUEBLA, 329<br>ROMA NTE.<br>( CDMX )</div>
     <div class="ficha-r">SPEAKEASY<br>{t("MAR – DOM", "TUE – SUN")}<br>{t("DESDE 6 PM", "FROM 6 PM")}</div>
   </div>
+  {cartel_show()}
   <p class="hero-texto">{t("Un bar que explora el placer a través de los sentidos. Una experiencia íntima e inmersiva que se esconde detrás de la cocina de Pavorosso.", "A bar that explores pleasure through the senses. An intimate, immersive experience hidden behind the kitchen of Pavorosso.")}</p>
   <p class="hero-texto hero-texto-2">{t("Inspirado en el rojo como símbolo del deseo, ROSSO envuelve a sus invitados con atmósfera, música y ritmo.", "Inspired by red as the color of desire, ROSSO wraps its guests in atmosphere, music and rhythm.")}</p>
-  <div class="hoy" data-hoy hidden></div>
-  {bloque_shows()}
+  <div class="hoy" data-hoy{show_de_hoy_attrs()} hidden></div>
   <div class="hero-cta">
     <a class="btn" href="{B}/reservar/">{t("Reservar mesa", "Book a table")}</a>
     <a class="btn btn-linea" href="{B}/carta/">{t("Ver la carta", "See the menu")}</a>
@@ -332,7 +333,14 @@ def pag_carta():
   <div class="etiqueta">{t("La carta", "The menu")}</div>
   <h1>{t("Cócteles de la casa, clásicos y algo para picar.", "House cocktails, classics and something to snack on.")}</h1>
   <p class="nota" id="carta-nota">{t("Precios en pesos, IVA incluido. Actualizada desde nuestro punto de venta el", "Prices in Mexican pesos, tax included. Updated from our point of sale on")} {e(fecha_carta(CARTA))}.</p>
-  <p class="nota"><a class="enlace" href="{B}/quiz/">{t("¿No sabes qué pedir? Descubre qué cóctel eres", "Not sure what to order? Find out which cocktail you are")}</a></p>
+</section>
+<section class="carta-quiz">
+  <div class="carta-quiz-caja">
+    <div class="etiqueta">{t("Tres preguntas", "Three questions")}</div>
+    <h2>{t("¿No sabes qué pedir?", "Not sure what to order?")}</h2>
+    <p>{t("Dinos con qué se hace, qué fruta lleva y cómo se siente en la boca, y te decimos cuál cóctel de la casa eres.", "Tell us what it is made with, what fruit is in it and how it feels, and we tell you which house cocktail you are.")}</p>
+    <a class="btn" href="{B}/quiz/">{t("Descubre qué cóctel eres", "Find out which cocktail you are")}</a>
+  </div>
 </section>
 {dupla(("barra_picarilla", t("Picarilla, cóctel de la casa, sobre la barra bajo el techo de luces", "Picarilla, a house cocktail, on the bar under the ceiling of lights"), t("Picarilla · cóctel de la casa", "Picarilla · house cocktail")),
         ("coctel_loriginedumonde", t("L'Origine du Monde, martini de la casa", "L'Origine du Monde, the house martini"), "L'Origine du Monde"), "50% 62%")}
@@ -618,8 +626,68 @@ def shows_anunciados():
     return sorted((s for s in BOLETOS if s.get("visible") == "si" and s["fecha"] >= hoy), key=lambda s: s["fecha"])
 
 
+def fecha_corta(iso):
+    d = dt.date.fromisoformat(iso)
+    if L == "en":
+        return f"{DIAS_EN[d.weekday()][:3]}, {MESES_EN[d.month - 1][:3]} {d.day}"
+    return f"{DIAS[d.weekday()][:3].capitalize()} {d.day} {MESES[d.month - 1][:3]}"
+
+
+def horas_cortas(s):
+    """'7 y 9 pm' en vez de '7:00 pm y 9:00 pm' cuando todas son en punto y del mismo lado del día."""
+    hs = [hora12(x["hora"]) for x in s["sesiones"]]
+    if all(h.endswith(hs[0][-2:]) and ":00 " in h for h in hs):
+        hs = [h.split(":")[0] for h in hs[:-1]] + [hs[-1].replace(":00", "")]
+    return hs[0] if len(hs) == 1 else ", ".join(hs[:-1]) + t(" y ", " and ") + hs[-1]
+
+
+def proximo_show():
+    return next(iter(shows_anunciados()), None)
+
+
+def cinta_show(ruta):
+    """Barra arriba de la cabecera en todo el sitio mientras haya un show anunciado. No va en la
+    portada (ahí está el cartel), en las páginas del show ni en las internas (las de con_pixel=False)."""
+    s = proximo_show()
+    if not s or ruta == "/" or ruta.startswith("/boletos/"):
+        return ""
+    return (f'<a class="cinta" href="{B}/boletos/{e(s["slug"])}/"><span class="cinta-k">{t("En vivo", "Live")}</span>'
+            f'<span class="cinta-t"><strong>{e(s["artista"])}</strong> · {e(fecha_corta(s["fecha"]))} · {e(horas_cortas(s))}</span>'
+            f'<span class="cinta-cta">{t("Boletos", "Tickets")} →</span></a>')
+
+
+def cartel_show():
+    """El headline de la portada mientras haya un show anunciado: nombre grande, fecha y botón.
+    El 'quedan N lugares' lo pone site.js cuando ya son pocos."""
+    s = proximo_show()
+    if not s:
+        return ""
+    d = s[L]
+    liga = f'{B}/boletos/{e(s["slug"])}/'
+    cupos = {int(x["cupo"]) for x in s["sesiones"]}
+    n = min(cupos)
+    lugares = t(f" · {n} lugares por sesión", f" · {n} seats per set") if len(cupos) == 1 else ""
+    return f"""<div class="cartel" data-show="{e(s["slug"])}">
+    <div class="cartel-k">{t("Show en vivo", "Live show")}{(" · " + e(d["gancho"])) if d.get("gancho") else ""}</div>
+    <h2 class="cartel-nombre"><a href="{liga}">{e(s["artista"])}</a></h2>
+    <p class="cartel-fecha"><span>{e(fecha_larga(s["fecha"]))}</span> <span>{e(horas_cortas(s))}</span></p>
+    <p class="cartel-texto">{e(d.get("cartel") or d["descripcion"])}</p>
+    <div class="cartel-pie"><a class="btn" href="{liga}">{t("Comprar boletos", "Get tickets")}</a>
+      <span class="cartel-precio">${s["precio"]:,} {t("por persona", "per person")}{lugares}<span class="show-cupo" data-show-cupo></span></span></div>
+  </div>"""
+
+
+def show_de_hoy_attrs():
+    """Para la tira 'Hoy' de la portada: la noche del show dice eso y no 'domingo de vinilos'."""
+    s = proximo_show()
+    if not s:
+        return ""
+    return (f' data-show-fecha="{e(s["fecha"])}" data-show-txt="{e(s["artista"] + " · " + horas_cortas(s))}"'
+            f' data-show-url="{B}/boletos/{e(s["slug"])}/"')
+
+
 def bloque_shows():
-    """Aviso de los shows con boleto (portada y noches). Lo que queda lo pinta site.js con el API."""
+    """Aviso de los shows con boleto (noches). Lo que queda lo pinta site.js con el API."""
     out = ""
     for s in shows_anunciados():
         horas = t(" y ", " and ").join(x[L] for x in s["sesiones"])
@@ -675,7 +743,7 @@ def pag_boleto(s):
     </ol>
     <p class="nota mini">{e(d.get("politica", ""))} <a href="{B}/privacidad/">{t("Aviso de privacidad", "Privacy notice")}</a>.</p>
   </div>
-  <form class="forma" id="forma-boletos" novalidate>
+  <form class="forma" id="forma-boletos" method="post" novalidate>
     <fieldset class="montos"><legend>{t("Sesión", "Set")}</legend>{sesiones}</fieldset>
     <div class="fila">
       <div class="campo"><label for="b-cantidad">{t("Boletos", "Tickets")}</label><select id="b-cantidad" name="cantidad">{cuantos}</select></div>
@@ -685,8 +753,8 @@ def pag_boleto(s):
       <div class="campo"><label for="b-email">{t("Correo", "Email")} <span>({t("para el recibo", "for the receipt")})</span></label><input id="b-email" name="email" type="email" autocomplete="email" required></div>
       <div class="campo"><label for="b-whatsapp">WhatsApp <span>({t("opcional, por si cambia algo", "optional, in case anything changes")})</span></label><input id="b-whatsapp" name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" maxlength="20"></div>
     </div>
-    <div class="miel" aria-hidden="true"><label for="b-empresa">Empresa</label><input id="b-empresa" name="empresa_web" tabindex="-1" autocomplete="off"></div>
-    <button class="btn" type="submit" id="b-pagar">{t("Pagar", "Pay")} ${s["precio"] * min(2, s["max_por_compra"]):,}</button>
+    <div class="miel" aria-hidden="true"><label for="b-x9">{t("No llenar", "Leave empty")}</label><input id="b-x9" name="b_x9" tabindex="-1" autocomplete="off"></div>
+    <button class="btn" type="submit" id="b-pagar" disabled>{t("Pagar", "Pay")} ${s["precio"] * min(2, s["max_por_compra"]):,}</button>
     <p class="forma-msg" id="forma-msg" role="status"></p>
   </form>
 </section>

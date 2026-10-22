@@ -24,13 +24,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;900&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/assets/style.css?v=b9be3288">
+<link rel="stylesheet" href="/assets/style.css?v=441065c9">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BarOrPub", "name": "Rosso Speakeasy", "url": "https://rossospeakeasy.com", "telephone": "+525664357899", "servesCuisine": "Cocktails", "address": {"@type": "PostalAddress", "streetAddress": "Puebla 329", "addressLocality": "Ciudad de México", "addressRegion": "CDMX", "postalCode": "06700", "addressCountry": "MX"}, "acceptsReservations": "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico", "menu": "https://rossospeakeasy.com/carta/", "sameAs": ["https://www.instagram.com/rosso.speakeasy/", "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico"], "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "opens": "18:00", "closes": "02:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "16:00", "closes": "23:00"}]}</script>
 <meta name="robots" content="noindex"><script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "name": "CARLA · 7:00 pm", "startDate": "2026-11-15T19:00:00-06:00", "doorTime": "2026-11-15T18:30:00-06:00", "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode", "eventStatus": "https://schema.org/EventScheduled", "location": {"@type": "BarOrPub", "name": "Rosso Speakeasy", "address": {"@type": "PostalAddress", "streetAddress": "Puebla 329", "addressLocality": "Ciudad de México", "postalCode": "06700", "addressCountry": "MX"}}, "performer": {"@type": "Person", "name": "CARLA"}, "offers": {"@type": "Offer", "price": "650", "priceCurrency": "MXN", "url": "https://rossospeakeasy.com/en/boletos/carla/", "availability": "https://schema.org/InStock"}}</script><script type="application/ld+json">{"@context": "https://schema.org", "@type": "Event", "name": "CARLA · 9:00 pm", "startDate": "2026-11-15T21:00:00-06:00", "doorTime": "2026-11-15T20:30:00-06:00", "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode", "eventStatus": "https://schema.org/EventScheduled", "location": {"@type": "BarOrPub", "name": "Rosso Speakeasy", "address": {"@type": "PostalAddress", "streetAddress": "Puebla 329", "addressLocality": "Ciudad de México", "postalCode": "06700", "addressCountry": "MX"}}, "performer": {"@type": "Person", "name": "CARLA"}, "offers": {"@type": "Offer", "price": "650", "priceCurrency": "MXN", "url": "https://rossospeakeasy.com/en/boletos/carla/", "availability": "https://schema.org/InStock"}}</script>
 <script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1111695471183815');fbq('track','PageView');</script><noscript><img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=1111695471183815&ev=PageView&noscript=1"></noscript>
 </head>
 <body class="pag-regalo pag-boletos" data-api="https://rosso-web-api-703407013960.us-central1.run.app" data-base="/en">
 <a class="salto" href="#contenido">Skip to content</a>
+
 <header class="cabecera">
   <a class="marca" href="/en/" aria-label="ROSSO, home"><img src="/assets/rosso-wordmark-letras.svg" alt="ROSSO" width="1280" height="252"></a>
   <button class="menu-btn" aria-expanded="false" aria-controls="nav">Menu</button>
@@ -59,7 +60,7 @@
     </ol>
     <p class="nota mini">Your ticket is for the set you chose. No refunds, but you can pass your ticket to someone else: message us on WhatsApp with their name. If the show is cancelled, you get a full refund. <a href="/en/privacidad/">Privacy notice</a>.</p>
   </div>
-  <form class="forma" id="forma-boletos" novalidate>
+  <form class="forma" id="forma-boletos" method="post" novalidate>
     <fieldset class="montos"><legend>Set</legend><label class="monto"><input type="radio" name="sesion" value="19" checked><span class="monto-cifra">7:00 pm</span><span class="monto-nota" data-cupo="19">Doors 6:30 pm · 30 seats</span></label><label class="monto"><input type="radio" name="sesion" value="21"><span class="monto-cifra">9:00 pm</span><span class="monto-nota" data-cupo="21">Doors 8:30 pm · 30 seats</span></label></fieldset>
     <div class="fila">
       <div class="campo"><label for="b-cantidad">Tickets</label><select id="b-cantidad" name="cantidad"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option></select></div>
@@ -69,8 +70,8 @@
       <div class="campo"><label for="b-email">Email <span>(for the receipt)</span></label><input id="b-email" name="email" type="email" autocomplete="email" required></div>
       <div class="campo"><label for="b-whatsapp">WhatsApp <span>(optional, in case anything changes)</span></label><input id="b-whatsapp" name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" maxlength="20"></div>
     </div>
-    <div class="miel" aria-hidden="true"><label for="b-empresa">Empresa</label><input id="b-empresa" name="empresa_web" tabindex="-1" autocomplete="off"></div>
-    <button class="btn" type="submit" id="b-pagar">Pay $1,300</button>
+    <div class="miel" aria-hidden="true"><label for="b-x9">Leave empty</label><input id="b-x9" name="b_x9" tabindex="-1" autocomplete="off"></div>
+    <button class="btn" type="submit" id="b-pagar" disabled>Pay $1,300</button>
     <p class="forma-msg" id="forma-msg" role="status"></p>
   </form>
 </section>
@@ -95,7 +96,7 @@
     <p class="mini">© 2026 Rosso Speakeasy · Puebla 329, Roma Norte, CDMX · <a href="/en/speakeasy-roma-norte/">Speakeasy Roma Norte</a> · <a href="/en/bar-con-dj-cdmx/">Bar with DJ</a> · <a href="/en/bar-de-vinilos-cdmx/">Vinyl</a> · <a href="/en/producciones/">Location hire</a> · <a href="/en/club/">Club ROSSO</a> · <a href="/en/privacidad/">Privacy</a></p>
   </div>
 </footer>
-<script src="/assets/site.js?v=d7038762" defer></script>
+<script src="/assets/site.js?v=dd4b4cdf" defer></script>
 
 </body>
 </html>
