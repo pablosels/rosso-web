@@ -4,6 +4,7 @@
 
 - **Quiz**: campaña, conjunto y anuncio ya publicados con la foto de la cortina. Meta la tiene "en revisión"; en cuanto apruebe, corre sola con $100 diarios.
 - **Noche fuerte**: campaña, conjunto y anuncio completos en borrador (radio 5 km, miércoles a sábado de 4 a 9 pm, $750 del 6 al 18 de octubre, imagen semanal, texto y botón "Reservar"). Solo falta "Revisar y publicar" (3 borradores).
+- **Quiz, cambios del 22 de octubre en el sitio** (commit bf43168 en main): el quiz bajó de cinco a tres preguntas (Vista, Oído, Gusto), hay un botón "Reservar mesa" fijo durante todo el quiz y se mide "quiz_inicio" (contestó la primera pregunta). Ese conteo aparecerá en el resumen de los lunes cuando se vuelva a desplegar la API (api/metricas.py ya lo trae). El anuncio Quiz tiene en borrador el texto nuevo ("Tres preguntas...") y la imagen `quiz-cortina-1080x1920.jpg` ya dice "tres preguntas"; falta subirla y publicar.
 - **Públicos**: existe "ROSSO" (base), "ROSSO 5 km - copy" y "ROSSO visitantes web 30 dias". Faltan "Interactuó en Instagram 90 días" y "Equipo" (exclusión); no estorban para encender.
 
 Para pegar valor por valor en el Administrador de anuncios (business.facebook.com). Sigue el orden: públicos primero, campañas después. Todo queda en **borrador**; tú publicas al final.
