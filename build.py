@@ -671,7 +671,7 @@ def pag_boleto(s):
     <ol class="pasos">
       <li><strong>{t("Eliges sesión y pagas.", "Pick a set and pay.")}</strong> {t("Tarjeta de crédito o débito, Apple Pay o Google Pay, cobro seguro con Stripe.", "Credit or debit card, Apple Pay or Google Pay, secure checkout with Stripe.")}</li>
       <li><strong>{t("Recibes tu código.", "Get your code.")}</strong> {t("En pantalla al terminar y en el recibo que te llega al correo.", "On screen when you finish and on the receipt we email you.")}</li>
-      <li><strong>{t("En la puerta.", "At the door.")}</strong> {t("Te pedimos tu nombre y tu código. Llega a la hora de puertas: los lugares no se guardan.", "We ask for your name and code. Arrive when doors open: seats are not held.")}</li>
+      <li><strong>{t("En la puerta.", "At the door.")}</strong> {t("Te pedimos tu nombre y tu código. Con tu boleto pagado tu lugar está asegurado; puedes llegar desde la hora de puertas.", "We ask for your name and code. Once your ticket is paid your spot is guaranteed; you can arrive from the time doors open.")}</li>
     </ol>
     <p class="nota mini">{e(d.get("politica", ""))} <a href="{B}/privacidad/">{t("Aviso de privacidad", "Privacy notice")}</a>.</p>
   </div>
