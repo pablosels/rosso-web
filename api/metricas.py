@@ -105,3 +105,24 @@ def texto_resumen(dias=7):
         lineas.append("Sin datos todavía.")
     lineas.append(f"\nHoja: https://docs.google.com/spreadsheets/d/{SHEET_ID}/edit")
     return "\n".join(lineas)
+
+
+def borrar_canal(canal):
+    """Borra de la hoja todas las filas cuyo canal (columna C) sea `canal`. Devuelve cuántas borró."""
+    vaciar()
+    canal = str(canal or "").strip().lower()
+    if not canal or not CANAL_RE.match(canal) or canal == "directo":
+        return 0
+    ses = _session()
+    meta = ses.get(f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}", params={"fields": "sheets.properties"}).json()
+    props = meta["sheets"][0]["properties"]
+    titulo, sheet_id = props["title"], props["sheetId"]
+    col = ses.get(f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}/values/{titulo}!C:C").json().get("values", [])
+    filas = [i for i, v in enumerate(col) if i > 0 and v and str(v[0]).strip().lower() == canal]
+    if not filas:
+        return 0
+    peticiones = [{"deleteDimension": {"range": {"sheetId": sheet_id, "dimension": "ROWS", "startIndex": i, "endIndex": i + 1}}}
+                  for i in sorted(filas, reverse=True)]   # de abajo hacia arriba para que no se corran los índices
+    r = ses.post(f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}:batchUpdate", json={"requests": peticiones})
+    r.raise_for_status()
+    return len(filas)

@@ -455,6 +455,18 @@ def metricas_resumen():
     return jsonify(ok=True)
 
 
+@app.post("/metricas/limpiar")
+def metricas_limpiar():
+    """Mantenimiento: borra de la hoja las filas de un canal de prueba. ?canal=prueba, header X-Refresh-Key."""
+    if not REFRESH_KEY or request.headers.get("X-Refresh-Key") != REFRESH_KEY:
+        return jsonify(error="no autorizado"), 401
+    try:
+        n = metricas_mod.borrar_canal(request.args.get("canal", "prueba"))
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+    return jsonify(ok=True, borradas=n)
+
+
 @app.get("/metricas")
 def metricas_json():
     if not REFRESH_KEY or request.args.get("k") != REFRESH_KEY:
