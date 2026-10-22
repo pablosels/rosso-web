@@ -4,7 +4,7 @@
 
 - **Quiz**: campaña, conjunto y anuncio ya publicados con la foto de la cortina. Meta la tiene "en revisión"; en cuanto apruebe, corre sola con $100 diarios.
 - **Noche fuerte**: campaña, conjunto y anuncio completos en borrador (radio 5 km, miércoles a sábado de 4 a 9 pm, $750 del 6 al 18 de octubre, imagen semanal, texto y botón "Reservar"). Solo falta "Revisar y publicar" (3 borradores).
-- **Quiz, cambios del 22 de octubre en el sitio** (commit bf43168 en main): el quiz bajó de cinco a tres preguntas (Vista, Oído, Gusto), hay un botón "Reservar mesa" fijo durante todo el quiz y se mide "quiz_inicio" (contestó la primera pregunta). Ese conteo aparecerá en el resumen de los lunes cuando se vuelva a desplegar la API (api/metricas.py ya lo trae). El anuncio Quiz tiene en borrador el texto nuevo ("Tres preguntas...") y la imagen `quiz-cortina-1080x1920.jpg` ya dice "tres preguntas"; falta subirla y publicar.
+- **Quiz, cambios del 22 de octubre en el sitio** (commit bf43168 en main): el quiz bajó de cinco a tres preguntas (Vista, Oído, Gusto), hay un botón "Reservar mesa" fijo durante todo el quiz y se mide "quiz_inicio" (contestó la primera pregunta). Ese conteo aparecerá en el resumen de los lunes cuando se vuelva a desplegar la API (api/metricas.py ya lo trae). El anuncio Quiz ya se publicó con el texto nuevo ("Tres preguntas..."); la imagen `quiz-cortina-1080x1920.jpg` regenerada dice "tres preguntas" por si se quiere reemplazar la del anuncio.
 - **Públicos**: existe "ROSSO" (base), "ROSSO 5 km - copy" y "ROSSO visitantes web 30 dias". Faltan "Interactuó en Instagram 90 días" y "Equipo" (exclusión); no estorban para encender.
 
 Para pegar valor por valor en el Administrador de anuncios (business.facebook.com). Sigue el orden: públicos primero, campañas después. Todo queda en **borrador**; tú publicas al final.
@@ -29,7 +29,7 @@ Antes de empezar, confirma en Configuración › Cuentas:
 - Criterio 1 (costo por visita ≤ $6): las dos pasan de sobra.
 - Criterio 2 (10 de cada 100 buscan mesa): **no pasa**. Resumen de Telegram de la semana: canal ads 1,183 visitas → 6 buscaron mesa (0.5 de cada 100). Los demás canales: directo 28 de cada 100, ig 47, google 31. Meta tampoco atribuye Schedule ni Contact a los anuncios aunque el píxel los registra (478 Schedule y 43 Contact en cuatro semanas). Los dos anuncios compartían el canal "ads"; desde el 22 de octubre Noche fuerte usa `?de=noche` para medirlos por separado.
 - Los eventos diarios del píxel pasaron de ~120 a ~270 desde que arrancaron los anuncios.
-- Renovación del 22 de octubre: conjunto duplicado "Base 25-40 radio 5 km mie-sab 16-21h (22 oct - 31 oct)", $750 del 22 oct al 3 nov, mismo horario y público; anuncio "Noche fuerte - semana 22-24 oct" (JIMENO, PABLO MIYA, UNEG) con imagen `plan/anuncios/noche-fuerte-semana-2026-10-22.jpg`. Queda en borrador hasta que se publique.
+- Renovación del 22 de octubre: conjunto duplicado "Base 25-40 radio 5 km mie-sab 16-21h (22 oct - 31 oct)", $750 del 22 oct al 3 nov, mismo horario y público; anuncio "Noche fuerte - semana 22-24 oct" (JIMENO, PABLO MIYA, UNEG) con imagen `plan/anuncios/noche-fuerte-semana-2026-10-22.jpg`. Publicada el 22 de octubre por la tarde; Meta la revisa.
 
 ---
 
