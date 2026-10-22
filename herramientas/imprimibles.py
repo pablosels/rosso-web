@@ -116,4 +116,8 @@ if __name__ == "__main__":
             [("Hay un bar escondido", 13, True), ("atrás de esta cocina.", 13, True), ("", 6, False),
              ("Cócteles de autor, DJ de miércoles", 9.5, False), ("a sábado y vinilos los domingos.", 9.5, False)],
             "https://rossospeakeasy.com/pavo/", "rossospeakeasy.com", "Pregúntale a tu mesero")
+    tarjeta("ROSSO_tarjeta_quiz.pdf", 9 * cm, 12.5 * cm, "Tres preguntas",
+            [("¿No sabes qué pedir?", 13, True), ("Descubre qué cóctel eres.", 13, True), ("", 6, False),
+             ("Dinos con qué se hace, qué fruta lleva", 9.5, False), ("y cómo se siente, y te decimos cuál eres.", 9.5, False)],
+            "https://rossospeakeasy.com/eres/", "rossospeakeasy.com/eres", "Enséñaselo a tu bartender")
     guia_sello()

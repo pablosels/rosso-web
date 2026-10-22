@@ -651,7 +651,7 @@ def cinta_show(ruta):
     s = proximo_show()
     if not s or ruta == "/" or ruta.startswith("/boletos/"):
         return ""
-    return (f'<a class="cinta" href="{B}/boletos/{e(s["slug"])}/"><span class="cinta-k">{t("En vivo", "Live")}</span>'
+    return (f'<a class="cinta" href="{B}/boletos/{e(s["slug"])}/" data-show-hasta="{e(s["fecha"])}"><span class="cinta-k">{t("En vivo", "Live")}</span>'
             f'<span class="cinta-t"><strong>{e(s["artista"])}</strong> · {e(fecha_corta(s["fecha"]))} · {e(horas_cortas(s))}</span>'
             f'<span class="cinta-cta">{t("Boletos", "Tickets")} →</span></a>')
 
@@ -667,7 +667,7 @@ def cartel_show():
     cupos = {int(x["cupo"]) for x in s["sesiones"]}
     n = min(cupos)
     lugares = t(f" · {n} lugares por sesión", f" · {n} seats per set") if len(cupos) == 1 else ""
-    return f"""<div class="cartel" data-show="{e(s["slug"])}">
+    return f"""<div class="cartel" data-show="{e(s["slug"])}" data-show-hasta="{e(s["fecha"])}">
     <div class="cartel-k">{t("Show en vivo", "Live show")}{(" · " + e(d["gancho"])) if d.get("gancho") else ""}</div>
     <h2 class="cartel-nombre"><a href="{liga}">{e(s["artista"])}</a></h2>
     <p class="cartel-fecha"><span>{e(fecha_larga(s["fecha"]))}</span> <span>{e(horas_cortas(s))}</span></p>

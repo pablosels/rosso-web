@@ -35,5 +35,9 @@
   "resena": {
     "destino": "https://search.google.com/local/writereview?placeid=ChIJeypSuKD_0YUR32-Gkjw8rD8",
     "nombre": "Tarjeta para dejar reseña en Google"
+  },
+  "eres": {
+    "destino": "/quiz/",
+    "nombre": "QR del quiz en el bar (¿qué cóctel eres?)"
   }
 }

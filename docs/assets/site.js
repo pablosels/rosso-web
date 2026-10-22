@@ -768,7 +768,7 @@
     for (var i = 0; i < orden.length; i++) for (var k = 0; k < sesiones.length; k++) if (sesiones[k].estado === orden[i]) return orden[i];
     return "";
   }
-  function nota(x) { return x.estado === "abierta" ? (EN ? x.quedan + " left" : "Quedan " + x.quedan) : (ESTADOS[x.estado] || ""); }
+  function nota(x) { return x.estado === "abierta" ? (EN ? x.quedan + " left" : (x.quedan === 1 ? "Queda 1" : "Quedan " + x.quedan)) : (ESTADOS[x.estado] || ""); }
 
   // ---------------- página del show
   var forma = $("forma-boletos"), datosEl = $("b-datos");
@@ -906,6 +906,9 @@
   }
 
   // ---------------- aviso del show (cinta de arriba, cartel de portada y noches): una consulta por show
+  // la cinta y el cartel salen del build: pasado el show se quitan aunque nadie haya vuelto a armar el sitio
+  var hoyShow = (function () { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); })();
+  [].forEach.call(document.querySelectorAll("[data-show-hasta]"), function (el) { if (hoyShow > el.getAttribute("data-show-hasta")) el.parentNode.removeChild(el); });
   var porShow = {};
   [].forEach.call(document.querySelectorAll("[data-show]"), function (el) {
     var span = el.querySelector("[data-show-cupo]");
