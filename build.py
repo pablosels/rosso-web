@@ -29,6 +29,25 @@ NOCHES = json.loads((CONT / "noches.json").read_text(encoding="utf-8"))
 QUIZ = json.loads((CONT / "quiz.json").read_text(encoding="utf-8"))
 SEO = json.loads((CONT / "seo.json").read_text(encoding="utf-8"))
 CARTA = json.loads((RAIZ / "carta_snapshot.json").read_text(encoding="utf-8"))
+BOLETOS = json.loads((RAIZ / "api" / "boletos.json").read_text(encoding="utf-8"))["shows"]   # el mismo catálogo que usa el API
+
+
+def validar_boletos(shows):
+    """Las reglas básicas del API (api/boletos.py): si el API rechaza el catálogo, el sitio tampoco se publica."""
+    import re
+    hora = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
+    for s in shows:
+        if not re.fullmatch(r"[a-z0-9-]{2,40}", s["slug"]) or s.get("visible", "no") not in ("no", "oculto", "si"):
+            raise ValueError(f"boletos.json: slug o visible inválido en {s.get('slug')!r}")
+        dt.date.fromisoformat(s["fecha"])
+        if s.get("venta_abre") and dt.datetime.fromisoformat(s["venta_abre"]).tzinfo is not None:
+            raise ValueError(f"boletos.json: venta_abre de {s['slug']} va sin zona horaria (hora CDMX)")
+        for x in s["sesiones"]:
+            if not hora.fullmatch(x["hora"]) or not hora.fullmatch(x.get("puertas", x["hora"])) or not 1 <= int(x["cupo"]) <= 50:
+                raise ValueError(f"boletos.json: hora, puertas o cupo inválido en {s['slug']}/{x.get('id')}")
+
+
+validar_boletos(BOLETOS)
 A = SITE["base"]          # raíz de assets (no cambia con el idioma)
 B = SITE["base"]          # prefijo de las ligas internas: "" en español, "/en" en inglés
 L = "es"
@@ -83,7 +102,8 @@ if SITE.get("regalo_activo"):
     NAV.append(("Regalo", "Gift card", "/regalo/"))
 
 
-def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", script=""):
+def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", script="", og_img=None, con_pixel=True):
+    """con_pixel=False en páginas con códigos o PIN: el píxel de Meta manda la URL completa (con ?s=, ?c=) a Meta."""
     descripcion = descripcion or t(SITE["descripcion"], SITE.get("descripcion_en", SITE["descripcion"]))
     canon = URL + B + ruta
     nav = "".join(
@@ -104,7 +124,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
             {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "16:00", "closes": "23:00"}],
     }, ensure_ascii=False)
     pixel = ""
-    if SITE.get("meta_pixel"):
+    if SITE.get("meta_pixel") and con_pixel:
         pid = "".join(ch for ch in str(SITE["meta_pixel"]) if ch.isdigit())
         pixel = ("<script>!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};"
                  "if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;"
@@ -122,7 +142,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
 {alternos}
 <meta property="og:title" content="{e(titulo)}">
 <meta property="og:description" content="{e(descripcion)}">
-<meta property="og:image" content="{URL}/assets/og.png">
+<meta property="og:image" content="{og_img or URL + "/assets/og.png"}">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="{"en_US" if L == "en" else "es_MX"}">
 <meta name="theme-color" content="#28000F">
@@ -266,6 +286,7 @@ def pag_inicio():
   <p class="hero-texto">{t("Un bar que explora el placer a través de los sentidos. Una experiencia íntima e inmersiva que se esconde detrás de la cocina de Pavorosso.", "A bar that explores pleasure through the senses. An intimate, immersive experience hidden behind the kitchen of Pavorosso.")}</p>
   <p class="hero-texto hero-texto-2">{t("Inspirado en el rojo como símbolo del deseo, ROSSO envuelve a sus invitados con atmósfera, música y ritmo.", "Inspired by red as the color of desire, ROSSO wraps its guests in atmosphere, music and rhythm.")}</p>
   <div class="hoy" data-hoy hidden></div>
+  {bloque_shows()}
   <div class="hero-cta">
     <a class="btn" href="{B}/reservar/">{t("Reservar mesa", "Book a table")}</a>
     <a class="btn btn-linea" href="{B}/carta/">{t("Ver la carta", "See the menu")}</a>
@@ -356,6 +377,7 @@ def pag_noches():
   <div data-vinilo hidden></div>
 </section>
 <section class="fechas-sec">
+  {bloque_shows()}
   <div class="etiqueta">{t("Quién toca", "Who's playing")}</div>
   <p class="agenda-vacia nota">{t("La programación de la semana se publica cada lunes. Síguenos en", "The week's lineup is posted every Monday. Follow us at")} <a href="https://www.instagram.com/{SITE['instagram']}/">@{SITE['instagram']}</a>.</p>
   <div data-agenda="21" hidden></div>
@@ -532,7 +554,7 @@ def pag_regalo_gracias():
   <p class="nota mini">{t("Guarda este código: es lo único que se necesita en barra. También te llegó el recibo de Stripe al correo que pusiste.", "Keep this code: it is all you need at the bar. Stripe also emailed the receipt to the address you gave.")}</p>
 </section>
 """
-    return pagina(t("Gracias · ROSSO", "Thank you · ROSSO"), cuerpo, "/regalo/gracias/", t("Tu tarjeta de regalo de ROSSO.", "Your ROSSO gift card."), clase="pag-regalo", extra_head='<meta name="robots" content="noindex">')
+    return pagina(t("Gracias · ROSSO", "Thank you · ROSSO"), cuerpo, "/regalo/gracias/", t("Tu tarjeta de regalo de ROSSO.", "Your ROSSO gift card."), clase="pag-regalo", extra_head='<meta name="robots" content="noindex">', con_pixel=False)
 
 
 def pag_regalo_tarjeta():
@@ -551,7 +573,7 @@ def pag_regalo_tarjeta():
   <p class="tarjeta-acciones"><button class="btn" type="button" onclick="window.print()">{t("Imprimir o guardar en PDF", "Print or save as PDF")}</button></p>
 </section>
 """
-    return pagina(t("Tu tarjeta · ROSSO", "Your card · ROSSO"), cuerpo, "/regalo/tarjeta/", t("Tarjeta de regalo de ROSSO.", "ROSSO gift card."), clase="pag-regalo pag-tarjeta", extra_head='<meta name="robots" content="noindex">')
+    return pagina(t("Tu tarjeta · ROSSO", "Your card · ROSSO"), cuerpo, "/regalo/tarjeta/", t("Tarjeta de regalo de ROSSO.", "ROSSO gift card."), clase="pag-regalo pag-tarjeta", extra_head='<meta name="robots" content="noindex">', con_pixel=False)
 
 
 def pag_regalo_canje():
@@ -577,7 +599,188 @@ def pag_regalo_canje():
   <p class="forma-msg" id="forma-msg" role="status"></p>
 </section>
 """
-    return pagina("Canje · ROSSO", cuerpo, "/regalo/canje/", "Uso interno.", clase="pag-regalo", extra_head='<meta name="robots" content="noindex,nofollow">')
+    return pagina("Canje · ROSSO", cuerpo, "/regalo/canje/", "Uso interno.", clase="pag-regalo", extra_head='<meta name="robots" content="noindex,nofollow">', con_pixel=False)
+
+
+# ---------------------------------------------------------------- boletos de shows
+def hora12(h):
+    hh, mm = (int(x) for x in h.split(":"))
+    return f"{(hh - 1) % 12 + 1}:{mm:02d} {'am' if hh < 12 else 'pm'}"
+
+
+def shows_publicos():
+    """Shows con página: visible "si" u "oculto" (el oculto no sale en portada, noches ni sitemap)."""
+    return [s for s in BOLETOS if s.get("visible") in ("si", "oculto")]
+
+
+def shows_anunciados():
+    hoy = dt.date.today().isoformat()
+    return sorted((s for s in BOLETOS if s.get("visible") == "si" and s["fecha"] >= hoy), key=lambda s: s["fecha"])
+
+
+def bloque_shows():
+    """Aviso de los shows con boleto (portada y noches). Lo que queda lo pinta site.js con el API."""
+    out = ""
+    for s in shows_anunciados():
+        horas = t(" y ", " and ").join(x[L] for x in s["sesiones"])
+        out += (f'<div class="hoy show-aviso" data-show="{e(s["slug"])}"><span class="k">Show</span>'
+                f'<span class="t"><strong>{e(s["artista"])}</strong> · {e(fecha_larga(s["fecha"]))} · {e(horas)} · '
+                f'${s["precio"]:,}<span class="show-cupo" data-show-cupo></span></span>'
+                f'<a class="enlace" href="{B}/boletos/{e(s["slug"])}/">{t("Boletos", "Tickets")}</a></div>')
+    return out
+
+
+def pag_boleto(s):
+    d = s[L]
+    ruta = f"/boletos/{s['slug']}/"
+    sesiones = "".join(
+        f'<label class="monto"><input type="radio" name="sesion" value="{e(x["id"])}"{" checked" if i == 0 else ""}>'
+        f'<span class="monto-cifra">{e(x[L])}</span>'
+        f'<span class="monto-nota" data-cupo="{e(x["id"])}">{t("Puertas", "Doors")} {e(hora12(x["puertas"]))} · {x["cupo"]} {t("lugares", "seats")}</span></label>'
+        for i, x in enumerate(s["sesiones"]))
+    cuantos = "".join(f'<option value="{n}"{" selected" if n == min(2, s["max_por_compra"]) else ""}>{n}</option>'
+                      for n in range(1, s["max_por_compra"] + 1))
+    horas = t(" y ", " and ").join(x[L] for x in s["sesiones"])
+    eventos = [{"@context": "https://schema.org", "@type": "Event", "name": f'{s["artista"]} · {x[L]}',
+                "startDate": f'{s["fecha"]}T{x["hora"]}:00-06:00', "doorTime": f'{s["fecha"]}T{x["puertas"]}:00-06:00',
+                "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+                "eventStatus": "https://schema.org/EventScheduled",
+                "location": {"@type": "BarOrPub", "name": SITE["nombre_largo"],
+                             "address": {"@type": "PostalAddress", "streetAddress": "Puebla 329", "addressLocality": "Ciudad de México",
+                                         "postalCode": "06700", "addressCountry": "MX"}},
+                "performer": {"@type": "Person", "name": s["artista"]},
+                "offers": {"@type": "Offer", "price": str(s["precio"]), "priceCurrency": "MXN", "url": URL + B + ruta,
+                           "availability": "https://schema.org/InStock"}} for x in s["sesiones"]]
+    datos = json.dumps({"slug": s["slug"], "precio": s["precio"], "max": s["max_por_compra"]}, ensure_ascii=False)
+    foto_ = s.get("foto") or ["espacio_vistaconsola", "50% 72%"]
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">{t("Show con boleto", "Ticketed show")} · {e(fecha_larga(s["fecha"]))}</div>
+  <h1>{e(d["titulo"])}</h1>
+  <p class="nota">{e(d["texto"])}</p>
+</section>
+{cine(foto_[0], d["titulo"], "", foto_[1])}
+<section class="regalo" id="boletos">
+  <div class="regalo-pasos">
+    <dl class="ficha">
+      <dt>{t("Cuándo", "When")}</dt><dd>{e(fecha_larga(s["fecha"]))} · {e(horas)}</dd>
+      <dt>{t("Sesiones", "Sets")}</dt><dd>{t(f"{len(s['sesiones'])} sesiones de {s.get('duracion_min', 60)} minutos; cada boleto es para una.", f"{len(s['sesiones'])} sets of {s.get('duracion_min', 60)} minutes; each ticket is for one.")}</dd>
+      <dt>{t("Precio", "Price")}</dt><dd>${s["precio"]:,} {t("por persona, IVA incluido. Sin cargos extra.", "per person, tax included. No extra fees.")}</dd>
+      <dt>{t("Dónde", "Where")}</dt><dd>ROSSO · Puebla 329, Roma Norte</dd>
+    </dl>
+    <ol class="pasos">
+      <li><strong>{t("Eliges sesión y pagas.", "Pick a set and pay.")}</strong> {t("Tarjeta de crédito o débito, Apple Pay o Google Pay, cobro seguro con Stripe.", "Credit or debit card, Apple Pay or Google Pay, secure checkout with Stripe.")}</li>
+      <li><strong>{t("Recibes tu código.", "Get your code.")}</strong> {t("En pantalla al terminar y en el recibo que te llega al correo.", "On screen when you finish and on the receipt we email you.")}</li>
+      <li><strong>{t("En la puerta.", "At the door.")}</strong> {t("Te pedimos tu nombre y tu código. Llega a la hora de puertas: los lugares no se guardan.", "We ask for your name and code. Arrive when doors open: seats are not held.")}</li>
+    </ol>
+    <p class="nota mini">{e(d.get("politica", ""))} <a href="{B}/privacidad/">{t("Aviso de privacidad", "Privacy notice")}</a>.</p>
+  </div>
+  <form class="forma" id="forma-boletos" novalidate>
+    <fieldset class="montos"><legend>{t("Sesión", "Set")}</legend>{sesiones}</fieldset>
+    <div class="fila">
+      <div class="campo"><label for="b-cantidad">{t("Boletos", "Tickets")}</label><select id="b-cantidad" name="cantidad">{cuantos}</select></div>
+      <div class="campo"><label for="b-nombre">{t("Nombre", "Name")} <span>({t("el que buscamos en la puerta", "the one we look up at the door")})</span></label><input id="b-nombre" name="nombre" maxlength="60" autocomplete="name" required></div>
+    </div>
+    <div class="fila">
+      <div class="campo"><label for="b-email">{t("Correo", "Email")} <span>({t("para el recibo", "for the receipt")})</span></label><input id="b-email" name="email" type="email" autocomplete="email" required></div>
+      <div class="campo"><label for="b-whatsapp">WhatsApp <span>({t("opcional, por si cambia algo", "optional, in case anything changes")})</span></label><input id="b-whatsapp" name="whatsapp" type="tel" inputmode="tel" autocomplete="tel" maxlength="20"></div>
+    </div>
+    <div class="miel" aria-hidden="true"><label for="b-empresa">Empresa</label><input id="b-empresa" name="empresa_web" tabindex="-1" autocomplete="off"></div>
+    <button class="btn" type="submit" id="b-pagar">{t("Pagar", "Pay")} ${s["precio"] * min(2, s["max_por_compra"]):,}</button>
+    <p class="forma-msg" id="forma-msg" role="status"></p>
+  </form>
+</section>
+<script id="b-datos" type="application/json">{datos}</script>
+"""
+    robots = '<meta name="robots" content="noindex">' if s.get("visible") != "si" else ""
+    og = (URL + "/assets/fotos/" + s["og"]) if s.get("og") else None
+    return pagina(d["titulo"], cuerpo, ruta, d["descripcion"], clase="pag-regalo pag-boletos", og_img=og,
+                  extra_head=robots + "".join(f'<script type="application/ld+json">{json.dumps(x, ensure_ascii=False)}</script>' for x in eventos))
+
+
+def pag_boletos_gracias():
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">{t("Boletos", "Tickets")}</div>
+  <h1 id="b-titulo">{t("Confirmando tu pago…", "Confirming your payment…")}</h1>
+  <p class="nota" id="b-nota">{t("Un momento, estamos confirmando tus lugares.", "One moment, we are confirming your seats.")}</p>
+</section>
+<section class="regalo-resultado" id="b-resultado" hidden>
+  <div class="codigo-caja">
+    <div class="etiqueta">{t("Tu código", "Your code")}</div>
+    <div class="codigo" id="b-codigo">···-···</div>
+    <div class="codigo-datos" id="b-datos-compra"></div>
+    <div class="codigo-acciones">
+      <button class="btn" type="button" id="b-copiar">{t("Copiar código", "Copy code")}</button>
+      <a class="btn btn-linea" id="b-wa" href="#" rel="noopener">{t("Mandármelo por WhatsApp", "Send it to myself on WhatsApp")}</a>
+    </div>
+  </div>
+  <p class="nota mini">{t("En la puerta te pedimos tu nombre y este código. También viene en el recibo de Stripe que te llegó al correo.", "At the door we ask for your name and this code. It is also on the Stripe receipt we emailed you.")}</p>
+</section>
+"""
+    return pagina(t("Tus boletos · ROSSO", "Your tickets · ROSSO"), cuerpo, "/boletos/gracias/", t("Tus boletos de ROSSO.", "Your ROSSO tickets."),
+                  clase="pag-regalo pag-boletos", con_pixel=False,
+                  extra_head='<meta name="robots" content="noindex"><meta name="referrer" content="no-referrer">')
+
+
+def pag_boletos_puerta():
+    # en orden de fecha; site.js preselecciona el de hoy o el siguiente
+    opciones = "".join(f'<option value="{e(s["slug"])}" data-fecha="{e(s["fecha"])}">{e(s["artista"])} · {e(s["fecha"])}</option>'
+                       for s in sorted(BOLETOS, key=lambda s: s["fecha"]))
+    cuantos = "".join(f'<option value="{n}">{n}</option>' for n in range(1, 7))
+    cuerpo = f"""
+<section class="encabezado">
+  <div class="etiqueta">Puerta · uso interno</div>
+  <h1>Lista de puerta.</h1>
+  <p class="nota">Usa los datos del celular, no el WiFi del bar: si alguien se equivoca de PIN en la barra, todo el WiFi espera 15 minutos.</p>
+</section>
+<section class="canje puerta">
+  <form class="forma" id="forma-puerta" novalidate>
+    <div class="fila">
+      <div class="campo"><label for="p-show">Show</label><select id="p-show" name="show">{opciones}</select></div>
+      <div class="campo"><label for="p-pin">PIN</label><input id="p-pin" name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="12"></div>
+    </div>
+    <button class="btn" type="submit">Abrir lista</button>
+  </form>
+  <div id="p-panel" hidden>
+    <div class="puerta-barra"><span id="p-estado" class="mini"></span><button class="btn btn-linea" type="button" id="p-refrescar">Actualizar</button></div>
+    <div class="campo"><label for="p-buscar">Buscar</label><input id="p-buscar" type="search" placeholder="Nombre, código o últimos 4 del WhatsApp" autocomplete="off" autocapitalize="off"></div>
+    <div id="p-sesiones"></div>
+    <details class="puerta-mas">
+      <summary>Venta en puerta o cortesía</summary>
+      <form class="forma" id="forma-puerta-venta" novalidate>
+        <div class="fila">
+          <div class="campo"><label for="pv-sesion">Sesión</label><select id="pv-sesion" name="sesion"></select></div>
+          <div class="campo"><label for="pv-cantidad">Cuántos</label><select id="pv-cantidad" name="cantidad">{cuantos}</select></div>
+        </div>
+        <div class="fila">
+          <div class="campo"><label for="pv-tipo">Tipo</label><select id="pv-tipo" name="tipo"><option value="puerta">Venta</option><option value="cortesia">Cortesía</option></select></div>
+          <div class="campo"><label for="pv-metodo">Cómo pagó</label><select id="pv-metodo" name="metodo"><option value="efectivo">Efectivo</option><option value="clip">Clip</option><option value="transferencia">Transferencia</option></select></div>
+        </div>
+        <div class="fila">
+          <div class="campo"><label for="pv-nombre">Nombre</label><input id="pv-nombre" name="nombre" maxlength="60" autocomplete="off"></div>
+          <div class="campo"><label for="pv-pidio">Cortesía de parte de <span>(opcional)</span></label><input id="pv-pidio" name="pidio" maxlength="30" autocomplete="off"></div>
+        </div>
+        <label class="casilla"><input type="checkbox" id="pv-entran" name="entran" checked> Ya está aquí: marcar su entrada</label>
+        <button class="btn" type="submit" id="pv-registrar">Registrar y marcar entrada</button>
+      </form>
+    </details>
+    <details class="puerta-mas">
+      <summary>Pablo</summary>
+      <div class="puerta-acciones">
+        <button class="btn btn-linea" type="button" data-accion="pausa" id="p-pausa">Pausar venta en línea</button>
+        <button class="btn btn-linea" type="button" data-accion="lista">Mandar lista a Telegram</button>
+        <button class="btn btn-linea" type="button" data-accion="liquidacion">Mandar liquidación a Telegram</button>
+        <button class="btn btn-linea" type="button" data-accion="cortesias">Tope de cortesías</button>
+      </div>
+      <p class="nota mini">El cupo y los pagos en curso se cambian en cada sesión. La liquidación sólo le llega a Pablo.</p>
+    </details>
+  </div>
+  <p class="forma-msg" id="forma-msg" role="status"></p>
+</section>
+"""
+    return pagina("Puerta · ROSSO", cuerpo, "/boletos/puerta/", "Uso interno.", clase="pag-regalo pag-puerta", con_pixel=False,
+                  extra_head='<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">')
 
 
 # ---------------------------------------------------------------- club ROSSO y privacidad
@@ -617,10 +820,10 @@ def pag_privacidad():
 </section>
 <section class="legal">
   <p><strong>Who is responsible.</strong> {e(SITE.get('razon_social', SITE['nombre_largo']))}, Puebla 329, Roma Norte, 06700, Mexico City, under Mexico's Federal Law on the Protection of Personal Data Held by Private Parties.</p>
-  <p><strong>What we collect.</strong> Name, WhatsApp number and, if you give them, email and birthday (day and month). When you book or request a quote, also the date, time and party size.</p>
+  <p><strong>What we collect.</strong> Name, WhatsApp number and, if you give them, email and birthday (day and month). When you book or request a quote, also the date, time and party size. When you buy a show ticket, your name, email and, if you give it, WhatsApp, so you are on the door list.</p>
   <p><strong>What for.</strong> To tell you about special nights, guest DJs and menu news; to buy you a birthday cocktail; to handle your booking or quote; and to measure where our visits come from, without identifying you. The site uses the Meta pixel to measure the results of our Instagram and Facebook ads; you can limit it in your Meta account's ad settings.</p>
   <p><strong>How often.</strong> No more than two messages a month. Opt out any time by replying "baja" on WhatsApp or writing to hola@rossospeakeasy.com.</p>
-  <p><strong>Who we share it with.</strong> No one. Data is stored on Google services; gift card payments are processed by Stripe and reservations for up to 4 guests go through OpenTable, each under their own terms.</p>
+  <p><strong>Who we share it with.</strong> No one. Data is stored on Google services; gift card and ticket payments are processed by Stripe and reservations for up to 4 guests go through OpenTable, each under their own terms.</p>
   <p><strong>Your rights.</strong> You can access, correct, delete or object to the use of your data, or withdraw consent, by writing to <a href="mailto:hola@rossospeakeasy.com">hola@rossospeakeasy.com</a>. We answer within 20 business days. The Spanish version at <a href="{A}/privacidad/">rossospeakeasy.com/privacidad</a> is the binding one.</p>
   <p class="mini">Last updated: {SITE.get('privacidad_fecha', '05/09/2026')}.</p>
 </section>
@@ -634,10 +837,10 @@ def pag_privacidad():
 </section>
 <section class="legal">
   <p><strong>Responsable.</strong> {e(SITE.get('razon_social', SITE['nombre_largo']))}, con domicilio en Puebla 329, Roma Norte, 06700, Ciudad de México, es responsable del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.</p>
-  <p><strong>Datos que recabamos.</strong> Nombre, número de WhatsApp y, si nos los das, correo electrónico y fecha de cumpleaños (día y mes). Al reservar o cotizar un evento, también la fecha, hora y número de personas.</p>
+  <p><strong>Datos que recabamos.</strong> Nombre, número de WhatsApp y, si nos los das, correo electrónico y fecha de cumpleaños (día y mes). Al reservar o cotizar un evento, también la fecha, hora y número de personas. Al comprar un boleto para un show, tu nombre, correo y, si nos lo das, WhatsApp, para que estés en la lista de la puerta.</p>
   <p><strong>Para qué.</strong> Para avisarte de noches especiales, DJs invitados y novedades de la carta; para invitarte un cóctel en tu cumpleaños; para atender tu reservación o cotización; y para medir de dónde llegan nuestras visitas, sin identificarte. El sitio usa el píxel de Meta para medir el resultado de nuestros anuncios en Instagram y Facebook; puedes limitarlo desde la configuración de anuncios de tu cuenta de Meta. No usamos tus datos para ningún otro fin.</p>
   <p><strong>Cuántos mensajes.</strong> No más de dos al mes. Puedes darte de baja en cualquier momento contestando "baja" al WhatsApp o escribiendo a hola@rossospeakeasy.com.</p>
-  <p><strong>Con quién se comparten.</strong> Con nadie. Los datos se guardan en servicios de Google (hojas de cálculo y nube) y, si compras una tarjeta de regalo, el pago lo procesa Stripe con sus propios términos. Las reservaciones de hasta 4 personas se hacen a través de OpenTable, sujeto a su aviso de privacidad.</p>
+  <p><strong>Con quién se comparten.</strong> Con nadie. Los datos se guardan en servicios de Google (hojas de cálculo y nube) y, si compras una tarjeta de regalo o un boleto, el pago lo procesa Stripe con sus propios términos. Las reservaciones de hasta 4 personas se hacen a través de OpenTable, sujeto a su aviso de privacidad.</p>
   <p><strong>Tus derechos (ARCO).</strong> Puedes acceder, rectificar, cancelar u oponerte al uso de tus datos, o revocar tu consentimiento, escribiendo a <a href="mailto:hola@rossospeakeasy.com">hola@rossospeakeasy.com</a> con tu nombre y el dato que quieres consultar o borrar. Respondemos en un máximo de 20 días hábiles.</p>
   <p><strong>Cambios.</strong> Si este aviso cambia, publicamos la nueva versión en esta misma página.</p>
   <p class="mini">Última actualización: {SITE.get('privacidad_fecha', '05/09/2026')}.</p>
@@ -786,7 +989,7 @@ def pag_sello():
   <p class="nota mini">¿No está en el Club? Que se dé de alta en <a href="{A}/club/">rossospeakeasy.com/club</a> desde su teléfono y vuelve a buscar.</p>
 </section>
 """
-    return pagina("Sello ROSSO · barra", cuerpo, "/club/sello/", "Uso interno.", clase="pag-sello", extra_head='<meta name="robots" content="noindex,nofollow">')
+    return pagina("Sello ROSSO · barra", cuerpo, "/club/sello/", "Uso interno.", clase="pag-sello", extra_head='<meta name="robots" content="noindex,nofollow">', con_pixel=False)
 
 
 # ---------------------------------------------------------------- quiz: ¿qué cóctel eres?
@@ -898,9 +1101,14 @@ def main():
                "quiz/index.html": pag_quiz()}
         for p_ in SEO["paginas"]:
             paginas[f"{p_['slug']}/index.html"] = pag_seo(p_)
+        paginas["boletos/gracias/index.html"] = pag_boletos_gracias()
+        paginas["boletos/puerta/index.html"] = pag_boletos_puerta()
+        for s_ in shows_publicos():
+            paginas[f"boletos/{s_['slug']}/index.html"] = pag_boleto(s_)
         if idioma == "en":
             paginas.pop("regalo/canje/index.html")     # la barra trabaja en español
             paginas.pop("club/sello/index.html")
+            paginas.pop("boletos/puerta/index.html")
         for ruta, contenido in paginas.items():
             destino = DOCS / ("en/" if idioma == "en" else "") / ruta
             destino.parent.mkdir(parents=True, exist_ok=True)
@@ -926,7 +1134,7 @@ def main():
     (DOCS / "carta.json").write_text(json.dumps(CARTA, ensure_ascii=False), encoding="utf-8")
     (DOCS / ".nojekyll").write_text("")
     (DOCS / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {URL}/sitemap.xml\n")
-    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/", "/producciones/", "/club/", "/privacidad/", "/quiz/"] + [f"/{p_['slug']}/" for p_ in SEO["paginas"]] + (["/regalo/"] if SITE.get("regalo_activo") else [])
+    urls = ["/", "/carta/", "/noches/", "/reservar/", "/eventos/", "/producciones/", "/club/", "/privacidad/", "/quiz/"] + [f"/{p_['slug']}/" for p_ in SEO["paginas"]] + (["/regalo/"] if SITE.get("regalo_activo") else []) + [f"/boletos/{s_['slug']}/" for s_ in shows_anunciados()]
     urls = urls + ["/en" + u for u in urls]
     (DOCS / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

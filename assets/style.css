@@ -401,3 +401,33 @@ figure{margin:0}
 /* reservar: aviso cuando regresan porque OpenTable no cargó */
 .reserva-regreso{background:var(--carmin);color:#E5E8E8;padding:1rem 1.1rem;margin:0 0 1rem;font-size:.95rem;line-height:1.45}
 .reserva-regreso .btn{display:block;margin-top:.8rem;background:#E5E8E8;color:#282323}
+
+/* boletos de shows */
+.pag-boletos .montos{grid-template-columns:repeat(2,1fr)}
+.monto.agotado{opacity:.45;cursor:not-allowed}
+.monto.agotado input{cursor:not-allowed}
+.show-aviso{border-color:var(--carmin-claro)}
+.show-aviso .show-cupo{color:var(--ink-suave)}
+.fechas-sec .show-aviso{margin-bottom:2rem}
+.pag-puerta .canje{max-width:760px}
+.puerta-barra{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+.puerta-barra .mini.error{color:var(--carmin-claro)}
+.puerta-sesion{border-top:1px solid var(--linea);padding-top:1.4rem;margin-top:1.4rem;display:grid;gap:.8rem}
+.puerta-sesion h2{font-size:clamp(20px,3vw,28px)}
+.puerta-sesion.actual h2{color:var(--carmin-claro)}
+.puerta-sesion .mini{font-size:14px;color:var(--ink-suave);margin:0}
+.puerta-acciones{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.puerta-acciones .btn{padding:10px 14px}
+.puerta-acciones .btn.entra{background:var(--carmin);border-color:var(--carmin);color:var(--blanco)}
+.puerta-acciones .btn.peligro{color:var(--carmin-claro);border-color:var(--carmin-claro)}
+.sello-item.entro{border-color:var(--carmin-claro);background:rgba(180,5,25,.14)}
+.sello-item.anulada{opacity:.45}
+.sello-item.anulada .n{text-decoration:line-through}
+.fila-mas summary,.puerta-mas summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-suave);padding:.6rem 0}
+.fila-mas[open]{flex-basis:100%}
+.puerta-mas{border-top:1px solid var(--linea);margin-top:1.6rem;padding-top:.6rem}
+.pag-puerta #forma-msg{position:sticky;bottom:0;z-index:5;background:var(--vermouth);border-top:1px solid var(--linea);padding:.8rem 0;margin:0}
+.pag-puerta #forma-msg:empty{padding:0;border:0}
+.casilla{display:flex;gap:.6rem;align-items:center;font-size:15px;color:var(--ink-suave);cursor:pointer}
+.casilla input{width:20px;height:20px;accent-color:var(--carmin)}
+.sello-item.trabajando{opacity:.6}

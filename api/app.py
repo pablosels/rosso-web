@@ -33,6 +33,13 @@ import cotizador
 import pdf_cotizacion
 import correo as correo_mod
 import tarifario as tf
+try:
+    import boletos as boletos_mod   # si el catálogo de boletos trae un error, el resto del API sigue vivo
+    BOLETOS_ERROR = ""
+except Exception as e:   # noqa: BLE001
+    boletos_mod = None
+    BOLETOS_ERROR = repr(e)
+    print("BOLETOS NO CARGÓ:", BOLETOS_ERROR)
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -487,15 +494,31 @@ def regalo_checkout():
 
 @app.post("/stripe/webhook")
 def stripe_webhook():
-    if not regalo_mod.configurado():
+    if not regalo_mod.WEBHOOK_SECRET:
         return jsonify(error="no configurado"), 503
     payload = request.get_data()
     if not regalo_mod.verificar_firma(payload, request.headers.get("Stripe-Signature", "")):
         return jsonify(error="firma inválida"), 400
     evento = json.loads(payload)
-    if evento.get("type") == "checkout.session.completed":
-        ses = evento["data"]["object"]
-        if (ses.get("metadata") or {}).get("tipo") == "regalo":
+    tipo = evento.get("type", "")
+    ses = (evento.get("data") or {}).get("object")
+    if ses is None and tipo.startswith("v1.checkout.session."):   # evento "thin": trae sólo la referencia
+        if not boletos_mod:
+            return jsonify(error="boletos no cargó"), 500
+        tipo, ses = boletos_mod.desdoblar_thin(evento)
+        if ses is None:
+            return jsonify(error="no se pudo leer la sesión en Stripe"), 503   # que Stripe reintente
+    ses = ses or {}
+    que = (ses.get("metadata") or {}).get("tipo")
+    if que == "boleto":
+        if not boletos_mod:
+            return jsonify(error="boletos no cargó"), 500   # que Stripe reintente cuando se arregle
+        boletos_mod.webhook(tipo, ses)
+        return jsonify(ok=True)
+    if tipo == "checkout.session.completed":
+        if que == "regalo":
+            if not regalo_mod.configurado():
+                return jsonify(error="no configurado"), 503
             d = regalo_mod.registrar_pago(ses)
             if d:
                 try:
@@ -1378,6 +1401,18 @@ def eventos():
     except Exception as e:
         print("telegram fallo:", e)
     return jsonify(ok=True, folio=folio)
+
+
+# ------------------------------------------------------------------ boletos de shows (boletos.py)
+if boletos_mod:
+    try:
+        boletos_mod.montar(app, telegram=telegram, freno=freno_pin, origenes=ORIGENES, refresh_key=REFRESH_KEY)
+    except Exception as e:   # noqa: BLE001
+        BOLETOS_ERROR = repr(e)
+        print("BOLETOS NO SE MONTÓ:", BOLETOS_ERROR)
+if BOLETOS_ERROR and os.environ.get("K_SERVICE"):
+    telegram("⚠️ <b>Boletos apagados</b>: el módulo no cargó y la venta y la puerta no funcionan.\n"
+             + BOLETOS_ERROR[:500].replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
 
 
 if __name__ == "__main__":

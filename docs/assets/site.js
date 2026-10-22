@@ -20,10 +20,10 @@
     if (g && g.c && Date.now() - g.t < 30 * 864e5) CANAL = g.c;
   } catch (e) { /* sin storage: canal directo */ }
   window.ROSSO_medir = medir;
-  var PIXEL = { reservar: "Schedule", whatsapp: "Contact", evento: "Lead", produccion_envio: "Lead", club_alta: "CompleteRegistration", quiz: "ViewContent" };
+  var PIXEL = { reservar: "Schedule", whatsapp: "Contact", evento: "Lead", produccion_envio: "Lead", club_alta: "CompleteRegistration", quiz: "ViewContent", boleto_pago: "InitiateCheckout" };
   function medir(tipo) {
     try { if (window.fbq && PIXEL[tipo]) window.fbq("track", PIXEL[tipo], { content_name: tipo }); } catch (e) { /* sin píxel */ }
-    if (tipo === "produccion_envio" || tipo === "club_alta") return;   // solo para el píxel; la métrica propia ya se cuenta aparte
+    if (tipo === "produccion_envio" || tipo === "club_alta" || tipo === "boleto_pago") return;   // solo para el píxel; la métrica propia ya se cuenta aparte
     if (!API) return;
     try {
       var datos = JSON.stringify({ tipo: tipo, canal: CANAL, pagina: location.pathname, movil: /Mobi|Android/i.test(navigator.userAgent), ref: document.referrer });
@@ -35,7 +35,7 @@
     if (!sessionStorage.getItem("rosso_visita")) { sessionStorage.setItem("rosso_visita", "1"); medir("visita"); }
   } catch (e) { medir("visita"); }
   var ruta = location.pathname.replace(/^\/en/, "");
-  ["carta", "noches", "club", "producciones", "regalo"].forEach(function (p) {
+  ["carta", "noches", "club", "producciones", "regalo", "boletos"].forEach(function (p) {
     if (ruta.indexOf("/" + p) === 0) medir(p === "producciones" ? "produccion" : p);
   });
   document.addEventListener("click", function (ev) {
@@ -678,4 +678,422 @@
     }
     logo.src = (document.querySelector(".marca img") || {}).src || "/assets/rosso-wordmark-letras.svg";
   });
+})();
+
+/* boletos de shows: compra, gracias, puerta y aviso en portada */
+(function () {
+  var API = document.body.dataset.api || "";
+  var EN = window.ROSSO_EN, tt = window.ROSSO_tt;
+  function $(id) { return document.getElementById(id); }
+  function pesos(n) { return "$" + Number(n || 0).toLocaleString("es-MX"); }
+  function hora12(h) {
+    if (!h) return "";
+    var p = String(h).split(":"), hh = parseInt(p[0], 10), mm = p[1] || "00";
+    return ((hh + 11) % 12 + 1) + ":" + mm + (hh < 12 ? " am" : " pm");
+  }
+  function fechaLarga(iso) {
+    if (!iso) return "";
+    var p = iso.split("-"), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])), w = d.getUTCDay();
+    var M = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+    var ME = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var D = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"], DE = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    return EN ? DE[w] + ", " + ME[+p[1] - 1] + " " + (+p[2]) : D[w] + " " + (+p[2]) + " de " + M[+p[1] - 1];
+  }
+  function canal() { try { var g = JSON.parse(localStorage.getItem("rosso_canal") || "null"); return g && g.c ? g.c : "directo"; } catch (e) { return "directo"; } }
+  var msg = $("forma-msg");
+  // origen: quién puso el mensaje ("pinta" = el refresco de cupo); el refresco sólo borra los suyos
+  function aviso(t, clase, origen) {
+    if (!msg) return;
+    msg.textContent = t; msg.className = "forma-msg" + (clase ? " " + clase : ""); msg.dataset.origen = origen || "";
+  }
+  function post(ruta, datos) {
+    return fetch(API + ruta, { method: "POST", mode: "cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(datos) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { ok: r.ok, status: r.status, j: j || {} }; }); });
+  }
+  function nuevaOp() {
+    try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) { /* sin crypto */ }
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+  }
+  var ESTADOS = {
+    por_abrir: tt("La venta abre pronto", "Sales open soon"),
+    pausada: tt("Venta en pausa", "Sales paused"),
+    cerrada_en_linea: tt("Venta en línea cerrada; pregunta en la puerta", "Online sales closed; ask at the door"),
+    pasada: tt("Ya pasó", "Over"),
+    agotada: tt("Agotado", "Sold out"),
+    en_pago: tt("Lugares en proceso de pago; vuelve en 20 min", "Seats being paid for; check back in 20 min")
+  };
+  // el API contesta en español; en /en/ se traduce por código
+  function errorCompra(j) {
+    if (!EN || !j || !j.codigo) return (j && j.error) || tt("No se pudo iniciar el pago. Inténtalo otra vez.", "Could not start checkout. Try again.");
+    var T = {
+      correo: "Check your email address.", nombre: "We need your name (it is the one we look up at the door).",
+      cantidad: "You can buy 1 to " + (j.max || 4) + " tickets per purchase.", sesion: "Pick a set.", show: "That show does not exist.",
+      quedan: "Only " + j.quedan + " seats left in this set.", agotada: "This set is sold out.",
+      en_pago: "No seats right now; some payments are in progress, try again in 20 minutes.",
+      tope: "There are other payments in progress from your connection; finish them or wait a few minutes.",
+      carrera: "The last seats were just taken; try fewer tickets or try again in a few minutes.",
+      por_abrir: "Sales have not opened yet.", pausada: "Sales are paused; message us on WhatsApp.",
+      cerrada_en_linea: "Online sales for this set have closed; ask at the door.", pasada: "This set is over.",
+      ocupado: "Many people are buying right now; try again in a few seconds.", inactivo: "Ticket sales are not open yet.",
+      stripe: "Could not start checkout; try again."
+    };
+    return T[j.codigo] || "Could not start checkout. Try again.";
+  }
+  function prioridad(sesiones) {   // el estado que vale la pena decir cuando ninguna sesión está abierta
+    var orden = ["en_pago", "cerrada_en_linea", "pausada", "por_abrir", "agotada", "pasada"];
+    for (var i = 0; i < orden.length; i++) for (var k = 0; k < sesiones.length; k++) if (sesiones[k].estado === orden[i]) return orden[i];
+    return "";
+  }
+  function nota(x) { return x.estado === "abierta" ? (EN ? x.quedan + " left" : "Quedan " + x.quedan) : (ESTADOS[x.estado] || ""); }
+
+  // ---------------- página del show
+  var forma = $("forma-boletos"), datosEl = $("b-datos");
+  if (forma && datosEl) {
+    var D = JSON.parse(datosEl.textContent), pagar = $("b-pagar"), info = null, primera = true;
+    var radio = function () { return forma.querySelector("input[name=sesion]:checked"); };
+    var sel = function () { var r = radio(); return r ? r.value : ""; };
+    var cuantos = function () { return parseInt(forma.cantidad.value, 10) || 1; };
+    var etiqueta = function () {
+      var r = radio(), nombre = r ? r.closest(".monto").querySelector(".monto-cifra").textContent : "";
+      pagar.textContent = tt("Pagar ", "Pay ") + pesos(D.precio * cuantos()) + (nombre ? " · " + nombre : "");
+    };
+    var pinta = function () {
+      if (!info) return;
+      var abiertas = 0, perdida = "";
+      info.sesiones.forEach(function (x) {
+        var n = forma.querySelector("[data-cupo='" + x.id + "']"), r = forma.querySelector("input[name=sesion][value='" + x.id + "']");
+        if (n) n.textContent = tt("Puertas ", "Doors ") + hora12(x.puertas) + " · " + nota(x);
+        var ok = x.estado === "abierta";
+        if (r) {
+          r.disabled = !ok; r.closest(".monto").classList.toggle("agotado", !ok);
+          if (!ok && r.checked) { r.checked = false; if (!primera) perdida = EN ? x.en : x.es; }
+        }
+        if (ok) abiertas++;
+      });
+      if (primera && !sel()) { var otra = forma.querySelector("input[name=sesion]:not(:disabled)"); if (otra) otra.checked = true; }
+      primera = false;
+      etiqueta();
+      pagar.disabled = !abiertas || !sel();
+      if (perdida) aviso(tt("La sesión de las " + perdida + " se llenó o tiene pagos en curso. Elige otra.", "The " + perdida + " set filled up or has payments in progress. Pick another one."), "error");
+      else if (!abiertas) aviso((ESTADOS[prioridad(info.sesiones)] || tt("Ahorita no hay lugares en línea", "No seats online right now")) + ".", "error", "pinta");
+      else if (msg && msg.dataset.origen === "pinta") aviso("");
+    };
+    var cargar = function () {
+      if (!API) return;
+      fetch(API + "/boletos/show/" + encodeURIComponent(D.slug), { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+        if (!j) return;
+        if (!j.activo) { pagar.disabled = true; aviso(tt("La venta en línea abre muy pronto.", "Online sales open very soon."), "error", "pinta"); return; }
+        info = j; pinta();
+      }).catch(function () { /* se queda lo que dice la página */ });
+    };
+    forma.addEventListener("change", function () { etiqueta(); if (info) pagar.disabled = !sel() || !!pagar.dataset.ocupado; });
+    etiqueta(); cargar(); setInterval(function () { if (!document.hidden && !pagar.dataset.ocupado) cargar(); }, 60000);
+    // volvió con "atrás" desde Stripe y el navegador restauró la página tal cual
+    window.addEventListener("pageshow", function (e) { if (e.persisted) { delete pagar.dataset.ocupado; pagar.disabled = false; aviso(""); cargar(); } });
+
+    // regresó de Stripe sin pagar: se sueltan sus lugares
+    var q = new URLSearchParams(location.search), hold = q.get("cancelado");
+    if (hold && API) {
+      history.replaceState(null, "", location.pathname);
+      post("/boletos/cancelar", { show: D.slug, sesion: q.get("f") || "", hold: hold }).then(function (r) {
+        if (r.ok && r.j.pagado && r.j.compra) aviso(tt("Tu pago sí entró. Tu código: ", "Your payment went through. Your code: ") + r.j.compra.codigo, "ok");
+        else if (r.ok) aviso(tt("Cancelaste el pago; tus lugares quedaron libres. Puedes volver a intentarlo.", "You cancelled the payment; your seats were released. You can try again."));
+        cargar();
+      }).catch(function () { /* se liberan solos */ });
+    }
+
+    forma.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      var d = { show: D.slug, sesion: sel(), cantidad: cuantos(), nombre: forma.nombre.value.trim(), email: forma.email.value.trim(),
+                whatsapp: forma.whatsapp.value.trim(), canal: canal(), idioma: EN ? "en" : "es", empresa_web: forma.empresa_web.value };
+      if (!d.sesion) { aviso(tt("Elige la sesión.", "Pick a set."), "error"); return; }
+      if (d.nombre.length < 2 || !d.email) { aviso(tt("Nos faltan tu nombre y tu correo.", "We need your name and email."), "error"); return; }
+      if (!API) { aviso(tt("El pago todavía no está conectado; escríbenos por WhatsApp.", "Payment is not connected yet; message us on WhatsApp."), "error"); return; }
+      pagar.disabled = true; pagar.dataset.ocupado = "1"; aviso(tt("Apartando tus lugares…", "Holding your seats…"));
+      if (window.ROSSO_medir) window.ROSSO_medir("boleto_pago");
+      post("/boletos/checkout", d).then(function (r) {
+        if (r.ok && r.j.url) { location.href = r.j.url; return; }
+        delete pagar.dataset.ocupado;
+        aviso(errorCompra(r.j), "error");
+        pagar.disabled = false; cargar();
+      }).catch(function () {
+        delete pagar.dataset.ocupado;
+        aviso(tt("No se pudo iniciar el pago. Inténtalo otra vez.", "Could not start checkout. Try again."), "error"); pagar.disabled = false;
+      });
+    });
+  }
+
+  // ---------------- gracias: espera el registro del pago
+  var res = $("b-resultado");
+  if (res && API) {
+    var qs = new URLSearchParams(location.search), ref = { b: qs.get("b") || "", f: qs.get("f") || "", s: qs.get("s") || "" };
+    try {
+      if (ref.s) sessionStorage.setItem("rosso_boleto", JSON.stringify(ref));
+      else ref = JSON.parse(sessionStorage.getItem("rosso_boleto") || "null") || ref;
+    } catch (e) { /* sin storage */ }
+    if (qs.get("s")) history.replaceState(null, "", location.pathname);   // que el id del pago no se quede en la barra
+    var titulo = $("b-titulo"), notaG = $("b-nota"), intentos = 0;
+    var waRosso = function (texto) {
+      var a = document.createElement("a");
+      a.href = "https://wa.me/525664357899?text=" + encodeURIComponent(texto);
+      a.textContent = tt("escríbenos por WhatsApp", "message us on WhatsApp");
+      return a;
+    };
+    var pintaG = function (c) {
+      if (c.estado === "anulada") {
+        titulo.textContent = tt("Este boleto fue cancelado.", "This ticket was cancelled.");
+        notaG.textContent = tt("Si crees que es un error, ", "If you think this is a mistake, ");
+        notaG.appendChild(waRosso(tt("Hola, mi boleto " + c.codigo + " aparece cancelado.", "Hi, my ticket " + c.codigo + " shows as cancelled.")));
+        notaG.appendChild(document.createTextNode("."));
+        return;
+      }
+      var ses = (EN ? c.sesion.en : c.sesion.es) || hora12(c.sesion.hora);
+      titulo.textContent = tt("Listo. Nos vemos en ROSSO.", "Done. See you at ROSSO.");
+      notaG.textContent = c.cantidad + (EN ? (c.cantidad === 1 ? " ticket" : " tickets") : (c.cantidad === 1 ? " boleto" : " boletos")) + " · " + c.artista + " · "
+        + fechaLarga(c.fecha) + " · " + ses + " (" + tt("puertas ", "doors ") + hora12(c.sesion.puertas) + ")";
+      $("b-codigo").textContent = c.codigo;
+      $("b-datos-compra").textContent = tt("A nombre de ", "Under the name ") + c.nombre;
+      var texto = tt("Mis boletos para " + c.artista + " en ROSSO: " + fechaLarga(c.fecha) + ", " + ses + ". Código " + c.codigo + " a nombre de " + c.nombre + ". Puebla 329, Roma Norte.",
+                     "My tickets for " + c.artista + " at ROSSO: " + fechaLarga(c.fecha) + ", " + ses + ". Code " + c.codigo + " under " + c.nombre + ". Puebla 329, Roma Norte.");
+      $("b-wa").href = "https://wa.me/?text=" + encodeURIComponent(texto);
+      $("b-copiar").onclick = function () {
+        var b = this; (navigator.clipboard ? navigator.clipboard.writeText(c.codigo) : Promise.reject()).then(function () { b.textContent = tt("Copiado", "Copied"); }, function () { b.textContent = c.codigo; });
+      };
+      res.hidden = false;
+    };
+    var rendirse = function () {
+      titulo.textContent = tt("Tu pago quedó en Stripe.", "Your payment is with Stripe.");
+      notaG.textContent = tt("Tu código tarda un poco más de lo normal. Lo tienes también en el recibo de Stripe; si no te llegó, ", "Your code is taking longer than usual. It is also on your Stripe receipt; if you did not get it, ");
+      notaG.appendChild(waRosso(tt("Hola, compré boletos y no vi mi código. Mi correo es: ", "Hi, I bought tickets and did not see my code. My email is: ")));
+      notaG.appendChild(document.createTextNode("."));
+    };
+    var consulta = function () {
+      intentos++;
+      var v = intentos % 3 === 0 ? "&v=1" : "";   // cada tercer intento el API le pregunta directo a Stripe
+      fetch(API + "/boletos/estado?b=" + encodeURIComponent(ref.b) + "&f=" + encodeURIComponent(ref.f) + "&s=" + encodeURIComponent(ref.s) + v, { mode: "cors" })
+        .then(function (r) { return r.json(); }).then(function (j) {
+          if (j.listo) { pintaG(j.compra); return; }
+          if (intentos < 45) setTimeout(consulta, 2000); else rendirse();
+        }).catch(function () { if (intentos < 45) setTimeout(consulta, 3000); else rendirse(); });
+    };
+    if (ref.s) consulta();
+    else { titulo.textContent = tt("Falta el número de pago.", "Payment reference missing."); notaG.textContent = tt("Abre esta página desde la liga a la que te regresó Stripe.", "Open this page from the link Stripe sent you back to."); }
+  }
+
+  // ---------------- aviso del show en portada y noches
+  if (API) [].forEach.call(document.querySelectorAll("[data-show]"), function (el) {
+    var span = el.querySelector("[data-show-cupo]");
+    if (!span) return;
+    fetch(API + "/boletos/show/" + encodeURIComponent(el.getAttribute("data-show")), { mode: "cors" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j || !j.activo) return;
+      var quedan = 0, abiertas = 0;
+      j.sesiones.forEach(function (x) { if (x.estado === "abierta") { abiertas++; quedan += x.quedan; } });
+      span.textContent = abiertas ? (EN ? " · " + quedan + " seats left" : " · quedan " + quedan + " lugares") : " · " + (ESTADOS[prioridad(j.sesiones)] || tt("Agotado", "Sold out"));
+    }).catch(function () { /* nada */ });
+  });
+
+  // ---------------- puerta
+  var fp = $("forma-puerta");
+  if (fp && API) {
+    var PIN = "", SHOW = "", datos = null, ultima = null, reloj = null, ultimaActual = "";
+    var panel = $("p-panel"), cont = $("p-sesiones"), estadoEl = $("p-estado"), buscar = $("p-buscar"), fv = $("forma-puerta-venta");
+    var abiertos = {};   // los "Más" abiertos, para que el refresco no los cierre
+    var norm = function (s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); };
+    var hhmm = function (d) { return ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2); };
+    // el show de hoy (o el siguiente) ya elegido
+    (function () {
+      var hoy = new Date(), iso = hoy.getFullYear() + "-" + ("0" + (hoy.getMonth() + 1)).slice(-2) + "-" + ("0" + hoy.getDate()).slice(-2);
+      for (var i = 0; i < fp.show.options.length; i++) if ((fp.show.options[i].getAttribute("data-fecha") || "") >= iso) { fp.show.selectedIndex = i; break; }
+    })();
+    var parar = function () { if (reloj) clearInterval(reloj); reloj = null; };
+    var pedirPin = function (texto) { PIN = ""; parar(); fp.hidden = false; fp.pin.value = ""; fp.pin.focus(); aviso(texto, "error"); };
+    var llamar = function (ruta, extra, reintento) {
+      var d = { show: SHOW, pin: PIN };
+      for (var k in (extra || {})) d[k] = extra[k];
+      return post(ruta, d).then(function (r) {
+        if (r.status === 403 || r.status === 429) { pedirPin(r.j.error || "PIN incorrecto"); throw new Error("pin"); }
+        return r;
+      }, function (e) {
+        // sin señal: se reintenta UNA vez con la misma op (el API no la aplica dos veces)
+        if (!reintento) return new Promise(function (ok) { setTimeout(ok, 1500); }).then(function () { return llamar(ruta, extra, true); });
+        throw e;
+      });
+    };
+    var sinRed = function (e) { if (e && e.message === "pin") return; aviso("Sin conexión: no se hizo. Inténtalo otra vez o anótalo en papel.", "error"); };
+    var resultado = function (r, exito) { aviso(r.ok ? exito : (r.j.error || "No se pudo."), r.ok ? "ok" : "error"); cargar(); };
+    var sinConexion = function () { estadoEl.textContent = "SIN CONEXIÓN · lista de las " + (ultima ? hhmm(ultima) : "—") + ". Anota en papel lo que pase."; estadoEl.className = "mini error"; };
+    var cargar = function () {
+      return llamar("/boletos/puerta/lista").then(function (r) {
+        if (!r.ok) { aviso(r.j.error || "No se pudo cargar la lista.", "error"); return; }
+        datos = r.j; ultima = new Date(); pintar();
+      }).catch(function (e) { if (e.message !== "pin") sinConexion(); });
+    };
+    var actual = function () {   // la sesión que está por empezar o en curso
+      if (!datos) return null;
+      var ahora = Date.now(), mejor = datos.sesiones[0];
+      datos.sesiones.forEach(function (x) { if (new Date(x.inicio).getTime() + 50 * 60000 > ahora && new Date(mejor.inicio).getTime() + 50 * 60000 <= ahora) mejor = x; });
+      return mejor;
+    };
+    var boton = function (texto, fn, clase) { var b = document.createElement("button"); b.type = "button"; b.className = "btn btn-linea " + (clase || ""); b.textContent = texto; b.onclick = fn; return b; };
+    var txt = function (tag, clase, texto) { var el = document.createElement(tag); if (clase) el.className = clase; el.textContent = texto; return el; };
+
+    var pintar = function () {
+      if (!datos) return;
+      estadoEl.className = "mini";
+      estadoEl.textContent = datos.artista + " · actualizada " + hhmm(ultima) + (datos.pausada ? " · VENTA EN LÍNEA EN PAUSA" : "") + " · cortesías " + datos.cortesias + "/" + datos.cortesias_max;
+      $("p-pausa").textContent = datos.pausada ? "Reanudar venta en línea" : "Pausar venta en línea";
+      var q = norm(buscar.value).replace(/-/g, ""), cur = actual();
+      // la venta en puerta va a la sesión de ahora, salvo que alguien haya elegido otra desde que empezó la actual
+      if (cur && cur.id !== ultimaActual) { ultimaActual = cur.id; delete fv.dataset.elegida; }
+      fv.sesion.innerHTML = "";
+      datos.sesiones.forEach(function (x) { var o = document.createElement("option"); o.value = x.id; o.textContent = x.etiqueta + " (quedan " + Math.max(0, x.quedan) + ")"; fv.sesion.appendChild(o); });
+      fv.sesion.value = fv.dataset.elegida || (cur && cur.id) || "";
+      cont.innerHTML = "";
+      datos.sesiones.forEach(function (x) {
+        var caja = document.createElement("section"); caja.className = "puerta-sesion" + (cur && cur.id === x.id ? " actual" : "");
+        caja.appendChild(txt("h2", "", x.etiqueta + (cur && cur.id === x.id ? " · ahora" : "")));
+        caja.appendChild(txt("p", "mini", x.vendidos + " de " + x.cupo + " vendidos · entraron " + x.entraron + " · quedan " + Math.max(0, x.quedan)
+          + (x.en_pago ? " · " + x.en_pago + " en pago en línea (vencen " + x.apartados.map(function (a) { return a.vence; }).join(", ") + ")" : "") + " · puertas " + hora12(x.puertas)));
+        var acc = document.createElement("div"); acc.className = "puerta-acciones";
+        if (x.en_pago) acc.appendChild(boton("Soltar pagos en curso", function () {
+          if (!confirm("Esto cancela en Stripe los pagos en línea que estén a medias en " + x.etiqueta + " y libera esos lugares. ¿Seguro?")) return;
+          aviso("Soltando…");
+          llamar("/boletos/puerta/soltar", { sesion: x.id }).then(function (r) {
+            resultado(r, "Soltados: " + (r.j.sueltos || 0) + (r.j.pagados ? " · ya estaban pagados: " + r.j.pagados : "") + (r.j.abiertos ? " · siguen abiertos: " + r.j.abiertos : ""));
+          }).catch(sinRed);
+        }));
+        acc.appendChild(boton("Cambiar cupo", function () {
+          var n = parseInt(prompt("Cupo de " + x.etiqueta + " (ahora " + x.cupo + "):", x.cupo), 10);
+          if (!n || n === x.cupo) return;
+          aviso("Cambiando cupo…");
+          llamar("/boletos/puerta/cupo", { sesion: x.id, cupo: n }).then(function (r) { resultado(r, "Cupo de " + x.etiqueta + ": " + n); }).catch(sinRed);
+        }));
+        caja.appendChild(acc);
+        var lista = document.createElement("div"); lista.className = "sello-lista";
+        var visibles = x.compras.filter(function (c) {
+          if (!q) return true;
+          return norm(c.nombre + " " + c.a_nombre_de).indexOf(q) >= 0 || norm(c.codigo).replace(/-/g, "").indexOf(q) >= 0 || (q.length === 4 && c.wa === q);
+        });
+        if (!visibles.length) lista.appendChild(txt("p", "mini", q ? "Nadie con esa búsqueda en esta sesión." : "Nadie todavía."));
+        visibles.forEach(function (c) { lista.appendChild(fila(x, c)); });
+        caja.appendChild(lista);
+        cont.appendChild(caja);
+      });
+    };
+
+    var fila = function (x, c) {
+      var el = document.createElement("div");
+      el.className = "sello-item" + (c.estado === "anulada" ? " anulada" : c.entraron >= c.cantidad ? " entro" : "");
+      var izq = document.createElement("div");
+      izq.appendChild(txt("div", "n", c.codigo + " · " + (c.a_nombre_de || c.nombre)));
+      izq.appendChild(txt("div", "d", (c.estado === "anulada" ? "ANULADA · " : "") + c.entraron + " de " + c.cantidad + " entraron · "
+        + (c.canal === "web" ? "en línea" : c.canal === "cortesia" ? "cortesía" : c.metodo) + (c.a_nombre_de ? " · compró " + c.nombre : "") + (c.email ? " · " + c.email : "") + (c.wa ? " · …" + c.wa : "")));
+      el.appendChild(izq);
+      if (c.estado === "anulada") return el;
+      var der = document.createElement("div"); der.className = "puerta-acciones";
+      var ocupar = function (on) { [].forEach.call(el.querySelectorAll("button"), function (b) { b.disabled = on; }); el.classList.toggle("trabajando", on); };
+      var entrada = function (n) {
+        ocupar(true);
+        llamar("/boletos/puerta/entrada", { sesion: x.id, codigo: c.codigo, n: n, op: nuevaOp() }).then(function (r) {
+          if (!r.ok) { ocupar(false); aviso(r.j.error || "No se pudo.", "error"); return; }
+          x.entraron += r.j.entraron - c.entraron; c.entraron = r.j.entraron; pintar();
+          aviso(c.codigo + ": " + r.j.entraron + " de " + r.j.cantidad + " adentro.", "ok");
+        }).catch(function (e) { ocupar(false); sinRed(e); });
+      };
+      if (c.entraron < c.cantidad) der.appendChild(boton("Entró 1", function () { entrada(1); }, "entra"));
+      if (c.entraron > 0) der.appendChild(boton("−1", function () { entrada(-1); }));
+      var mas = document.createElement("details"); mas.className = "fila-mas";
+      if (abiertos[c.codigo]) mas.open = true;
+      mas.addEventListener("toggle", function () { if (mas.open) abiertos[c.codigo] = 1; else delete abiertos[c.codigo]; });
+      mas.appendChild(txt("summary", "", "Más"));
+      var cajaMas = document.createElement("div"); cajaMas.className = "puerta-acciones";
+      cajaMas.appendChild(boton("A nombre de…", function () {
+        var n = prompt("¿A nombre de quién queda " + c.codigo + "?", c.a_nombre_de || "");
+        if (n === null) return;
+        aviso("Guardando…");
+        llamar("/boletos/puerta/nombre", { sesion: x.id, codigo: c.codigo, nombre: n }).then(function (r) { resultado(r, "Listo: " + c.codigo + " a nombre de " + n + "."); }).catch(sinRed);
+      }));
+      datos.sesiones.forEach(function (y) {
+        if (y.id === x.id) return;
+        cajaMas.appendChild(boton("Pasar a " + y.etiqueta, function () {
+          if (!confirm("¿Pasar " + c.codigo + " (" + c.nombre + ", " + c.cantidad + ") a " + y.etiqueta + "?")) return;
+          aviso("Moviendo…"); delete abiertos[c.codigo];
+          llamar("/boletos/puerta/mover", { sesion: x.id, destino: y.id, codigo: c.codigo }).then(function (r) { resultado(r, c.codigo + " pasó a " + y.etiqueta + "."); }).catch(sinRed);
+        }));
+      });
+      cajaMas.appendChild(boton("Anular", function () {
+        if (!confirm("¿Anular " + c.codigo + " (" + c.nombre + ", " + c.cantidad + ")? Libera los lugares y deja de contar en la liquidación." + (c.canal === "web" ? " Si es por reembolso, el reembolso se hace en Stripe." : ""))) return;
+        var motivo = prompt("Motivo (opcional). Cancelar = no anular:", "");
+        if (motivo === null) return;
+        aviso("Anulando…"); delete abiertos[c.codigo];
+        llamar("/boletos/puerta/anular", { sesion: x.id, codigo: c.codigo, motivo: motivo, op: nuevaOp() }).then(function (r) { resultado(r, c.codigo + " anulado."); }).catch(sinRed);
+      }, "peligro"));
+      mas.appendChild(cajaMas);
+      der.appendChild(mas);
+      el.appendChild(der);
+      return el;
+    };
+
+    fp.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      PIN = fp.pin.value.trim(); SHOW = fp.show.value;
+      if (!PIN) { aviso("Pon el PIN.", "error"); return; }
+      aviso("Abriendo…");
+      llamar("/boletos/puerta/lista").then(function (r) {
+        if (!r.ok) { aviso(r.j.error || "No se pudo abrir la lista.", "error"); return; }
+        fp.pin.value = ""; fp.hidden = true; panel.hidden = false; aviso("");
+        datos = r.j; ultima = new Date(); pintar();
+        parar(); reloj = setInterval(function () { if (!document.hidden && PIN) cargar(); }, 30000);
+      }).catch(function (e) { if (e.message !== "pin") aviso("Sin conexión con el API. Usa datos del celular.", "error"); });
+    });
+    $("p-refrescar").onclick = function () { aviso("Actualizando…"); cargar().then(function () { if (msg.textContent === "Actualizando…") aviso(""); }); };
+    buscar.addEventListener("input", pintar);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden && PIN) cargar(); });
+
+    var registrar = $("pv-registrar"), entran = $("pv-entran");
+    var textoRegistrar = function () { registrar.textContent = entran.checked ? "Registrar y marcar entrada" : "Registrar (todavía no llega)"; };
+    var porDefecto = function () {   // cortesías y transferencias se registran antes de que lleguen
+      fv.metodo.disabled = fv.tipo.value === "cortesia";
+      entran.checked = fv.tipo.value === "puerta" && fv.metodo.value !== "transferencia";
+      textoRegistrar();
+    };
+    fv.tipo.addEventListener("change", porDefecto);
+    fv.metodo.addEventListener("change", porDefecto);
+    entran.addEventListener("change", textoRegistrar);
+    fv.sesion.addEventListener("change", function () { fv.dataset.elegida = fv.sesion.value; });
+    fv.addEventListener("submit", function (ev) {
+      ev.preventDefault();
+      if (registrar.disabled) return;
+      var d = { sesion: fv.sesion.value, cantidad: parseInt(fv.cantidad.value, 10), tipo: fv.tipo.value, metodo: fv.metodo.value,
+                nombre: fv.nombre.value.trim(), pidio: fv.pidio.value.trim(), entran: entran.checked, op: nuevaOp() };
+      var desc = d.cantidad + (d.tipo === "cortesia" ? " cortesía(s)" : " en " + d.metodo + " (" + pesos(datos.precio * d.cantidad) + ")");
+      if (!confirm("¿Registrar " + desc + " para " + (fv.sesion.options[fv.sesion.selectedIndex] || {}).text + "?" + (d.entran ? " Quedan marcados como adentro." : ""))) return;
+      registrar.disabled = true; aviso("Registrando…");
+      llamar("/boletos/puerta/venta", d).then(function (r) {
+        registrar.disabled = false;
+        if (!r.ok) { aviso(r.j.error || "No se pudo.", "error"); return; }
+        aviso("Registrado: " + r.j.codigo + " · " + desc + ".", "ok"); fv.nombre.value = ""; fv.pidio.value = ""; cargar();
+      }).catch(function (e) { registrar.disabled = false; sinRed(e); });
+    });
+
+    [].forEach.call(document.querySelectorAll(".pag-puerta [data-accion]"), function (b) {
+      b.addEventListener("click", function () {
+        var a = b.getAttribute("data-accion");
+        if (a === "pausa") {
+          var pausar = !datos.pausada;
+          if (!confirm(pausar ? "¿Pausar la venta en línea? La página dirá que está en pausa." : "¿Reanudar la venta en línea?")) return;
+          aviso(pausar ? "Pausando…" : "Reanudando…");
+          llamar("/boletos/puerta/pausa", { pausada: pausar }).then(function (r) { resultado(r, pausar ? "Venta en pausa." : "Venta reanudada."); }).catch(sinRed);
+        } else if (a === "cortesias") {
+          var n = parseInt(prompt("Tope de cortesías del show (ahora " + datos.cortesias_max + "):", datos.cortesias_max), 10);
+          if (isNaN(n)) return;
+          aviso("Cambiando tope…");
+          llamar("/boletos/puerta/cupo", { campo: "cortesias_max", cupo: n }).then(function (r) { resultado(r, "Tope de cortesías: " + n); }).catch(sinRed);
+        } else {
+          aviso("Mandando…");
+          llamar("/boletos/puerta/telegram", { que: a }).then(function (r) { aviso(r.ok ? "Mandado al Telegram de Pablo." : (r.j.error || "No se pudo."), r.ok ? "ok" : "error"); }).catch(sinRed);
+        }
+      });
+    });
+  }
 })();

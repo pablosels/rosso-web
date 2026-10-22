@@ -15,7 +15,7 @@ import google.auth
 from google.auth.transport.requests import AuthorizedSession
 
 SHEET_ID = os.environ.get("METRICAS_SHEET_ID", "")
-TIPOS = {"visita", "reservar", "whatsapp", "evento", "carta", "opentable", "noches", "club", "produccion", "regalo", "spotify", "instagram", "quiz"}
+TIPOS = {"visita", "reservar", "whatsapp", "evento", "carta", "opentable", "noches", "club", "produccion", "regalo", "spotify", "instagram", "quiz", "boletos"}
 CANAL_RE = re.compile(r"^[a-z0-9_-]{1,24}$")
 
 _sesion = None

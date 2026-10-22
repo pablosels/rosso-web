@@ -107,25 +107,84 @@ aunque venda poco. Cambiarlo requiere redeploy (va dentro de la imagen).
 
 ## Tarjetas de regalo (Stripe)
 
-La API ya sabe cobrar; solo faltan dos secretos de Stripe. Pablo, en el panel de Stripe (cuenta ROSSO SPEAKEASY, modo real):
+La API ya sabe cobrar; solo faltan dos secretos de Stripe (los mismos sirven para los boletos, ver abajo). Pablo, en el panel de Stripe (cuenta ROSSO SPEAKEASY, modo real; en inglés: Developers > API keys y Developers > Webhooks, o directo dashboard.stripe.com/apikeys y dashboard.stripe.com/webhooks):
 
-1. **Llave restringida**: Desarrolladores > Claves de API > "Crear clave restringida". Nombre `rosso-web`. Permisos: *Checkout Sessions* = Escritura; todo lo demás Ninguno. Copiar la clave `rk_live_...`.
-2. **Webhook**: Desarrolladores > Webhooks > "Agregar endpoint". URL `https://rosso-web-api-703407013960.us-central1.run.app/stripe/webhook`. Evento: `checkout.session.completed`. Copiar el "Secreto de firma" `whsec_...`.
+1. **Llave restringida**: "Create restricted key". Nombre `rosso-web`. Permisos: *Checkout Sessions* = Write; todo lo demás None. Copiar la clave `rk_live_...`.
+2. **Webhook**: "Add destination". Evento: `checkout.session.completed`. Formato del payload: **Snapshot** (no "Thin": los eventos thin no traen la sesión). Tipo: Webhook endpoint. URL `https://rosso-web-api-703407013960.us-central1.run.app/stripe/webhook`. Copiar el "Signing secret" `whsec_...`.
 
-Luego, en PowerShell (pegar cada valor cuando lo pida):
+Luego, en PowerShell, el script que pide cada valor en una ventana (no en la terminal), prueba la clave creando y expirando una sesión de $10 que nadie paga, y la guarda:
 
 ```powershell
-Read-Host "rk_live" | Set-Content -NoNewline $env:TEMP\rk.txt; gcloud secrets create stripe-key-rosso --data-file=$env:TEMP\rk.txt --project motor-facturas; Remove-Item $env:TEMP\rk.txt
-Read-Host "whsec" | Set-Content -NoNewline $env:TEMP\wh.txt; gcloud secrets create stripe-webhook-rosso --data-file=$env:TEMP\wh.txt --project motor-facturas; Remove-Item $env:TEMP\wh.txt
-gcloud secrets add-iam-policy-binding stripe-key-rosso --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project motor-facturas
-gcloud secrets add-iam-policy-binding stripe-webhook-rosso --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/secretmanager.secretAccessor --project motor-facturas
-gcloud run services update rosso-web-api --region us-central1 --project motor-facturas --update-secrets=STRIPE_KEY=stripe-key-rosso:latest,STRIPE_WEBHOOK_SECRET=stripe-webhook-rosso:latest
+powershell -ExecutionPolicy Bypass -File "C:\Users\minis\Downloads\rosso-web\api\stripe-secretos.ps1"
 ```
+
+Todas las llamadas a Stripe de los boletos van con `Stripe-Version: 2026-09-30.endive` (variable `STRIPE_VERSION` para cambiarla). En esa versión `payment_method_types` ya no existe en Checkout: da 400. Por eso boletos.py usa `allowed_payment_method_types[0]=card`. regalo.py no fija versión ni método (usa los del panel).
 
 Después: `content/site.json` → `"regalo_activo": true`, `python build.py`, commit y push (aparece "Regalo" en el menú).
 
 Variables ya puestas: `REGALO_SHEET_ID` (hoja "Tarjetas ROSSO", 1op60hWGzKriYFXSf6-ZCr5x-aFx6gDo86dbDCotUxJM) y `CANJE_PIN` (secreto `rosso-canje-pin`, ver abajo).
 Páginas: `/regalo/` compra · `/regalo/gracias/?s=cs_...` código · `/regalo/tarjeta/?c=ROSSO-XXXX-XXXX` tarjeta imprimible · `/regalo/canje/` barra (PIN).
+
+## Boletos de shows (`boletos.py`, 21-oct-2026)
+
+Venta de boletos con lugar por sesión. Primer show: Carla Gibert, 25-nov-2026. Páginas: `/boletos/<slug>/` (compra, es y en),
+`/boletos/gracias/` (código) y `/boletos/puerta/` (lista de puerta con PIN, sólo español).
+
+- **Catálogo**: `api/boletos.json` (público). Lo leen el API y `build.py`. `visible`: `no` (nada), `oculto` (se vende y existe la
+  página, sin ligas ni sitemap: para el ensayo), `si` (página, aviso en portada y en /noches/, sitemap). `venta_abre` (hora CDMX) y
+  `cierra_min_antes` (minutos antes de cada sesión en que cierra la venta en línea).
+- **Trato con la artista**: `api/boletos_tratos.json`. Está en `.gitignore` (el repo es público) pero NO en `.gcloudignore`: viaja en
+  la imagen. Si falta, la liquidación lo dice y no calcula el pago a la artista.
+- **Libro de cupo**: un JSON por sesión en `gs://$BOLETOS_BUCKET/boletos/<slug>/<sesion>.json`, escrito con `if_generation_match`
+  (atómico entre las dos instancias). Bucket propio, con versiones y SIN regla de borrado: `motor-facturas-respaldos` borra todo a los 60 días.
+- Comprar: primero se crea la sesión de Stripe y luego, en una sola escritura, el apartado (20 min). Al vencer, el apartado se resuelve
+  preguntándole a Stripe: expirada se suelta, pagada se registra. El pago lo registra el webhook o, si se atrasa, la página de gracias.
+
+### Una sola vez
+
+```powershell
+gcloud storage buckets create gs://rosso-boletos-motor-facturas --project motor-facturas --location us-central1 --uniform-bucket-level-access
+gcloud storage buckets update gs://rosso-boletos-motor-facturas --versioning
+gcloud storage buckets add-iam-policy-binding gs://rosso-boletos-motor-facturas --member=serviceAccount:motor-facturas-job@motor-facturas.iam.gserviceaccount.com --role=roles/storage.objectAdmin
+cd C:\Users\minis\Downloads\rosso-web\api
+gcloud run deploy rosso-web-api --source . --region us-central1 --project motor-facturas
+gcloud run services update rosso-web-api --region us-central1 --project motor-facturas --update-env-vars BOLETOS_BUCKET=rosso-boletos-motor-facturas
+```
+
+Opcionales: `PUERTA_PIN` (secreto propio para la puerta, 6 dígitos o más; el PIN de barra también sirve, y sólo el de barra
+borra los fallos del freno) y `BOLETOS_SHEET_ID` (una hoja aparte,
+"Boletos ROSSO", compartida como Editor con la cuenta de servicio: espejo de ventas, nunca la verdad). Siempre `--update-*`, nunca `--set-*`.
+
+**Antes de desplegar**, la otra sesión despliega desde la misma carpeta: comparar con lo vivo
+(`gcloud storage ls -l gs://run-sources-motor-facturas-us-central1/services/rosso-web-api/`, el zip más nuevo contra `api/`).
+
+### Publicar un show
+
+1. `boletos.json`: datos del show con `visible: "oculto"`. `boletos_tratos.json`: el trato. Desplegar el API.
+2. `python build.py`, commit SÓLO de las rutas tocadas (nunca `git add -A`: hay trabajo ajeno sin commit) y push.
+3. **Ensayo**: comprar un boleto real en la página oculta, ver el Telegram, el código, la lista de puerta, marcar entrada, mandar la
+   liquidación; reembolsarlo en Stripe y anularlo en la puerta.
+4. `visible: "si"` (y `venta_abre` si se quiere a una hora), desplegar el API, build y push.
+
+### La noche del show
+
+- Celular de puerta con datos móviles (no el WiFi de la barra: 10 PIN malos en la barra bloquean esa IP 15 min).
+- Antes de abrir puertas: "Mandar lista a Telegram" (respaldo si se cae la conexión).
+- Cero deploys desde el día anterior a las 18:00 hasta el día siguiente. Anotar la revisión buena; si algo se rompe:
+  `gcloud run services update-traffic rosso-web-api --region us-central1 --project motor-facturas --to-revisions=<REVISION>=100`.
+- OpenTable no sabe del show: bloquear esa noche a mano en GuestCenter.
+- Al final: "Mandar liquidación a Telegram" (texto + CSV, sólo le llega a Pablo). Neto = (bruto − comisión acordada) / 1.16; a la
+  artista fijo + porcentaje del neto, bruto antes de la retención de ISR.
+
+### Reembolsos y cambios
+
+Un reembolso se hace en Stripe y el código se **anula** en la puerta ("Más" > "Anular"): libera el lugar y deja de contar. Cambios
+de sesión ("Pasar a…"), a nombre de otra persona ("A nombre de…") y ventas en puerta o cortesías, desde la misma página.
+
+**Pago huérfano** (Telegram "Pago de boleto SIN registrar": el show o la sesión ya no estaban en el catálogo): NO se mete como
+venta en puerta (saldría con otro código y otra comisión). Se registra con su mismo código:
+`POST /boletos/huerfana` con header `X-Refresh-Key` y body `{"cs": "cs_live_…", "show": "<slug>", "sesion": "<id>"}`.
+Los errores pasajeros (GCS, red) no generan huérfanas: el webhook responde 500 y Stripe reintenta.
 
 ## PIN de barra (`CANJE_PIN`)
 

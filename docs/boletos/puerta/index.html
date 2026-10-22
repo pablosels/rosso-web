@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puerta · ROSSO</title>
+<meta name="description" content="Uso interno.">
+<link rel="canonical" href="https://rossospeakeasy.com/boletos/puerta/">
+<link rel="alternate" hreflang="es" href="https://rossospeakeasy.com/boletos/puerta/">
+<link rel="alternate" hreflang="en" href="https://rossospeakeasy.com/en/boletos/puerta/">
+<link rel="alternate" hreflang="x-default" href="https://rossospeakeasy.com/boletos/puerta/">
+<meta property="og:title" content="Puerta · ROSSO">
+<meta property="og:description" content="Uso interno.">
+<meta property="og:image" content="https://rossospeakeasy.com/assets/og.png">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_MX">
+<meta name="theme-color" content="#28000F">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;900&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/assets/style.css?v=0ead3f23">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BarOrPub", "name": "Rosso Speakeasy", "url": "https://rossospeakeasy.com", "telephone": "+525664357899", "servesCuisine": "Cocktails", "address": {"@type": "PostalAddress", "streetAddress": "Puebla 329", "addressLocality": "Ciudad de México", "addressRegion": "CDMX", "postalCode": "06700", "addressCountry": "MX"}, "acceptsReservations": "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico", "menu": "https://rossospeakeasy.com/carta/", "sameAs": ["https://www.instagram.com/rosso.speakeasy/", "https://www.opentable.com.mx/r/rosso-speakeasy-ciudad-de-mexico"], "openingHoursSpecification": [{"@type": "OpeningHoursSpecification", "dayOfWeek": ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], "opens": "18:00", "closes": "02:00"}, {"@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "16:00", "closes": "23:00"}]}</script>
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+
+</head>
+<body class="pag-regalo pag-puerta" data-api="https://rosso-web-api-703407013960.us-central1.run.app" data-base="">
+<a class="salto" href="#contenido">Ir al contenido</a>
+<header class="cabecera">
+  <a class="marca" href="/" aria-label="ROSSO, inicio"><img src="/assets/rosso-wordmark-letras.svg" alt="ROSSO" width="1280" height="252"></a>
+  <button class="menu-btn" aria-expanded="false" aria-controls="nav">Menú</button>
+  <nav id="nav" class="nav"><a href="/carta/">Carta</a><a href="/noches/">Noches</a><a href="/eventos/">Eventos</a><a href="/producciones/">Locación</a><a href="/reservar/">Reservar</a><a class="idioma" href="/en/boletos/puerta/" hreflang="en" lang="en">EN</a></nav>
+</header>
+<main id="contenido">
+
+<section class="encabezado">
+  <div class="etiqueta">Puerta · uso interno</div>
+  <h1>Lista de puerta.</h1>
+  <p class="nota">Usa los datos del celular, no el WiFi del bar: si alguien se equivoca de PIN en la barra, todo el WiFi espera 15 minutos.</p>
+</section>
+<section class="canje puerta">
+  <form class="forma" id="forma-puerta" novalidate>
+    <div class="fila">
+      <div class="campo"><label for="p-show">Show</label><select id="p-show" name="show"><option value="carla" data-fecha="2026-11-15">CARLA · 2026-11-15</option></select></div>
+      <div class="campo"><label for="p-pin">PIN</label><input id="p-pin" name="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="12"></div>
+    </div>
+    <button class="btn" type="submit">Abrir lista</button>
+  </form>
+  <div id="p-panel" hidden>
+    <div class="puerta-barra"><span id="p-estado" class="mini"></span><button class="btn btn-linea" type="button" id="p-refrescar">Actualizar</button></div>
+    <div class="campo"><label for="p-buscar">Buscar</label><input id="p-buscar" type="search" placeholder="Nombre, código o últimos 4 del WhatsApp" autocomplete="off" autocapitalize="off"></div>
+    <div id="p-sesiones"></div>
+    <details class="puerta-mas">
+      <summary>Venta en puerta o cortesía</summary>
+      <form class="forma" id="forma-puerta-venta" novalidate>
+        <div class="fila">
+          <div class="campo"><label for="pv-sesion">Sesión</label><select id="pv-sesion" name="sesion"></select></div>
+          <div class="campo"><label for="pv-cantidad">Cuántos</label><select id="pv-cantidad" name="cantidad"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></select></div>
+        </div>
+        <div class="fila">
+          <div class="campo"><label for="pv-tipo">Tipo</label><select id="pv-tipo" name="tipo"><option value="puerta">Venta</option><option value="cortesia">Cortesía</option></select></div>
+          <div class="campo"><label for="pv-metodo">Cómo pagó</label><select id="pv-metodo" name="metodo"><option value="efectivo">Efectivo</option><option value="clip">Clip</option><option value="transferencia">Transferencia</option></select></div>
+        </div>
+        <div class="fila">
+          <div class="campo"><label for="pv-nombre">Nombre</label><input id="pv-nombre" name="nombre" maxlength="60" autocomplete="off"></div>
+          <div class="campo"><label for="pv-pidio">Cortesía de parte de <span>(opcional)</span></label><input id="pv-pidio" name="pidio" maxlength="30" autocomplete="off"></div>
+        </div>
+        <label class="casilla"><input type="checkbox" id="pv-entran" name="entran" checked> Ya está aquí: marcar su entrada</label>
+        <button class="btn" type="submit" id="pv-registrar">Registrar y marcar entrada</button>
+      </form>
+    </details>
+    <details class="puerta-mas">
+      <summary>Pablo</summary>
+      <div class="puerta-acciones">
+        <button class="btn btn-linea" type="button" data-accion="pausa" id="p-pausa">Pausar venta en línea</button>
+        <button class="btn btn-linea" type="button" data-accion="lista">Mandar lista a Telegram</button>
+        <button class="btn btn-linea" type="button" data-accion="liquidacion">Mandar liquidación a Telegram</button>
+        <button class="btn btn-linea" type="button" data-accion="cortesias">Tope de cortesías</button>
+      </div>
+      <p class="nota mini">El cupo y los pagos en curso se cambian en cada sesión. La liquidación sólo le llega a Pablo.</p>
+    </details>
+  </div>
+  <p class="forma-msg" id="forma-msg" role="status"></p>
+</section>
+
+</main>
+<footer class="pie">
+  <div class="pie-col">
+    <div class="etiqueta">Dónde</div>
+    <p><a href="https://maps.google.com/?q=Rosso+Speakeasy+Puebla+329+Roma+Norte+CDMX">Puebla 329, Roma Norte<br>Ciudad de México, 06700</a></p>
+  </div>
+  <div class="pie-col">
+    <div class="etiqueta">Cuándo</div>
+    <p>Martes a sábado · 6:00 pm – 2:00 am<br>Domingo · 4:00 pm – 11:00 pm<br>Lunes · cerrado</p>
+  </div>
+  <div class="pie-col">
+    <div class="etiqueta">Contacto</div>
+    <p><a href="https://wa.me/525664357899?text=Hola%2C%20ROSSO.">WhatsApp +52 56 6435 7899</a><br><a href="https://www.instagram.com/rosso.speakeasy/">@rosso.speakeasy</a></p>
+  </div>
+  <div class="pie-col pie-legal">
+    <p>Reservaciones hasta 4 personas por <a href="/reservar/">OpenTable</a>. Grupos y eventos por WhatsApp.</p>
+    <p class="mini">© 2026 Rosso Speakeasy · Puebla 329, Roma Norte, CDMX · <a href="/speakeasy-roma-norte/">Speakeasy Roma Norte</a> · <a href="/bar-con-dj-cdmx/">Bar con DJ</a> · <a href="/bar-de-vinilos-cdmx/">Vinilos</a> · <a href="/producciones/">Locación</a> · <a href="/club/">Club ROSSO</a> · <a href="/privacidad/">Privacidad</a></p>
+  </div>
+</footer>
+<script src="/assets/site.js?v=f1355bd0" defer></script>
+
+</body>
+</html>
