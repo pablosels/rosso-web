@@ -18,6 +18,20 @@ Antes de empezar, confirma en Configuración › Cuentas:
 
 ---
 
+## Corte del jueves 22 de octubre (datos de Meta, 6 al 21 de octubre)
+
+| Campaña | Estado | Visitas al sitio | Costo por visita | Gasto | Impresiones | Alcance |
+|---|---|---|---|---|---|---|
+| Quiz | Activa | 1,310 | $1.20 | $1,571 | 77,097 | 42,484 |
+| Noche fuerte | Terminó el 18 oct | 507 | $1.48 | $748 | 33,850 | 23,243 |
+
+- Criterio 1 (costo por visita ≤ $6): las dos pasan de sobra.
+- Criterio 2 (10 de cada 100 buscan mesa): Meta no atribuye ningún evento Schedule ni Contact a los anuncios, aunque el píxel sí los registra (478 Schedule y 43 Contact en cuatro semanas, todos los canales). Mide este criterio con el resumen de los lunes en Telegram (canal "ads"), no con Meta.
+- Los eventos diarios del píxel pasaron de ~120 a ~270 desde que arrancaron los anuncios.
+- Noche fuerte no corre esta semana: terminó con su fecha de fin. Para renovarla: duplicar el conjunto con fechas nuevas, correr el generador y subir la imagen.
+
+---
+
 ## Paso 3 · Públicos
 
 Administrador de anuncios › Públicos › Crear público.
