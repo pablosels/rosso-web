@@ -26,7 +26,7 @@ Antes de empezar, confirma en Configuración › Cuentas:
 | Noche fuerte | Terminó el 18 oct | 507 | $1.48 | $748 | 33,850 | 23,243 |
 
 - Criterio 1 (costo por visita ≤ $6): las dos pasan de sobra.
-- Criterio 2 (10 de cada 100 buscan mesa): Meta no atribuye ningún evento Schedule ni Contact a los anuncios, aunque el píxel sí los registra (478 Schedule y 43 Contact en cuatro semanas, todos los canales). Mide este criterio con el resumen de los lunes en Telegram (canal "ads"), no con Meta.
+- Criterio 2 (10 de cada 100 buscan mesa): **no pasa**. Resumen de Telegram de la semana: canal ads 1,183 visitas → 6 buscaron mesa (0.5 de cada 100). Los demás canales: directo 28 de cada 100, ig 47, google 31. Meta tampoco atribuye Schedule ni Contact a los anuncios aunque el píxel los registra (478 Schedule y 43 Contact en cuatro semanas). Los dos anuncios compartían el canal "ads"; desde el 22 de octubre Noche fuerte usa `?de=noche` para medirlos por separado.
 - Los eventos diarios del píxel pasaron de ~120 a ~270 desde que arrancaron los anuncios.
 - Renovación del 22 de octubre: conjunto duplicado "Base 25-40 radio 5 km mie-sab 16-21h (22 oct - 31 oct)", $750 del 22 oct al 3 nov, mismo horario y público; anuncio "Noche fuerte - semana 22-24 oct" (JIMENO, PABLO MIYA, UNEG) con imagen `plan/anuncios/noche-fuerte-semana-2026-10-22.jpg`. Queda en borrador hasta que se publique.
 
@@ -157,7 +157,7 @@ Un solo anuncio con las noches de la semana (miércoles a sábado). Si fuera un 
 | Formato | Una sola imagen |
 | Pieza | `plan/anuncios/noche-fuerte-semana-AAAA-MM-DD.jpg` (1080x1920). Se genera cada lunes con `python herramientas/imagen_noche_fuerte.py` (lee la agenda de la API: miércoles a sábado con DJ, género y hora). |
 | Texto principal | Miércoles [DJ], jueves [DJ], viernes [DJ] y sábado [DJ] en ROSSO. Puebla 329, Roma Norte. Reserva tu mesa. |
-| Sitio web (URL) | `https://rossospeakeasy.com/noches/?de=ads` |
+| Sitio web (URL) | `https://rossospeakeasy.com/noches/?de=noche` (canal propio; Quiz se queda con `ads`) |
 | Llamada a la acción | Reservar |
 
 Alternativa por noche, si algún día se quiere empujar a un solo DJ: imagen `plan/anuncios/noche-fuerte-AAAA-MM-DD-slug.jpg` y liga `https://rossospeakeasy.com/dj/?n=SLUG&de=ads` (el parámetro de la página del DJ es `n`, no `dj`).
