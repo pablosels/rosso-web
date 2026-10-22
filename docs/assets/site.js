@@ -562,19 +562,32 @@
     if (i < D.preguntas.length) pregunta(); else resultado(mejor());
   });
   function mejor() {
-    var BASES = { agave: 1, gin: 1, ron: 1, whiskey: 1, vermut: 1 };
+    // v3: la base filtra; el resto se puntúa contra el perfil de ingredientes de cada cóctel. Sin azar.
+    var BASES = { agave: 1, gin: 1, ron: 1, whiskey: 1, vermut: 1 }, PESOS = D.pesos || {};
     var elegidas = Object.keys(puntos).filter(function (r) { return BASES[r]; });
     var cand = D.cocteles.filter(function (c) {
       if (sinAlcohol) return c.sin_alcohol;
       if (c.sin_alcohol) return false;
-      return !elegidas.length || c.rasgos.some(function (r) { return elegidas.indexOf(r) >= 0; });   // la base elegida filtra
+      return !elegidas.length || c.rasgos.some(function (r) { return elegidas.indexOf(r) >= 0; });
     });
-    var top = null, max = -1;
+    if (!cand.length) cand = D.cocteles.slice();
+    var top = null, max = -1, maxPri = 1e9;
     cand.forEach(function (c) {
-      var s = 0; c.rasgos.forEach(function (r, idx) { if (!BASES[r]) s += (puntos[r] || 0) * (idx < 3 ? 2 : 1); });   // los 3 primeros rasgos pesan doble
-      if (s > max) { max = s; top = c; }
+      var s = 0; c.rasgos.forEach(function (r) { if (!BASES[r] && puntos[r]) s += puntos[r] * (PESOS[r] || 1); });
+      var pri = c.prioridad == null ? 99 : c.prioridad;
+      if (s > max || (s === max && pri < maxPri)) { max = s; maxPri = pri; top = c; }
     });
     return top;
+  }
+  function fraseDijiste(c) {
+    // "Dijiste agave, dorado, humo y chile… Eso, en la carta, es una Picarilla: tequila, miel…"
+    var E = D.etiquetas || {}, dichas = Object.keys(puntos).filter(function (r) { return E[r]; });
+    var coinciden = dichas.filter(function (r) { return c.rasgos.indexOf(r) >= 0; }).map(function (r) { return E[r]; });
+    if (!coinciden.length) return "";
+    var lista = coinciden.length > 1 ? coinciden.slice(0, -1).join(", ") + (EN ? " and " : " y ") + coinciden[coinciden.length - 1] : coinciden[0];
+    var ing = String(c.ingredientes || "").replace(/[.]$/, "");
+    return EN ? "You said " + lista + ". On the menu, that is " + c.nombre + ": " + ing + "."
+              : "Dijiste " + lista + ". Eso, en la carta, es " + c.nombre + ": " + ing.charAt(0).toLowerCase() + ing.slice(1) + ".";
   }
   function resultado(c) {
     barra.style.width = "100%";
@@ -583,7 +596,8 @@
     document.getElementById("q-nombre").textContent = c.nombre;
     document.getElementById("q-notas").textContent = c.notas;
     document.getElementById("q-ingredientes").textContent = c.ingredientes;
-    document.getElementById("q-porque").textContent = c.porque;
+    var dij = fraseDijiste(c);
+    document.getElementById("q-porque").innerHTML = (dij ? "<strong>" + esc(dij) + "</strong> " : "") + esc(c.porque);
     var res = document.getElementById("q-resultado"); res.hidden = false;
     var fig = document.getElementById("q-foto"), conFoto = (res.dataset.fotos || "").split(" ").indexOf(c.slug) >= 0;
     if (fig) {

@@ -1001,9 +1001,10 @@ def pag_sello():
 
 # ---------------------------------------------------------------- quiz: ¿qué cóctel eres?
 def pag_quiz():
-    datos = {"preguntas": [{"q": p[L], "sentido": (p.get("sentido") or {}).get(L, ""), "opciones": [{"t": o[L], "rasgos": o["rasgos"], "sin_alcohol": o.get("sin_alcohol", False)} for o in p["opciones"]]} for p in QUIZ["preguntas"]],
+    datos = {"pesos": QUIZ.get("pesos", {}), "etiquetas": {k: v.get(L, k) for k, v in QUIZ.get("etiquetas", {}).items()},
+             "preguntas": [{"q": p[L], "sentido": (p.get("sentido") or {}).get(L, ""), "opciones": [{"t": o[L], "rasgos": o["rasgos"], "sin_alcohol": o.get("sin_alcohol", False)} for o in p["opciones"]]} for p in QUIZ["preguntas"]],
              "cocteles": [{"slug": c["slug"], "nombre": c["nombre"], "rasgos": c["rasgos"], "sin_alcohol": c.get("sin_alcohol", False),
-                           "ingredientes": c[L]["ingredientes"], "notas": c[L]["notas"], "porque": c[L]["porque"]} for c in QUIZ["cocteles"]]}
+                           "ingredientes": c[L]["ingredientes"], "notas": c[L]["notas"], "porque": c[L]["porque"], "prioridad": c.get("prioridad", 99)} for c in QUIZ["cocteles"]]}
     cuerpo = f"""
 <section class="encabezado">
   <div class="etiqueta">{t("El quiz", "The quiz")}</div>
