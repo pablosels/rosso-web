@@ -4,7 +4,7 @@
 
 - **Quiz**: pausada el 30 de octubre (en 30 días: 1,980 visitas a $1.20, $2,368, sin reservaciones atribuibles). Su presupuesto pasa a CARLA.
 - **Noche fuerte**: activa con la renovación del 22 oct al 3 nov (853 visitas a $1.50 en 30 días). Renovar el lunes 2 de noviembre.
-- **CARLA 15 nov** (nueva, en borrador): campaña "ROSSO · CARLA 15 nov · Trafico", conjunto "CARLA · Base 25-40 Roma-Condesa · hasta 15 nov" ($100 diarios del 30 oct al 15 nov, público ROSSO, Instagram feed + perfil + historias + reels), anuncio "CARLA 15 nov - post IG" con el post carrusel del 28 de octubre, botón "Buy tickets" y liga `https://rossospeakeasy.com/boletos/carla/?de=carla` (canal propio "carla").
+- **CARLA 15 nov** (publicada el 30 de octubre, Meta la revisa): campaña "ROSSO · CARLA 15 nov · Trafico", conjunto "CARLA · Base 25-40 Roma-Condesa · hasta 15 nov" ($150 diarios del 30 oct a las 7:27 pm al 15 nov a las 7:27 pm, público ROSSO, Instagram feed + perfil + historias + reels), anuncio "CARLA 15 nov - post IG" con el post carrusel del 28 de octubre, botón "Buy tickets" y liga `https://rossospeakeasy.com/boletos/carla/?de=carla` (canal propio "carla").
 
 ## Estado al martes 6 de octubre
 
