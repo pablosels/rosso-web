@@ -1,5 +1,11 @@
 # Hoja de captura · Anuncios de Instagram para ROSSO
 
+## Estado al martes 3 de noviembre
+
+- **CARLA**: en 4 días, 441 visitas a la página de boletos a $1.20 ($530). Boletos vendidos: 6 de 60 (1 en la sesión de 7 pm, 5 en la de 9). Para empujar la venta: conjunto base subido de $150 a $250 diarios; conjunto nuevo "CARLA · Retorno · visitó el sitio 30d + IG 365d · hasta 15 nov" a $60 diarios con el público guardado "ROSSO · Retorno" (públicos personalizados "ROSSO visitantes web 30 dias" + "ROSSO · Interactuó en Instagram 365 días", México, 21+; 1,200 a 1,400 personas). Total $310 diarios hasta el 15 de noviembre. Mismo anuncio (post carrusel) en los dos conjuntos.
+- **Noche fuerte**: termina hoy 3 de noviembre; renovar si se quiere seguir.
+- **Quiz**: pausada desde el 30 de octubre.
+
 ## Estado al viernes 30 de octubre
 
 - **Quiz**: pausada el 30 de octubre (en 30 días: 1,980 visitas a $1.20, $2,368, sin reservaciones atribuibles). Su presupuesto pasa a CARLA.
