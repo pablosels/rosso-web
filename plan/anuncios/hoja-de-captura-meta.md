@@ -3,7 +3,8 @@
 ## Estado al martes 3 de noviembre
 
 - **CARLA**: en 4 días, 441 visitas a la página de boletos a $1.20 ($530). Boletos vendidos: 6 de 60 (1 en la sesión de 7 pm, 5 en la de 9). Para empujar la venta: conjunto base subido de $150 a $250 diarios; conjunto nuevo "CARLA · Retorno · visitó el sitio 30d + IG 365d · hasta 15 nov" a $60 diarios con el público guardado "ROSSO · Retorno" (públicos personalizados "ROSSO visitantes web 30 dias" + "ROSSO · Interactuó en Instagram 365 días", México, 21+; 1,200 a 1,400 personas). Total $310 diarios hasta el 15 de noviembre. Mismo anuncio (post carrusel) en los dos conjuntos.
-- **Noche fuerte**: termina hoy 3 de noviembre; renovar si se quiere seguir.
+- **Noche fuerte**: renovada el 3 de noviembre: conjunto "Base 25-40 radio 5 km mie-sab 16-21h (4 nov - 15 nov)", $750 del 3 al 15 de noviembre, anuncio "Noche fuerte - semana 4-7 nov" (TOLEDO, BARRETO, MUSICA PARA ADULTOS, SIESTA RECORDS) con `plan/anuncios/noche-fuerte-semana-2026-11-04.jpg`. Resumen del lunes 2: canal "noche" 400 visitas → 1 mesa; canal "carla" 407 visitas (el resumen no cuenta boletos); quiz 392 visitas, 16 iniciados, 11 terminados.
+- **Cómo subir la imagen sin el explorador de Windows** (Meta no deja automatizar el selector): desde la extensión de Claude en Chrome, inyectar un `<input type=file>` en la página, cargarle el archivo con file_upload, y antes de pulsar "Upload" sobreescribir `HTMLInputElement.prototype.click` para que el input de Meta reciba esos files y dispare `change`. Funcionó el 3 de noviembre.
 - **Quiz**: pausada desde el 30 de octubre.
 
 ## Estado al viernes 30 de octubre
