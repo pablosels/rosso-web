@@ -8,7 +8,7 @@ y la guarda en plan/anuncios/noche-fuerte-semana-AAAA-MM-DD.jpg. Se corre cada l
 
 Necesita Chrome instalado (se usa sin ventana para dibujar con las fuentes Geist) y Pillow.
 """
-import json, os, subprocess, urllib.request, pathlib
+import json, os, re, subprocess, urllib.request, pathlib
 from PIL import Image
 API = "https://rosso-web-api-703407013960.us-central1.run.app"
 REPO = pathlib.Path(__file__).resolve().parent.parent
@@ -16,7 +16,11 @@ OUT = REPO / "plan" / "anuncios"
 TMP = REPO / "herramientas" / "_tmp_noche_fuerte"; TMP.mkdir(exist_ok=True)
 CHROME = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
 ag = json.load(urllib.request.urlopen(API + "/agenda"))
-noches = [n for n in ag["noches"] if n["dia"][:2] in ("mi", "ju", "vi", "sá", "sa")]
+import datetime as _dt
+_hoy = _dt.date.fromisoformat(ag["hoy"])
+_domingo = _hoy + _dt.timedelta(days=(6 - _hoy.weekday()))          # la semana termina el domingo
+noches = [n for n in ag["noches"] if n["dia"][:2] in ("mi", "ju", "vi", "sá", "sa")
+          and _hoy <= _dt.date.fromisoformat(n["fecha"]) <= _domingo]
 fondo = (REPO / "assets/fotos/espacio_vistaconsola-m.jpg").as_uri()
 logo = (REPO / "assets/rosso-wordmark-letras.svg").as_uri()
 TPL = """<!doctype html><html><head><meta charset="utf-8">
@@ -42,7 +46,8 @@ function pinta(){
     N.forEach(function(n,i){
       x.fillStyle="#E0364A";x.font="500 36px 'Geist Mono', monospace";
       x.fillText((n.dia+" "+n.num+"  \u00b7  "+n.hora).toUpperCase(),W/2,y);
-      x.fillStyle="#E5E8E8";x.font="900 92px Geist, Helvetica, Arial, sans-serif";
+      x.fillStyle="#E5E8E8";var tam=92;x.font="900 "+tam+"px Geist, Helvetica, Arial, sans-serif";
+      while(x.measureText(n.dj.toUpperCase()).width>W-120&&tam>48){tam-=4;x.font="900 "+tam+"px Geist, Helvetica, Arial, sans-serif";}
       x.fillText(n.dj.toUpperCase(),W/2,y+104);
       x.fillStyle="rgba(229,232,232,.75)";x.font="400 40px Geist, Helvetica, Arial, sans-serif";
       x.fillText(n.genero,W/2,y+160);
@@ -59,7 +64,11 @@ function pinta(){
 }
 Promise.all([document.fonts.load("900 92px Geist"),document.fonts.load("400 40px Geist"),document.fonts.load("400 38px Geist"),document.fonts.load("500 36px 'Geist Mono'"),document.fonts.load("500 44px 'Geist Mono'"),document.fonts.load("500 34px 'Geist Mono'"),document.fonts.load("500 38px 'Geist Mono'")]).then(pinta,pinta);
 </script></body></html>"""
-datos = [{"dia": n["dia"], "num": n["fecha"].split("-")[2].lstrip("0"), "hora": n["hora"].replace(":00 p.m.", " pm"), "dj": n["dj"], "genero": n["genero"]} for n in noches]
+def _sin_parentesis(t):
+    t = t.strip()
+    return t[1:-1].strip() if t.startswith("(") and t.endswith(")") else t
+
+datos = [{"dia": n["dia"], "num": n["fecha"].split("-")[2].lstrip("0"), "hora": n["hora"].replace(":00 p.m.", " pm"), "dj": n["dj"], "genero": _sin_parentesis((n.get("genero") or "").strip())} for n in noches]
 sem = noches[0]["fecha"]
 h = TPL.replace("__N__", json.dumps(datos, ensure_ascii=False)).replace("__FONDO__", fondo).replace("__LOGO__", logo)
 hp = TMP / f"semana-{sem}.html"; hp.write_text(h, encoding="utf-8")
