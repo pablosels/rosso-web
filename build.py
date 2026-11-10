@@ -1128,7 +1128,7 @@ def inv_ics():
 def pag_invitacion():
     from urllib.parse import quote
     d = INV[L]
-    datos = {"pesos": QUIZ.get("pesos", {}), "peso_base": INV.get("peso_base", 3), "intensidad": INV.get("intensidad", {}),
+    datos = {"pesos": QUIZ.get("pesos", {}), "q1": d["q1"], "q1_pista": d["q1_pista"], "intensidad": INV.get("intensidad", {}),
              "tiempos": d["tiempos"], "saludo": d["saludo"], "cuando": d["cuando"], "whatsapp": SITE["whatsapp"],
              "fotos": sorted(p.stem for p in (RAIZ / "assets" / "fotos" / "cocteles").glob("*.jpg") if not p.stem.endswith("-m")),
              "preguntas": [{"q": p[L], "sentido": (p.get("sentido") or {}).get(L, ""), "opciones": [{"t": o[L], "rasgos": o["rasgos"], "sin_alcohol": o.get("sin_alcohol", False)} for o in p["opciones"]]} for p in QUIZ["preguntas"]],

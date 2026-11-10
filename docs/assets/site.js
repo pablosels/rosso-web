@@ -1180,7 +1180,8 @@
   }
 })();
 
-/* invitación: tres preguntas del quiz, TRES tragos (de ligero a intenso) y confirmación por WhatsApp */
+/* invitación: en la primera pregunta se eligen TRES bases (se puede repetir), una por trago; fruta y textura
+   deciden cuál cóctel de cada base. Se sirven de ligero a intenso y se confirma por WhatsApp. */
 (function () {
   var nodo = document.getElementById("inv-datos"), caja = document.getElementById("inv-caja");
   if (!nodo || !caja) return;
@@ -1188,7 +1189,8 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   var barra = document.getElementById("inv-barra"), res = document.getElementById("inv-resultado"), lista = document.getElementById("inv-trio");
   var forma = document.getElementById("inv-forma"), fNombre = document.getElementById("inv-nombre");
-  var ROMANOS = ["I", "II", "III"], CLAVE = "rosso_inv", resp = [], i = 0, tres = [];
+  var ROMANOS = ["I", "II", "III"], CLAVE = "rosso_inv2", N = D.preguntas.length;
+  var bases = [], resp = [], i = 0, tres = [];   // bases: tres opciones de la pregunta 1; resp[n]: opción de la pregunta n (n >= 1)
 
   // liga personal: /invitacion/?para=Nombre
   var para = "";
@@ -1198,34 +1200,58 @@
     fNombre.value = para;
   }
 
+  function corta(t) { return t.split(/[:,]/)[0]; }   // "Agave: tequila o mezcal" -> "Agave"
+  function cabeza(p, titulo) { return '<div class="q-num">' + (i + 1) + " / " + N + (p.sentido ? " · " + esc(p.sentido) : "") + "</div><h2>" + esc(titulo) + "</h2>"; }
   function pregunta() {
     var p = D.preguntas[i];
     res.hidden = true; caja.hidden = false;
-    barra.style.width = (i / D.preguntas.length * 100) + "%";
-    caja.innerHTML = '<div class="q-num">' + (i + 1) + " / " + D.preguntas.length + (p.sentido ? " · " + esc(p.sentido) : "") + "</div><h2>" + esc(p.q) + '</h2><ul class="q-opciones">' + p.opciones.map(function (o, k) { return '<li><button type="button" data-k="' + k + '">' + esc(o.t) + "</button></li>"; }).join("") + "</ul>";
-    var b = caja.querySelector("button"); if (b && i > 0) b.focus({ preventScroll: true });
+    barra.style.width = (i / N * 100) + "%";
+    if (i === 0) return preguntaBases(p);
+    caja.innerHTML = cabeza(p, p.q) + '<ul class="q-opciones">' + p.opciones.map(function (o, k) { return '<li><button type="button" data-k="' + k + '">' + esc(o.t) + "</button></li>"; }).join("") + "</ul>";
+    var b = caja.querySelector("button"); if (b) b.focus({ preventScroll: true });
+  }
+  function preguntaBases(p) {
+    var ops = p.opciones, cuenta = {};
+    bases.forEach(function (k) { cuenta[k] = (cuenta[k] || 0) + 1; });
+    var huecos = [0, 1, 2].map(function (n) {
+      var k = bases[n];
+      return k == null ? '<li class="vacio"><span>' + ROMANOS[n] + "</span></li>"
+        : '<li><button type="button" data-quita="' + n + '" aria-label="' + esc(tt("Quitar ", "Remove ") + corta(ops[k].t)) + '"><span>' + ROMANOS[n] + "</span> " + esc(corta(ops[k].t)) + ' <i aria-hidden="true">×</i></button></li>';
+    }).join("");
+    caja.innerHTML = cabeza(p, D.q1) + '<p class="inv-pista">' + esc(D.q1_pista) + '</p><ol class="inv-huecos" aria-label="' + esc(tt("Tus tres bases", "Your three bases")) + '">' + huecos + '</ol><ul class="q-opciones">' +
+      ops.map(function (o, k) { return '<li><button type="button" data-base="' + k + '"' + (bases.length >= 3 ? " disabled" : "") + ">" + esc(o.t) + (cuenta[k] ? ' <b class="inv-veces">×' + cuenta[k] + "</b>" : "") + "</button></li>"; }).join("") +
+      '</ul><p class="inv-sigue"><button class="btn" type="button" id="inv-sigue"' + (bases.length < 3 ? " disabled" : "") + ">" + esc(bases.length < 3 ? tt("Te faltan ", "Pick ") + (3 - bases.length) + tt("", " more") : tt("Continuar", "Continue")) + "</button></p>";
   }
   caja.addEventListener("click", function (ev) {
-    var b = ev.target.closest("button[data-k]"); if (!b) return;
+    var b = ev.target.closest("button"); if (!b || b.disabled) return;
+    if (b.dataset.base != null) { if (bases.length < 3) bases.push(+b.dataset.base); if (bases.length === 1 && window.ROSSO_medir) window.ROSSO_medir("quiz_inicio"); preguntaBases(D.preguntas[0]); return; }
+    if (b.dataset.quita != null) { bases.splice(+b.dataset.quita, 1); preguntaBases(D.preguntas[0]); return; }
+    if (b.id === "inv-sigue") { i = 1; pregunta(); sube(); return; }
+    if (b.dataset.k == null) return;
     resp[i] = +b.dataset.k; i++;
-    if (i < D.preguntas.length) pregunta(); else { guardar(); resultado(true); }
+    if (i < N) pregunta(); else { guardar(); resultado(true); }
   });
+  function sube() { document.getElementById("inv-quiz").scrollIntoView({ behavior: "smooth", block: "start" }); }
 
   function trio() {
-    // la base suma (no filtra, para que siempre haya tres); fruta y textura pesan lo del quiz. Sin azar.
-    var BASES = { agave: 1, gin: 1, ron: 1, whiskey: 1, vermut: 1 }, PESOS = D.pesos || {}, dichos = {}, sinAlcohol = false;
-    resp.forEach(function (k, n) {
-      var o = D.preguntas[n] && D.preguntas[n].opciones[k]; if (!o) return;
-      o.rasgos.forEach(function (r) { dichos[r] = 1; });
-      if (o.sin_alcohol) sinAlcohol = true;
+    // un trago por cada base elegida, sin repetir cóctel: de los de esa base, el que más coincide en fruta y textura.
+    // Si la base ya no tiene cócteles libres (whiskey y ron sólo tienen uno), entra el mejor de los que quedan. Sin azar.
+    var PESOS = D.pesos || {}, dichos = {}, usados = {}, I = D.intensidad || {};
+    for (var n = 1; n < N; n++) { var o = D.preguntas[n].opciones[resp[n]]; if (o) o.rasgos.forEach(function (r) { dichos[r] = 1; }); }
+    function puntos(c) { var s = 0; c.rasgos.forEach(function (r) { if (dichos[r]) s += PESOS[r] || 1; }); return s; }
+    function mejor(cand) {
+      var top = null, max = -1;
+      cand.forEach(function (c) { if (usados[c.slug]) return; var s = puntos(c); if (s > max || (s === max && c.prioridad < top.prioridad)) { max = s; top = c; } });
+      return top;
+    }
+    var out = [];
+    bases.forEach(function (k) {
+      var o = D.preguntas[0].opciones[k], sin = !!o.sin_alcohol, base = o.rasgos[0];
+      var c = mejor(D.cocteles.filter(function (x) { return sin ? x.sin_alcohol : (!x.sin_alcohol && x.rasgos.indexOf(base) >= 0); }))
+        || mejor(D.cocteles.filter(function (x) { return !!x.sin_alcohol === sin; })) || mejor(D.cocteles);
+      if (c) { usados[c.slug] = 1; out.push(c); }
     });
-    var cand = D.cocteles.filter(function (c) { return !!c.sin_alcohol === sinAlcohol; }).map(function (c) {
-      var s = 0; c.rasgos.forEach(function (r) { if (dichos[r]) s += BASES[r] ? (D.peso_base || 3) : (PESOS[r] || 1); });
-      return { c: c, s: s };
-    });
-    cand.sort(function (a, b) { return b.s - a.s || a.c.prioridad - b.c.prioridad; });
-    var I = D.intensidad || {};
-    return cand.slice(0, 3).map(function (x) { return x.c; }).sort(function (a, b) { return (I[a.slug] || 3) - (I[b.slug] || 3); });
+    return out.sort(function (a, b) { return (I[a.slug] || 3) - (I[b.slug] || 3); });
   }
 
   function resultado(mover) {
@@ -1238,13 +1264,13 @@
       return '<li class="inv-trago"><figure' + (conFoto ? "" : ' class="sin-foto"') + ">" + fig + '</figure><div><div class="q-num">' + ROMANOS[n] + " · " + esc(D.tiempos[n] || "") + "</div><h3>" + esc(c.nombre) + '</h3><p class="q-notas">' + esc(c.notas) + '</p><p class="q-ingredientes">' + esc(c.ingredientes) + "</p></div></li>";
     }).join("");
     res.hidden = false;
-    if (mover) document.getElementById("inv-quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+    if (mover) sube();
   }
 
-  function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(resp)); } catch (e) { } }
+  function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify({ b: bases, r: resp })); } catch (e) { } }
   document.getElementById("inv-otra").addEventListener("click", function () {
-    resp = []; i = 0; try { localStorage.removeItem(CLAVE); } catch (e) { }
-    pregunta(); document.getElementById("inv-quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+    bases = []; resp = []; i = 0; try { localStorage.removeItem(CLAVE); } catch (e) { }
+    pregunta(); sube();
   });
 
   forma.addEventListener("submit", function (ev) {
@@ -1262,8 +1288,10 @@
 
   // si ya contestó en este teléfono, vuelve a ver sus tres tragos
   try {
-    var g = JSON.parse(localStorage.getItem(CLAVE) || "null");
-    if (g && g.length === D.preguntas.length && g.every(function (k, n) { return D.preguntas[n].opciones[k]; })) { resp = g; i = g.length; resultado(false); return; }
+    var g = JSON.parse(localStorage.getItem(CLAVE) || "null"), P = D.preguntas;
+    if (g && g.b && g.b.length === 3 && g.b.every(function (k) { return P[0].opciones[k]; }) && g.r && g.r.length === N && g.r.slice(1).every(function (k, n) { return P[n + 1].opciones[k]; })) {
+      bases = g.b; resp = g.r; i = N; resultado(false); return;
+    }
   } catch (e) { }
   pregunta();
 })();

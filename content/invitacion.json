@@ -1,9 +1,8 @@
 {
- "_nota": "Invitación a la noche de creadores y prensa (1-dic-2026). La página /invitacion/ usa las preguntas y los cócteles de quiz.json, pero entrega TRES tragos en vez de uno: la base suma 3 (ya no filtra), fruta y textura suman lo de 'pesos'. Los tres se sirven de ligero a intenso según 'intensidad'. Liga personal: /invitacion/?para=Nombre. La confirmación sale por WhatsApp con los tres tragos.",
+ "_nota": "Invitación a la noche de creadores y prensa (1-dic-2026). La página /invitacion/ usa las preguntas y los cócteles de quiz.json, pero entrega TRES tragos: en la primera pregunta se eligen tres bases (se puede repetir) y cada una se vuelve un trago de esa base; fruta y textura (pesos de quiz.json) deciden cuál. Los tres se sirven de ligero a intenso según 'intensidad'. Liga personal: /invitacion/?para=Nombre. La confirmación sale por WhatsApp con los tres tragos. El PDF sale de herramientas/invitacion_pdf.py.",
  "fecha": "2026-12-01",
  "hora_inicio": "19:00",
  "hora_fin": "22:00",
- "peso_base": 3,
  "intensidad": {
   "rococócrème": 1,
   "paola": 1,
@@ -30,12 +29,18 @@
   "donde": "Puebla 329, Roma Norte · detrás de la cocina de Pavorosso",
   "texto": "ROSSO explora el placer a través de los sentidos. Queremos recibirte con tres tragos pensados para ti: contesta tres preguntas y, cuando cruces la cortina, la barra ya sabrá qué servirte.",
   "boton": "Elegir mis tres tragos",
-  "tiempos": ["Para abrir", "Para seguir", "Para cerrar"],
+  "tiempos": [
+   "Para abrir",
+   "Para seguir",
+   "Para cerrar"
+  ],
   "resultado_etiqueta": "Tu noche en tres tragos",
   "resultado_titulo": "Esto te vamos a servir.",
   "confirmar_etiqueta": "Confirma tu lugar",
   "confirmar_texto": "Mándanos tu confirmación por WhatsApp y dejamos tus tres tragos apartados a tu nombre.",
-  "privada": "Invitación personal e intransferible. Cupo limitado."
+  "privada": "Invitación personal e intransferible. Cupo limitado.",
+  "q1": "Para empezar: ¿con qué se hacen tus tres tragos?",
+  "q1_pista": "Elige tres, uno por trago. Puedes repetir el mismo."
  },
  "en": {
   "etiqueta": "Personal invitation",
@@ -46,11 +51,17 @@
   "donde": "Puebla 329, Roma Norte · behind the kitchen of Pavorosso",
   "texto": "ROSSO explores pleasure through the senses. We want to welcome you with three drinks made for you: answer three questions and, by the time you cross the curtain, the bar will know what to pour.",
   "boton": "Choose my three drinks",
-  "tiempos": ["To open", "To follow", "To close"],
+  "tiempos": [
+   "To open",
+   "To follow",
+   "To close"
+  ],
   "resultado_etiqueta": "Your night in three drinks",
   "resultado_titulo": "This is what we will pour.",
   "confirmar_etiqueta": "Confirm your spot",
   "confirmar_texto": "Send us your confirmation on WhatsApp and we will set your three drinks aside under your name.",
-  "privada": "Personal, non-transferable invitation. Limited capacity."
+  "privada": "Personal, non-transferable invitation. Limited capacity.",
+  "q1": "First things first: what are your three drinks made with?",
+  "q1_pista": "Pick three, one per drink. You can repeat the same one."
  }
 }

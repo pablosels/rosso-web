@@ -477,6 +477,19 @@ figure{margin:0}
 .inv-texto{max-width:720px;margin:0 auto;padding:clamp(48px,9vh,96px) var(--gutter) clamp(28px,5vh,48px)}
 .inv-texto p{font-size:clamp(20px,2.4vw,27px);line-height:1.34;letter-spacing:-.01em;max-width:30ch;margin:0}
 .inv-quiz{scroll-margin-top:24px;padding-top:8px}
+.inv-pista{color:var(--ink-suave);margin:-.6rem 0 1.2rem}
+.inv-huecos{list-style:none;margin:0 0 1.2rem;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem}
+.inv-huecos li{min-height:54px;border:1px dashed var(--linea);display:grid;place-items:center}
+.inv-huecos li.vacio span{font-family:var(--mono);font-size:12px;letter-spacing:.28em;color:var(--ink-suave)}
+.inv-huecos li:not(.vacio){border:1px solid var(--carmin);background:var(--carmin)}
+.inv-huecos button{width:100%;height:100%;background:none;border:0;color:var(--blanco);font:inherit;font-size:14px;font-weight:700;padding:8px 6px;cursor:pointer;line-height:1.15}
+.inv-huecos button span{display:block;font-family:var(--mono);font-weight:500;font-size:10px;letter-spacing:.28em;opacity:.75;margin-bottom:2px}
+.inv-huecos button i{font-style:normal;opacity:.7}
+.q-opciones button:disabled{opacity:.4;cursor:default}
+.inv-veces{float:right;font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.1em;color:var(--carmin-claro)}
+.inv-sigue{margin:1.2rem 0 0;max-width:none}
+.inv-sigue .btn{width:100%;text-align:center;padding:18px 26px}
+.inv-sigue .btn:disabled{background:transparent;border-color:var(--linea);color:var(--ink-suave);cursor:default}
 .inv-resultado h2{font-size:clamp(30px,6vw,52px);margin-bottom:1.4rem}
 .inv-trio{list-style:none;margin:0;padding:0;border-bottom:1px solid var(--linea)}
 .inv-trago{display:grid;grid-template-columns:clamp(96px,26vw,150px) minmax(0,1fr);gap:clamp(16px,4vw,28px);align-items:center;padding:18px 0;border-top:1px solid var(--linea)}
