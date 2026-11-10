@@ -28,6 +28,7 @@ if os.environ.get("BASE") is not None:
 NOCHES = json.loads((CONT / "noches.json").read_text(encoding="utf-8"))
 QUIZ = json.loads((CONT / "quiz.json").read_text(encoding="utf-8"))
 SEO = json.loads((CONT / "seo.json").read_text(encoding="utf-8"))
+INV = json.loads((CONT / "invitacion.json").read_text(encoding="utf-8"))
 CARTA = json.loads((RAIZ / "carta_snapshot.json").read_text(encoding="utf-8"))
 BOLETOS = json.loads((RAIZ / "api" / "boletos.json").read_text(encoding="utf-8"))["shows"]   # el mismo catálogo que usa el API
 
@@ -1108,6 +1109,87 @@ def pag_quiz():
                   t("Tres preguntas y te decimos cuál cóctel de la casa de ROSSO eres.", "Three questions and we tell you which ROSSO house cocktail you are."), clase="pag-quiz")
 
 
+# ---------------------------------------------------------------- invitación: noche de creadores y prensa
+def inv_utc(hora):
+    """Fecha y hora del evento en UTC (la CDMX va en UTC-6 todo el año) como AAAAMMDDTHHMMSSZ."""
+    d = dt.datetime.fromisoformat(f"{INV['fecha']}T{hora}:00") + dt.timedelta(hours=6)
+    return d.strftime("%Y%m%dT%H%M%SZ")
+
+
+def inv_ics():
+    lugar = f"ROSSO, {SITE['direccion']}, {SITE['ciudad']}"
+    return ("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//ROSSO//invitacion//ES\r\nBEGIN:VEVENT\r\n"
+            f"UID:invitacion-{INV['fecha']}@{SITE['dominio']}\r\nDTSTAMP:{inv_utc(INV['hora_inicio'])}\r\n"
+            f"DTSTART:{inv_utc(INV['hora_inicio'])}\r\nDTEND:{inv_utc(INV['hora_fin'])}\r\n"
+            f"SUMMARY:ROSSO · Tres tragos{chr(92)}, a tu medida\r\nLOCATION:{lugar.replace(',', chr(92) + ',')}\r\n"
+            f"DESCRIPTION:Entrada por la cocina de Pavorosso. {URL}/invitacion/\r\nEND:VEVENT\r\nEND:VCALENDAR\r\n")
+
+
+def pag_invitacion():
+    from urllib.parse import quote
+    d = INV[L]
+    datos = {"pesos": QUIZ.get("pesos", {}), "peso_base": INV.get("peso_base", 3), "intensidad": INV.get("intensidad", {}),
+             "tiempos": d["tiempos"], "saludo": d["saludo"], "cuando": d["cuando"], "whatsapp": SITE["whatsapp"],
+             "fotos": sorted(p.stem for p in (RAIZ / "assets" / "fotos" / "cocteles").glob("*.jpg") if not p.stem.endswith("-m")),
+             "preguntas": [{"q": p[L], "sentido": (p.get("sentido") or {}).get(L, ""), "opciones": [{"t": o[L], "rasgos": o["rasgos"], "sin_alcohol": o.get("sin_alcohol", False)} for o in p["opciones"]]} for p in QUIZ["preguntas"]],
+             "cocteles": [{"slug": c["slug"], "nombre": c["nombre"], "rasgos": c["rasgos"], "sin_alcohol": c.get("sin_alcohol", False),
+                           "ingredientes": c[L]["ingredientes"], "notas": c[L]["notas"], "prioridad": c.get("prioridad", 99)} for c in QUIZ["cocteles"]]}
+    lugar = f"ROSSO, {SITE['direccion']}, {SITE['ciudad']}"
+    gcal = ("https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + quote("ROSSO · " + d["titulo"])
+            + f"&dates={inv_utc(INV['hora_inicio'])}/{inv_utc(INV['hora_fin'])}&location=" + quote(lugar)
+            + "&details=" + quote(t("Entrada por la cocina de Pavorosso.", "Enter through the kitchen of Pavorosso.") + f" {URL}{B}/invitacion/"))
+    cuerpo = f"""
+<section class="inv-hero">
+  <div class="inv-fondo">{img("cortinaentrada", t("Una mano abre la cortina roja de la entrada a ROSSO", "A hand opens the red curtain at the entrance to ROSSO"), "100vw", lazy=False)}</div>
+  <div class="inv-hero-caja">
+    <img class="inv-marca" src="{A}/assets/rosso-wordmark-letras.svg" alt="ROSSO" width="1280" height="252">
+    <div class="inv-abajo">
+      <div class="etiqueta">{e(d["etiqueta"])}</div>
+      <p class="inv-saludo" id="inv-saludo">{e(d["saludo_sin_nombre"])}</p>
+      <h1>{e(d["titulo"])}</h1>
+      <p class="inv-ficha">{e(d["cuando"])}<br>{e(d["donde"])}</p>
+      <div class="hero-cta"><a class="btn" href="#inv-quiz">{e(d["boton"])}</a></div>
+    </div>
+  </div>
+</section>
+<section class="inv-texto">
+  <p>{e(d["texto"])}</p>
+</section>
+<section class="quiz inv-quiz" id="inv-quiz">
+  <div class="quiz-progreso" aria-hidden="true"><span id="inv-barra"></span></div>
+  <div id="inv-caja" class="quiz-caja">
+    <p class="nota">{t("Cargando…", "Loading…")}</p>
+  </div>
+  <div id="inv-resultado" class="inv-resultado" hidden>
+    <div class="etiqueta">{e(d["resultado_etiqueta"])}</div>
+    <h2>{e(d["resultado_titulo"])}</h2>
+    <ol class="inv-trio" id="inv-trio"></ol>
+    <p class="nota mini"><button class="inv-otra" type="button" id="inv-otra">{t("Cambiar mis respuestas", "Change my answers")}</button></p>
+    <div class="inv-confirma">
+      <div class="etiqueta">{e(d["confirmar_etiqueta"])}</div>
+      <p>{e(d["confirmar_texto"])}</p>
+      <form class="forma" id="inv-forma">
+        <div class="campo"><label for="inv-nombre">{t("Tu nombre", "Your name")}</label><input id="inv-nombre" name="nombre" autocomplete="name" required maxlength="60"></div>
+        <div class="campo"><label for="inv-medio">{t("Instagram o medio", "Instagram or outlet")}</label><input id="inv-medio" name="medio" placeholder="@" maxlength="60" autocapitalize="none"></div>
+        <div class="campo"><label for="inv-alergias">{t("Alergias o algo que no tomes", "Allergies or anything you avoid")} <span>({t("opcional", "optional")})</span></label><input id="inv-alergias" name="alergias" maxlength="120"></div>
+        <button class="btn" type="submit">{t("Confirmar por WhatsApp", "Confirm on WhatsApp")}</button>
+      </form>
+      <p class="inv-ligas"><a class="enlace" href="{gcal}" rel="noopener" target="_blank">Google Calendar</a><a class="enlace" href="{A}/invitacion/rosso-1-dic.ics">{t("Calendario del teléfono", "Phone calendar")}</a><a class="enlace" href="{SITE['maps']}" rel="noopener">{t("Cómo llegar", "Directions")}</a></p>
+    </div>
+  </div>
+</section>
+<section class="inv-cierre">
+  <p class="inv-ficha">{e(d["cuando"])}<br>{e(d["donde"])}</p>
+  <p class="nota mini">{e(d["privada"])}</p>
+</section>
+<script id="inv-datos" type="application/json">{json.dumps(datos, ensure_ascii=False)}</script>
+"""
+    return pagina(t("Invitación · ROSSO", "Invitation · ROSSO"), cuerpo, "/invitacion/",
+                  t(f"{d['cuando']}. Tres tragos pensados para ti, detrás de la cocina de Pavorosso.", f"{d['cuando']}. Three drinks made for you, behind the kitchen of Pavorosso."),
+                  clase="pag-invitacion", extra_head='<meta name="robots" content="noindex,nofollow">',
+                  og_img=URL + "/assets/invitacion-og.jpg", con_pixel=False)
+
+
 # ---------------------------------------------------------------- páginas para búsqueda
 def pag_seo(p):
     d = p[L]
@@ -1175,7 +1257,7 @@ def main():
                    "regalo/tarjeta/index.html": pag_regalo_tarjeta(), "regalo/canje/index.html": pag_regalo_canje(),
                    "club/index.html": pag_club(), "privacidad/index.html": pag_privacidad(),
                    "producciones/index.html": pag_producciones(), "dj/index.html": pag_dj(), "club/sello/index.html": pag_sello(),
-               "quiz/index.html": pag_quiz()}
+               "quiz/index.html": pag_quiz(), "invitacion/index.html": pag_invitacion()}
         for p_ in SEO["paginas"]:
             paginas[f"{p_['slug']}/index.html"] = pag_seo(p_)
         paginas["boletos/gracias/index.html"] = pag_boletos_gracias()
@@ -1208,6 +1290,7 @@ def main():
             f'<body style="background:#28000F;color:#E6E6E6;font-family:sans-serif;padding:2rem">'
             f'<a href="{destino}" style="color:#E6E6E6">Entrar a ROSSO</a></body></html>', encoding="utf-8")
 
+    (DOCS / "invitacion" / "rosso-1-dic.ics").write_bytes(inv_ics().encode("utf-8"))
     (DOCS / "carta.json").write_text(json.dumps(CARTA, ensure_ascii=False), encoding="utf-8")
     (DOCS / ".nojekyll").write_text("")
     (DOCS / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {URL}/sitemap.xml\n")

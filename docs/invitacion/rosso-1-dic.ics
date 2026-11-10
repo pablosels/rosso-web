@@ -1,0 +1,13 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//ROSSO//invitacion//ES
+BEGIN:VEVENT
+UID:invitacion-2026-12-01@rossospeakeasy.com
+DTSTAMP:20261202T010000Z
+DTSTART:20261202T010000Z
+DTEND:20261202T040000Z
+SUMMARY:ROSSO · Tres tragos\, a tu medida
+LOCATION:ROSSO\, Puebla 329\, Roma Norte\, Ciudad de México\, 06700
+DESCRIPTION:Entrada por la cocina de Pavorosso. https://rossospeakeasy.com/invitacion/
+END:VEVENT
+END:VCALENDAR

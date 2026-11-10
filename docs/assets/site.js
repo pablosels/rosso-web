@@ -1179,3 +1179,91 @@
     });
   }
 })();
+
+/* invitación: tres preguntas del quiz, TRES tragos (de ligero a intenso) y confirmación por WhatsApp */
+(function () {
+  var nodo = document.getElementById("inv-datos"), caja = document.getElementById("inv-caja");
+  if (!nodo || !caja) return;
+  var tt = window.ROSSO_tt, D = JSON.parse(nodo.textContent);
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  var barra = document.getElementById("inv-barra"), res = document.getElementById("inv-resultado"), lista = document.getElementById("inv-trio");
+  var forma = document.getElementById("inv-forma"), fNombre = document.getElementById("inv-nombre");
+  var ROMANOS = ["I", "II", "III"], CLAVE = "rosso_inv", resp = [], i = 0, tres = [];
+
+  // liga personal: /invitacion/?para=Nombre
+  var para = "";
+  try { para = (new URLSearchParams(location.search).get("para") || "").replace(/[<>{}]/g, "").replace(/\s+/g, " ").trim().slice(0, 40); } catch (e) { }
+  if (para) {
+    document.getElementById("inv-saludo").textContent = D.saludo.replace("{nombre}", para);
+    fNombre.value = para;
+  }
+
+  function pregunta() {
+    var p = D.preguntas[i];
+    res.hidden = true; caja.hidden = false;
+    barra.style.width = (i / D.preguntas.length * 100) + "%";
+    caja.innerHTML = '<div class="q-num">' + (i + 1) + " / " + D.preguntas.length + (p.sentido ? " · " + esc(p.sentido) : "") + "</div><h2>" + esc(p.q) + '</h2><ul class="q-opciones">' + p.opciones.map(function (o, k) { return '<li><button type="button" data-k="' + k + '">' + esc(o.t) + "</button></li>"; }).join("") + "</ul>";
+    var b = caja.querySelector("button"); if (b && i > 0) b.focus({ preventScroll: true });
+  }
+  caja.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button[data-k]"); if (!b) return;
+    resp[i] = +b.dataset.k; i++;
+    if (i < D.preguntas.length) pregunta(); else { guardar(); resultado(true); }
+  });
+
+  function trio() {
+    // la base suma (no filtra, para que siempre haya tres); fruta y textura pesan lo del quiz. Sin azar.
+    var BASES = { agave: 1, gin: 1, ron: 1, whiskey: 1, vermut: 1 }, PESOS = D.pesos || {}, dichos = {}, sinAlcohol = false;
+    resp.forEach(function (k, n) {
+      var o = D.preguntas[n] && D.preguntas[n].opciones[k]; if (!o) return;
+      o.rasgos.forEach(function (r) { dichos[r] = 1; });
+      if (o.sin_alcohol) sinAlcohol = true;
+    });
+    var cand = D.cocteles.filter(function (c) { return !!c.sin_alcohol === sinAlcohol; }).map(function (c) {
+      var s = 0; c.rasgos.forEach(function (r) { if (dichos[r]) s += BASES[r] ? (D.peso_base || 3) : (PESOS[r] || 1); });
+      return { c: c, s: s };
+    });
+    cand.sort(function (a, b) { return b.s - a.s || a.c.prioridad - b.c.prioridad; });
+    var I = D.intensidad || {};
+    return cand.slice(0, 3).map(function (x) { return x.c; }).sort(function (a, b) { return (I[a.slug] || 3) - (I[b.slug] || 3); });
+  }
+
+  function resultado(mover) {
+    tres = trio();
+    barra.style.width = "100%"; caja.hidden = true;
+    var A = document.body.dataset.assets || "";
+    lista.innerHTML = tres.map(function (c, n) {
+      var conFoto = D.fotos.indexOf(c.slug) >= 0;
+      var fig = conFoto ? '<img src="' + A + "/assets/fotos/cocteles/" + encodeURI(c.slug) + '-m.jpg" alt="' + esc(c.nombre) + '" loading="lazy">' : '<span aria-hidden="true">' + ROMANOS[n] + "</span>";
+      return '<li class="inv-trago"><figure' + (conFoto ? "" : ' class="sin-foto"') + ">" + fig + '</figure><div><div class="q-num">' + ROMANOS[n] + " · " + esc(D.tiempos[n] || "") + "</div><h3>" + esc(c.nombre) + '</h3><p class="q-notas">' + esc(c.notas) + '</p><p class="q-ingredientes">' + esc(c.ingredientes) + "</p></div></li>";
+    }).join("");
+    res.hidden = false;
+    if (mover) document.getElementById("inv-quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(resp)); } catch (e) { } }
+  document.getElementById("inv-otra").addEventListener("click", function () {
+    resp = []; i = 0; try { localStorage.removeItem(CLAVE); } catch (e) { }
+    pregunta(); document.getElementById("inv-quiz").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  forma.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var nombre = fNombre.value.trim(), medio = document.getElementById("inv-medio").value.trim(), alergias = document.getElementById("inv-alergias").value.trim();
+    if (!nombre || tres.length < 3) return;
+    var n = tres.map(function (c) { return c.nombre; });
+    var texto = tt("Confirmo mi lugar en ROSSO: ", "Confirming my spot at ROSSO: ") + D.cuando + ".\n" +
+      tt("Nombre: ", "Name: ") + nombre + "\n" +
+      (medio ? tt("Instagram o medio: ", "Instagram or outlet: ") + medio + "\n" : "") +
+      tt("Mis tres tragos: ", "My three drinks: ") + "1) " + n[0] + "  2) " + n[1] + "  3) " + n[2] + "\n" +
+      tt("Alergias: ", "Allergies: ") + (alergias || tt("ninguna", "none"));
+    location.href = "https://wa.me/" + D.whatsapp + "?text=" + encodeURIComponent(texto);
+  });
+
+  // si ya contestó en este teléfono, vuelve a ver sus tres tragos
+  try {
+    var g = JSON.parse(localStorage.getItem(CLAVE) || "null");
+    if (g && g.length === D.preguntas.length && g.every(function (k, n) { return D.preguntas[n].opciones[k]; })) { resp = g; i = g.length; resultado(false); return; }
+  } catch (e) { }
+  pregunta();
+})();
