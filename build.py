@@ -103,8 +103,20 @@ if SITE.get("regalo_activo"):
     NAV.append(("Regalo", "Gift card", "/regalo/"))
 
 
-def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", script="", og_img=None, con_pixel=True):
-    """con_pixel=False en páginas con códigos o PIN: el píxel de Meta manda la URL completa (con ?s=, ?c=) a Meta."""
+def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", script="", og_img=None, con_pixel=True, contactos=None):
+    """con_pixel=False en páginas con códigos o PIN: el píxel de Meta manda la URL completa (con ?s=, ?c=) a Meta.
+    contactos=[{"nombre", "telefono"}]: el pie sale sin horario y con esas personas en vez del WhatsApp de ROSSO (invitación)."""
+    if contactos:
+        def _tel(c):
+            num = "".join(ch for ch in c["telefono"] if ch.isdigit())
+            return f'{e(c["nombre"])} · <a href="tel:+{num}">{e(c["telefono"])}</a>'
+        pie_medio = (f'<div class="pie-col">\n    <div class="etiqueta">{t("Contacto", "Contact")}</div>\n'
+                     f'    <p>{"<br>".join(_tel(c) for c in contactos)}<br><a href="https://www.instagram.com/{SITE["instagram"]}/">@{SITE["instagram"]}</a></p>\n  </div>')
+    else:
+        horas = "<br>".join(f"{e(a_)} · {e(b_)}" for a_, b_ in (SITE["horario"] if L == "es" else SITE.get("horario_en", SITE["horario"])))
+        pie_medio = (f'<div class="pie-col">\n    <div class="etiqueta">{t("Cuándo", "When")}</div>\n    <p>{horas}</p>\n  </div>\n'
+                     f'  <div class="pie-col">\n    <div class="etiqueta">{t("Contacto", "Contact")}</div>\n'
+                     f'    <p><a href="{wa("Hola, ROSSO.")}">WhatsApp {e(SITE["whatsapp_bonito"])}</a><br><a href="https://www.instagram.com/{SITE["instagram"]}/">@{SITE["instagram"]}</a></p>\n  </div>')
     descripcion = descripcion or t(SITE["descripcion"], SITE.get("descripcion_en", SITE["descripcion"]))
     canon = URL + B + ruta
     nav = "".join(
@@ -177,14 +189,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
     <div class="etiqueta">{t("Dónde", "Where")}</div>
     <p><a href="{SITE['maps']}">{e(SITE['direccion'])}<br>{e(SITE['ciudad'])}</a></p>
   </div>
-  <div class="pie-col">
-    <div class="etiqueta">{t("Cuándo", "When")}</div>
-    <p>{"<br>".join(f"{e(a)} · {e(b)}" for a, b in (SITE['horario'] if L == "es" else SITE.get('horario_en', SITE['horario'])))}</p>
-  </div>
-  <div class="pie-col">
-    <div class="etiqueta">{t("Contacto", "Contact")}</div>
-    <p><a href="{wa('Hola, ROSSO.')}">WhatsApp {e(SITE['whatsapp_bonito'])}</a><br><a href="https://www.instagram.com/{SITE['instagram']}/">@{SITE['instagram']}</a></p>
-  </div>
+  {pie_medio}
   <div class="pie-col pie-legal">
     <p>{t(f"Reservaciones hasta {SITE['max_widget']} personas por", f"Reservations for up to {SITE['max_widget']} on")} <a href="{B}/reservar/">OpenTable</a>. {t("Grupos y eventos por WhatsApp.", "Groups and events via WhatsApp.")}</p>
     <p class="mini">© {dt.date.today().year} Rosso Speakeasy · Puebla 329, Roma Norte, CDMX · <a href="{B}/speakeasy-roma-norte/">Speakeasy Roma Norte</a> · <a href="{B}/bar-con-dj-cdmx/">{t("Bar con DJ", "Bar with DJ")}</a> · <a href="{B}/bar-de-vinilos-cdmx/">{t("Vinilos", "Vinyl")}</a> · <a href="{B}/producciones/">{t("Locación", "Location hire")}</a> · <a href="{B}/club/">Club ROSSO</a> · <a href="{B}/privacidad/">{t("Privacidad", "Privacy")}</a></p>
@@ -1187,7 +1192,7 @@ def pag_invitacion():
     return pagina(t("Invitación · ROSSO", "Invitation · ROSSO"), cuerpo, "/invitacion/",
                   t(f"{d['cuando']}. Tres tragos pensados para ti, detrás de la cocina de Pavorosso.", f"{d['cuando']}. Three drinks made for you, behind the kitchen of Pavorosso."),
                   clase="pag-invitacion", extra_head='<meta name="robots" content="noindex,nofollow">',
-                  og_img=URL + "/assets/invitacion-og.jpg", con_pixel=False)
+                  og_img=URL + "/assets/invitacion-og.jpg", con_pixel=False, contactos=INV.get("contactos"))
 
 
 # ---------------------------------------------------------------- páginas para búsqueda

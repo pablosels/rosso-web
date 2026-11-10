@@ -3,6 +3,16 @@
  "fecha": "2026-12-01",
  "hora_inicio": "19:00",
  "hora_fin": "22:00",
+ "contactos": [
+  {
+   "nombre": "Héctor",
+   "telefono": "+52 55 9198 7288"
+  },
+  {
+   "nombre": "Israel",
+   "telefono": "+52 33 3360 7186"
+  }
+ ],
  "intensidad": {
   "rococócrème": 1,
   "paola": 1,
