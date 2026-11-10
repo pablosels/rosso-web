@@ -109,7 +109,7 @@ def pagina(titulo, cuerpo, ruta, descripcion=None, clase="", extra_head="", scri
     if contactos:
         def _tel(c):
             num = "".join(ch for ch in c["telefono"] if ch.isdigit())
-            return f'{e(c["nombre"])} · <a href="tel:+{num}">{e(c["telefono"])}</a>'
+            return f'{e(c["nombre"])} · <a href="https://wa.me/{num}" rel="noopener">{e(c["telefono"])}</a>'
         pie_medio = (f'<div class="pie-col">\n    <div class="etiqueta">{t("Contacto", "Contact")}</div>\n'
                      f'    <p>{"<br>".join(_tel(c) for c in contactos)}<br><a href="https://www.instagram.com/{SITE["instagram"]}/">@{SITE["instagram"]}</a></p>\n  </div>')
     else:
