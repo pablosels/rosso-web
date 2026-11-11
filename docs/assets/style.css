@@ -490,7 +490,9 @@ figure{margin:0}
 .inv-sigue{margin:1.2rem 0 0;max-width:none}
 .inv-sigue .btn{width:100%;text-align:center;padding:18px 26px}
 .inv-sigue .btn:disabled{background:transparent;border-color:var(--linea);color:var(--ink-suave);cursor:default}
-.inv-resultado h2{font-size:clamp(30px,6vw,52px);margin-bottom:1.4rem}
+.inv-resultado h2{font-size:clamp(30px,6vw,52px);margin-bottom:.9rem}
+.inv-servir{color:var(--ink-suave);margin:0 0 1.4rem}
+.inv-nombre .btn{justify-self:stretch;text-align:center;padding:18px 26px}
 .inv-trio{list-style:none;margin:0;padding:0;border-bottom:1px solid var(--linea)}
 .inv-trago{display:grid;grid-template-columns:clamp(96px,26vw,150px) minmax(0,1fr);gap:clamp(16px,4vw,28px);align-items:center;padding:18px 0;border-top:1px solid var(--linea)}
 .inv-trago figure{margin:0;aspect-ratio:4/5;overflow:hidden;background:#000}

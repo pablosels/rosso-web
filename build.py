@@ -1167,7 +1167,8 @@ def pag_invitacion():
   </div>
   <div id="inv-resultado" class="inv-resultado" hidden>
     <div class="etiqueta">{e(d["resultado_etiqueta"])}</div>
-    <h2>{e(d["resultado_titulo"])}</h2>
+    <h2 id="inv-eres"></h2>
+    <p class="inv-servir">{e(d["resultado_titulo"])}</p>
     <ol class="inv-trio" id="inv-trio"></ol>
     <p class="nota mini"><button class="inv-otra" type="button" id="inv-otra">{t("Cambiar mis respuestas", "Change my answers")}</button></p>
     <div class="inv-confirma">

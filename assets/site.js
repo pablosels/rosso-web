@@ -1181,7 +1181,8 @@
 })();
 
 /* invitación: en la primera pregunta se eligen TRES bases (se puede repetir), una por trago; fruta y textura
-   deciden cuál cóctel de cada base. Se sirven de ligero a intenso y se confirma por WhatsApp. */
+   deciden cuál cóctel de cada base. Al final se pide el nombre y el resultado sale como "Pablo, eres Picarilla, …".
+   Se sirven de ligero a intenso y se confirma por WhatsApp. */
 (function () {
   var nodo = document.getElementById("inv-datos"), caja = document.getElementById("inv-caja");
   if (!nodo || !caja) return;
@@ -1190,22 +1191,19 @@
   var barra = document.getElementById("inv-barra"), res = document.getElementById("inv-resultado"), lista = document.getElementById("inv-trio");
   var forma = document.getElementById("inv-forma"), fNombre = document.getElementById("inv-nombre");
   var ROMANOS = ["I", "II", "III"], CLAVE = "rosso_inv2", N = D.preguntas.length;
-  var bases = [], resp = [], i = 0, tres = [];   // bases: tres opciones de la pregunta 1; resp[n]: opción de la pregunta n (n >= 1)
+  var nombre = "", bases = [], resp = [], i = 0, tres = [];   // bases: tres opciones de la pregunta 1; resp[n]: opción de la pregunta n (n >= 1)
 
-  // liga personal: /invitacion/?para=Nombre
-  var para = "";
-  try { para = (new URLSearchParams(location.search).get("para") || "").replace(/[<>{}]/g, "").replace(/\s+/g, " ").trim().slice(0, 40); } catch (e) { }
-  if (para) {
-    document.getElementById("inv-saludo").textContent = D.saludo.replace("{nombre}", para);
-    fNombre.value = para;
-  }
+  function limpia(s) { return String(s || "").replace(/[<>{}]/g, "").replace(/\s+/g, " ").trim().slice(0, 40); }
+  // la invitación es genérica; si la liga trae ?para=Nombre, el nombre ya viene puesto
+  try { nombre = limpia(new URLSearchParams(location.search).get("para")); } catch (e) { }
+  if (nombre) document.getElementById("inv-saludo").textContent = D.saludo.replace("{nombre}", nombre);
 
   function corta(t) { return t.split(/[:,]/)[0]; }   // "Agave: tequila o mezcal" -> "Agave"
   function cabeza(p, titulo) { return '<div class="q-num">' + (i + 1) + " / " + N + (p.sentido ? " · " + esc(p.sentido) : "") + "</div><h2>" + esc(titulo) + "</h2>"; }
   function pregunta() {
     var p = D.preguntas[i];
     res.hidden = true; caja.hidden = false;
-    barra.style.width = (i / N * 100) + "%";
+    barra.style.width = (i / (N + 1) * 100) + "%";
     if (i === 0) return preguntaBases(p);
     caja.innerHTML = cabeza(p, p.q) + '<ul class="q-opciones">' + p.opciones.map(function (o, k) { return '<li><button type="button" data-k="' + k + '">' + esc(o.t) + "</button></li>"; }).join("") + "</ul>";
     var b = caja.querySelector("button"); if (b) b.focus({ preventScroll: true });
@@ -1229,7 +1227,21 @@
     if (b.id === "inv-sigue") { i = 1; pregunta(); sube(); return; }
     if (b.dataset.k == null) return;
     resp[i] = +b.dataset.k; i++;
-    if (i < N) pregunta(); else { guardar(); resultado(true); }
+    if (i < N) pregunta(); else pideNombre();
+  });
+  // último paso: el nombre, para decirle qué tragos es
+  function pideNombre() {
+    res.hidden = true; caja.hidden = false;
+    barra.style.width = (N / (N + 1) * 100) + "%";
+    caja.innerHTML = '<div class="q-num">' + tt("Último paso", "Last step") + "</div><h2>" + tt("¿Cómo te llamas?", "What is your name?") + '</h2><form class="forma inv-nombre" id="inv-pide"><div class="campo"><label for="inv-quien">' + tt("Tu nombre", "Your name") +
+      '</label><input id="inv-quien" autocomplete="given-name" required maxlength="40" value="' + esc(nombre) + '"></div><button class="btn" type="submit">' + tt("Ver mis tres tragos", "See my three drinks") + "</button></form>";
+    var c = document.getElementById("inv-quien"); if (c) c.focus({ preventScroll: true });
+  }
+  caja.addEventListener("submit", function (ev) {
+    if (ev.target.id !== "inv-pide") return;
+    ev.preventDefault();
+    var v = limpia(document.getElementById("inv-quien").value); if (!v) return;
+    nombre = v; guardar(); resultado(true);
   });
   function sube() { document.getElementById("inv-quiz").scrollIntoView({ behavior: "smooth", block: "start" }); }
 
@@ -1263,11 +1275,14 @@
       var fig = conFoto ? '<img src="' + A + "/assets/fotos/cocteles/" + encodeURI(c.slug) + '-m.jpg" alt="' + esc(c.nombre) + '" loading="lazy">' : '<span aria-hidden="true">' + ROMANOS[n] + "</span>";
       return '<li class="inv-trago"><figure' + (conFoto ? "" : ' class="sin-foto"') + ">" + fig + '</figure><div><div class="q-num">' + ROMANOS[n] + " · " + esc(D.tiempos[n] || "") + "</div><h3>" + esc(c.nombre) + '</h3><p class="q-notas">' + esc(c.notas) + '</p><p class="q-ingredientes">' + esc(c.ingredientes) + "</p></div></li>";
     }).join("");
+    var n = tres.map(function (c) { return c.nombre; });
+    document.getElementById("inv-eres").textContent = nombre + tt(", eres ", ", you are ") + n[0] + ", " + n[1] + tt(" y ", " and ") + n[2] + ".";
+    fNombre.value = nombre;
     res.hidden = false;
     if (mover) sube();
   }
 
-  function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify({ b: bases, r: resp })); } catch (e) { } }
+  function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify({ b: bases, r: resp, n: nombre })); } catch (e) { } }
   document.getElementById("inv-otra").addEventListener("click", function () {
     bases = []; resp = []; i = 0; try { localStorage.removeItem(CLAVE); } catch (e) { }
     pregunta(); sube();
@@ -1275,11 +1290,11 @@
 
   forma.addEventListener("submit", function (ev) {
     ev.preventDefault();
-    var nombre = fNombre.value.trim(), medio = document.getElementById("inv-medio").value.trim(), alergias = document.getElementById("inv-alergias").value.trim();
-    if (!nombre || tres.length < 3) return;
+    var quien = fNombre.value.trim(), medio = document.getElementById("inv-medio").value.trim(), alergias = document.getElementById("inv-alergias").value.trim();
+    if (!quien || tres.length < 3) return;
     var n = tres.map(function (c) { return c.nombre; });
     var texto = tt("Confirmo mi lugar en ROSSO: ", "Confirming my spot at ROSSO: ") + D.cuando + ".\n" +
-      tt("Nombre: ", "Name: ") + nombre + "\n" +
+      tt("Nombre: ", "Name: ") + quien + "\n" +
       (medio ? tt("Instagram o medio: ", "Instagram or outlet: ") + medio + "\n" : "") +
       tt("Mis tres tragos: ", "My three drinks: ") + "1) " + n[0] + "  2) " + n[1] + "  3) " + n[2] + "\n" +
       tt("Alergias: ", "Allergies: ") + (alergias || tt("ninguna", "none"));
@@ -1289,8 +1304,8 @@
   // si ya contestó en este teléfono, vuelve a ver sus tres tragos
   try {
     var g = JSON.parse(localStorage.getItem(CLAVE) || "null"), P = D.preguntas;
-    if (g && g.b && g.b.length === 3 && g.b.every(function (k) { return P[0].opciones[k]; }) && g.r && g.r.length === N && g.r.slice(1).every(function (k, n) { return P[n + 1].opciones[k]; })) {
-      bases = g.b; resp = g.r; i = N; resultado(false); return;
+    if (g && g.b && g.b.length === 3 && g.b.every(function (k) { return P[0].opciones[k]; }) && g.r && g.r.length === N && g.r.slice(1).every(function (k, n) { return P[n + 1].opciones[k]; }) && limpia(g.n)) {
+      bases = g.b; resp = g.r; nombre = limpia(g.n); i = N; resultado(false); return;
     }
   } catch (e) { }
   pregunta();
